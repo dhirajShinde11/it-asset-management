@@ -42,7 +42,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // If accessed via QR Code scan on mobile / camera, open Equipment Passport
     if (scanTagParam) {
+        showAuthPage(null); // Keep login page as backdrop, protecting the admin console
         openMobileAssetPassport(scanTagParam);
+        return;
     }
 
     // If an email param was provided in the URL (user clicked link from their onboarding email)
@@ -2394,8 +2396,17 @@ function closeMobilePassportModal() {
     }
 }
 
+function goToAuthLoginPage() {
+    closeModal('mobile-asset-scan-modal');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    // Explicitly clear session to prevent unauthorized access from scanned equipment
+    localStorage.removeItem('itam_session');
+    App.session = null;
+    showAuthPage(null);
+}
+
 function goToFullDashboard() {
-    closeMobilePassportModal();
+    goToAuthLoginPage();
 }
 
 function renderBarcodeSvg(tag) {
