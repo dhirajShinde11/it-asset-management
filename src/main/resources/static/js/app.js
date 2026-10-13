@@ -17,20 +17,32 @@ const App = {
     cachedComponents: [],
     cachedActivity: [],
     searchTimer: null,
-    lastCreatedUser: null   // Holds data for success modal
+    lastCreatedUser: null,  // Holds data for success modal
+    networkInfo: null,      // Server LAN IP & URL for mobile QR codes
+    currentLabelAsset: null,// Current asset in label modal
+    scannedAsset: null      // Current asset viewed via QR mobile scan
 };
 
 // -------------------------------------------------------
 // INIT
 // -------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check URL query parameters (e.g. from welcome email link)
+    // Early fetch server LAN network info so QR codes immediately have phone-reachable IP
+    fetchNetworkInfo();
+
+    // Check URL query parameters (e.g. from mobile QR scan or welcome email link)
     const params = new URLSearchParams(window.location.search);
+    const scanTagParam = params.get('scanTag') || (window.location.hash.startsWith('#scanTag=') ? window.location.hash.substring(9) : null);
     const emailParam = params.get('email');
     const logoutParam = params.get('logout');
 
     if (logoutParam) {
         localStorage.removeItem('itam_session');
+    }
+
+    // If accessed via QR Code scan on mobile / camera, open Equipment Passport
+    if (scanTagParam) {
+        openMobileAssetPassport(scanTagParam);
     }
 
     // If an email param was provided in the URL (user clicked link from their onboarding email)
@@ -51,7 +63,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             showAuthPage(null);
         }
     } else {
-        showAuthPage(null);
+        if (!scanTagParam) {
+            showAuthPage(null);
+        }
     }
 
     // Global listener: Click outside closes user dropdown
@@ -2065,11 +2079,39 @@ function copyValue(text, label = 'Value') {
 }
 
 // ==========================================================================
-// MODULE: PRINTABLE ASSET LABEL & QR CODE GENERATION
+// MODULE: NETWORK DISCOVERY & PRINTABLE ASSET LABEL WITH SMART QR
 // ==========================================================================
+async function fetchNetworkInfo() {
+    try {
+        const res = await fetch('/api/system/network-info');
+        if (res.ok) {
+            App.networkInfo = await res.json();
+            console.log('[ITAM] Server network discovery:', App.networkInfo);
+        }
+    } catch (e) {
+        console.warn('[ITAM] Network info fetch error:', e);
+    }
+}
+
+function getSelectedQrBaseUrl() {
+    const select = document.getElementById('qr-host-preset-select');
+    if (select && select.value) {
+        return select.value;
+    }
+    // Smart fallback if select is not yet loaded:
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (App.networkInfo && App.networkInfo.lanUrl) {
+            return App.networkInfo.lanUrl;
+        }
+        return `http://10.229.34.29:${window.location.port || '8085'}`;
+    }
+    return window.location.origin;
+}
+
 function openAssetLabelModal(assetId) {
     const asset = App.cachedAssets.find(a => a.id === assetId);
     if (!asset) return;
+    App.currentLabelAsset = asset;
 
     document.getElementById('lbl-tag').textContent = asset.assetTag;
     document.getElementById('lbl-name').textContent = asset.name;
@@ -2077,12 +2119,77 @@ function openAssetLabelModal(assetId) {
     document.getElementById('lbl-serial').textContent = asset.serialNumber || 'N/A';
     document.getElementById('lbl-model').textContent = `${asset.manufacturer || ''} ${asset.model || ''}`.trim() || 'N/A';
 
-    // Clear and re-render QR Code
+    // Populate network preset selector
+    populateQrHostPresetOptions();
+
+    // Render QR Code with phone-accessible link
+    renderQrForCurrentLabelAsset();
+
+    // Render Clean SVG Barcode
+    renderBarcodeSvg(asset.assetTag);
+
+    document.getElementById('asset-label-modal').style.display = 'flex';
+}
+
+function populateQrHostPresetOptions() {
+    const select = document.getElementById('qr-host-preset-select');
+    if (!select) return;
+
+    const port = (App.networkInfo && App.networkInfo.serverPort) || window.location.port || '8085';
+    const detectedLanIp = (App.networkInfo && App.networkInfo.lanIp) || '10.229.34.29';
+    const lanUrl = (App.networkInfo && App.networkInfo.lanUrl) || `http://${detectedLanIp}:${port}`;
+    const browserOrigin = window.location.origin;
+
+    const options = [
+        {
+            value: lanUrl,
+            label: `📱 Mobile Wi-Fi (Host PC LAN): ${lanUrl}`
+        }
+    ];
+
+    if (browserOrigin !== lanUrl) {
+        options.push({
+            value: browserOrigin,
+            label: `💻 Desktop Browser (Local): ${browserOrigin}`
+        });
+    }
+
+    if (App.networkInfo && Array.isArray(App.networkInfo.availableIps)) {
+        App.networkInfo.availableIps.forEach(ip => {
+            const url = `http://${ip}:${port}`;
+            if (url !== lanUrl && url !== browserOrigin) {
+                options.push({
+                    value: url,
+                    label: `🌐 Interface IP: ${url}`
+                });
+            }
+        });
+    }
+
+    select.innerHTML = options.map((opt, idx) => `
+        <option value="${escapeHtml(opt.value)}" ${idx === 0 ? 'selected' : ''}>
+            ${escapeHtml(opt.label)}
+        </option>
+    `).join('');
+}
+
+function onQrHostPresetChanged() {
+    renderQrForCurrentLabelAsset();
+}
+
+function renderQrForCurrentLabelAsset() {
+    if (!App.currentLabelAsset) return;
+    const asset = App.currentLabelAsset;
+    const baseUrl = getSelectedQrBaseUrl();
+    const qrText = `${baseUrl}/?scanTag=${encodeURIComponent(asset.assetTag)}`;
+
+    const urlInput = document.getElementById('qr-target-url-input');
+    if (urlInput) urlInput.value = qrText;
+
     const qrContainer = document.getElementById('lbl-qr-code');
+    if (!qrContainer) return;
     qrContainer.innerHTML = '';
-    
-    const qrText = `${window.location.origin}/api/assets/${asset.id}?tag=${encodeURIComponent(asset.assetTag)}`;
-    
+
     try {
         if (typeof QRCode !== 'undefined') {
             new QRCode(qrContainer, {
@@ -2100,11 +2207,155 @@ function openAssetLabelModal(assetId) {
         console.error('QR Code render error:', e);
         qrContainer.innerHTML = `<div style="font-size:11px;padding:20px;border:1px dashed #94a3b8">QR: ${asset.assetTag}</div>`;
     }
+}
 
-    // Render Clean SVG Barcode
-    renderBarcodeSvg(asset.assetTag);
+function copyQrLink() {
+    const urlInput = document.getElementById('qr-target-url-input');
+    if (!urlInput) return;
+    const url = urlInput.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Mobile scan URL copied to clipboard!', 'info');
+        }).catch(() => {
+            prompt('Copy scan URL:', url);
+        });
+    } else {
+        prompt('Copy scan URL:', url);
+    }
+}
 
-    document.getElementById('asset-label-modal').style.display = 'flex';
+function testQrLinkInTab() {
+    const urlInput = document.getElementById('qr-target-url-input');
+    if (urlInput && urlInput.value) {
+        window.open(urlInput.value, '_blank');
+    }
+}
+
+// ==========================================================================
+// MODULE: MOBILE EQUIPMENT PASSPORT & QUICK PHYSICAL AUDIT
+// ==========================================================================
+async function openMobileAssetPassport(tag) {
+    try {
+        const res = await fetch(`/api/assets/tag/${encodeURIComponent(tag)}`);
+        if (!res.ok) {
+            showToast(`Asset with tag "${tag}" not found in inventory.`, 'error');
+            return;
+        }
+        const asset = await res.json();
+        App.scannedAsset = asset;
+
+        document.getElementById('scan-passport-category').textContent = (asset.category || 'ASSET').replace(/_/g, ' ');
+        
+        const statusEl = document.getElementById('scan-passport-status');
+        const st = asset.status || 'AVAILABLE';
+        statusEl.textContent = st.replace(/_/g, ' ');
+        if (st === 'AVAILABLE' || st === 'READY_TO_DEPLOY') {
+            statusEl.className = 'badge badge-success';
+        } else if (st === 'ASSIGNED' || st === 'DEPLOYED') {
+            statusEl.className = 'badge badge-info';
+        } else if (st === 'IN_REPAIR' || st === 'MAINTENANCE') {
+            statusEl.className = 'badge badge-warning';
+        } else {
+            statusEl.className = 'badge badge-secondary';
+        }
+
+        document.getElementById('scan-passport-name').textContent = asset.name || 'Unnamed Asset';
+        document.getElementById('scan-passport-tag').textContent = asset.assetTag;
+        document.getElementById('scan-passport-serial').textContent = asset.serialNumber || 'N/A';
+        document.getElementById('scan-passport-user').textContent = asset.assignedEmployeeName ? `${asset.assignedEmployeeName} (${asset.assignedEmployeeEmail || ''})` : 'Unassigned (In Storage)';
+        document.getElementById('scan-passport-dept').textContent = asset.assignedDepartment || asset.department || 'IT Stockroom';
+        document.getElementById('scan-passport-location').textContent = asset.location || 'Main Office';
+        
+        const condEl = document.getElementById('scan-passport-condition');
+        condEl.textContent = asset.condition || 'GOOD';
+
+        document.getElementById('scan-passport-model').textContent = `${asset.manufacturer || ''} ${asset.model || ''}`.trim() || 'N/A';
+        document.getElementById('scan-passport-cpu').textContent = asset.processor || asset.cpu || 'N/A';
+        document.getElementById('scan-passport-ram').textContent = asset.ram || asset.memory || 'N/A';
+        document.getElementById('scan-passport-storage').textContent = asset.storage || 'N/A';
+
+        const lastAuditEl = document.getElementById('scan-passport-last-audit');
+        const nextAuditEl = document.getElementById('scan-passport-next-audit');
+        lastAuditEl.textContent = asset.lastAuditDate ? formatDate(asset.lastAuditDate) : 'Not yet audited';
+        nextAuditEl.textContent = asset.nextAuditDate ? formatDate(asset.nextAuditDate) : 'In 6 months';
+
+        // Reset verify button state
+        const verifyBtn = document.getElementById('btn-quick-verify-audit');
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                Verify Physical Audit
+            `;
+            verifyBtn.className = 'btn btn-primary';
+            verifyBtn.style.background = '';
+            verifyBtn.style.borderColor = '';
+        }
+
+        document.getElementById('mobile-asset-scan-modal').style.display = 'flex';
+    } catch (err) {
+        console.error('Error fetching asset passport for tag:', tag, err);
+        showToast(`Could not load passport for tag "${tag}". Check network connection.`, 'error');
+    }
+}
+
+async function submitMobileQuickAudit() {
+    if (!App.scannedAsset) return;
+    const btn = document.getElementById('btn-quick-verify-audit');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Verifying physical presence...';
+    }
+
+    try {
+        const res = await fetch(`/api/assets/${App.scannedAsset.id}/audit?notes=Mobile%20QR%20Scan%20Physical%20Verification`, {
+            method: 'POST'
+        });
+        if (res.ok) {
+            const updated = await res.json();
+            App.scannedAsset = updated;
+            document.getElementById('scan-passport-last-audit').textContent = 'Verified Just Now (Today)';
+            document.getElementById('scan-passport-next-audit').textContent = updated.nextAuditDate ? formatDate(updated.nextAuditDate) : 'In 6 months';
+
+            if (btn) {
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    ✓ Physical Audit Verified!
+                `;
+                btn.className = 'btn btn-success';
+                btn.style.background = '#10b981';
+                btn.style.borderColor = '#10b981';
+            }
+            showToast(`Asset ${updated.assetTag} physical audit successfully recorded!`, 'success');
+            
+            // If main dashboard is running, refresh tables
+            if (App.session && App.session.role === 'ADMIN') {
+                loadAssets();
+                loadActivityLogs();
+            }
+        } else {
+            showToast('Audit recording failed. Please try again.', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Verify Physical Audit';
+            }
+        }
+    } catch (e) {
+        console.error('Audit submit error:', e);
+        showToast('Network error while verifying audit.', 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Verify Physical Audit';
+        }
+    }
+}
+
+function goToFullDashboard() {
+    closeModal('mobile-asset-scan-modal');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    if (!App.session) {
+        showAuthPage(null);
+    }
 }
 
 function renderBarcodeSvg(tag) {

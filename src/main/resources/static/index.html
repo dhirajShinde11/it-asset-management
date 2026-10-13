@@ -1687,6 +1687,41 @@
                     </div>
                     <div class="label-footer-note">PROPERTY OF ORGANIZATION • DO NOT REMOVE • SCAN TO AUDIT</div>
                 </div>
+
+                <!-- QR Destination & Mobile Scanning Network Bar -->
+                <div class="qr-network-config-box" style="margin-top: 20px; padding: 14px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 10px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                            QR Code Target Destination (For Mobile Phone Scan)
+                        </span>
+                        <span id="qr-ip-badge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                            Wi-Fi LAN IP
+                        </span>
+                    </div>
+
+                    <div style="margin-bottom: 8px;">
+                        <label for="qr-host-preset-select" style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px;">Select Network IP / Host Mode:</label>
+                        <select id="qr-host-preset-select" class="form-control" style="font-size: 12px; width: 100%; padding: 7px 10px; background: rgba(15, 23, 42, 0.85); color: #f8fafc; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px;" onchange="onQrHostPresetChanged()">
+                            <!-- Options dynamically populated by app.js -->
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" id="qr-target-url-input" class="form-control" style="font-family: monospace; font-size: 11px; padding: 6px 10px; background: rgba(15, 23, 42, 0.6); color: #38bdf8; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; flex: 1;" readonly>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="copyQrLink()" title="Copy Link to Clipboard" style="font-size: 11px; padding: 6px 12px; flex-shrink: 0;">
+                            Copy Link
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="testQrLinkInTab()" title="Test Opening Link in New Tab" style="font-size: 11px; padding: 6px 12px; flex-shrink: 0;">
+                            Test
+                        </button>
+                    </div>
+
+                    <div style="font-size: 11px; color: #94a3b8; display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>Scanning with your smartphone camera opens the <strong>Equipment Passport &amp; Quick Audit</strong> screen. Phone must be on the same Wi-Fi.</span>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer" style="display: flex; justify-content: space-between;">
@@ -1695,6 +1730,115 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     Print Label Sticker
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MOBILE EQUIPMENT PASSPORT & QUICK AUDIT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="mobile-asset-scan-modal" style="display: none; z-index: 1050;">
+        <div class="modal-dialog modal-md" style="max-width: 480px; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding: 16px 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #f8fafc;">Equipment Passport</h3>
+                        <p class="text-muted" style="margin: 2px 0 0 0; font-size: 12px;">Mobile Hardware Verification &amp; Audit</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeModal('mobile-asset-scan-modal')">&times;</button>
+            </div>
+
+            <div class="modal-body-content" style="padding: 20px; overflow-y: auto; background: rgba(15, 23, 42, 0.6);">
+                <!-- Hero Card -->
+                <div style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 12px; padding: 18px; margin-bottom: 16px; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span id="scan-passport-category" class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 600; font-size: 11px;">LAPTOP</span>
+                        <span id="scan-passport-status" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 11px; font-weight: 700;">READY TO DEPLOY</span>
+                    </div>
+                    <h2 id="scan-passport-name" style="font-size: 19px; font-weight: 700; color: #f8fafc; margin: 0 0 10px 0; line-height: 1.3;">Equipment Name</h2>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge" id="scan-passport-tag" style="background: #0f172a; border: 1px solid #38bdf8; color: #38bdf8; font-family: monospace; font-size: 13px; font-weight: 700; padding: 4px 10px;">AST-1001</span>
+                        <span style="font-size: 12px; color: #94a3b8;">S/N: <strong id="scan-passport-serial" style="color: #e2e8f0; font-family: monospace;">N/A</strong></span>
+                    </div>
+                </div>
+
+                <!-- Custody & Location -->
+                <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.12); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Custody &amp; Deployment
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Assigned User</span>
+                            <strong id="scan-passport-user" style="color: #f1f5f9;">Unassigned</strong>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Department</span>
+                            <span id="scan-passport-dept" style="color: #cbd5e1;">N/A</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Physical Location</span>
+                            <span id="scan-passport-location" style="color: #cbd5e1;">Main Office</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Condition</span>
+                            <span id="scan-passport-condition" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 11px;">EXCELLENT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hardware Specifications -->
+                <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.12); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        Technical Specifications
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Model / Brand</span>
+                            <span id="scan-passport-model" style="color: #cbd5e1;">N/A</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Processor (CPU)</span>
+                            <span id="scan-passport-cpu" style="color: #cbd5e1;">N/A</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Memory (RAM)</span>
+                            <span id="scan-passport-ram" style="color: #cbd5e1;">N/A</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: #64748b; display: block;">Storage</span>
+                            <span id="scan-passport-storage" style="color: #cbd5e1;">N/A</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Banner -->
+                <div id="scan-audit-status-banner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                    <div style="color: #34d399; flex-shrink: 0;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <div style="font-size: 12px; line-height: 1.4;">
+                        <span style="color: #e2e8f0; font-weight: 600; display: block;">Last Physical Audit: <span id="scan-passport-last-audit" style="color: #34d399;">Not yet audited</span></span>
+                        <span style="color: #94a3b8;">Next Scheduled Audit: <span id="scan-passport-next-audit">In 6 months</span></span>
+                    </div>
+                </div>
+
+                <!-- 1-Tap Physical Audit Verification Action -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" id="btn-quick-verify-audit" class="btn btn-primary" onclick="submitMobileQuickAudit()" style="padding: 12px 18px; font-size: 14px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        Verify Physical Audit
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="goToFullDashboard()" style="width: 100%; font-size: 13px;">
+                        Open Main IT Dashboard &rarr;
+                    </button>
+                </div>
             </div>
         </div>
     </div>
