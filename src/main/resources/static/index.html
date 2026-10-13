@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise IT Asset Management (ITAM)</title>
+    <meta name="description" content="Next-generation Enterprise IT Asset Management System - Role-based access, employee self-service portal, user onboarding with automated email dispatches, and hardware lifecycle tracking.">
+    <!-- Google Fonts: Inter, Outfit & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <!-- Background Glow Effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- ============================================================== -->
+    <!-- DEDICATED FULL-SCREEN SIGN-IN PAGE -->
+    <!-- ============================================================== -->
+    <div id="auth-view" style="display: none; min-height: 100vh; width: 100%; align-items: center; justify-content: center; position: relative; z-index: 100; padding: 24px; box-sizing: border-box;">
+        <div style="max-width: 460px; width: 100%; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 36px 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); box-sizing: border-box;">
+            <!-- Brand Logo -->
+            <div style="text-align: center; margin-bottom: 26px;">
+                <div style="width: 52px; height: 52px; margin: 0 auto 14px auto; background: linear-gradient(135deg, #6366f1, #06b6d4); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                </div>
+                <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #f8fafc; letter-spacing: -0.5px;">Aegis ITAM Portal</h2>
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #94a3b8;" id="auth-welcome-sub">Sign in to view your assigned hardware &amp; equipment</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="auth-page-form" onsubmit="submitAuthPageLogin(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="auth-email" style="font-size: 13px; color: #cbd5e1; font-weight: 500;">Organization Email *</label>
+                    <input type="email" id="auth-email" required placeholder="e.g. your-email@company.com" autocomplete="username" style="width: 100%; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="auth-password" style="font-size: 13px; color: #cbd5e1; font-weight: 500; margin: 0;">Password / Temporary Key *</label>
+                    </div>
+                    <input type="password" id="auth-password" required placeholder="••••••••" autocomplete="current-password" style="width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div id="auth-error-msg" class="alert-box alert-error" style="display: none; margin-bottom: 16px;"></div>
+
+                <button type="submit" class="btn btn-primary" id="btn-auth-submit" style="width: 100%; padding: 13px; font-size: 15px; font-weight: 600; justify-content: center;">
+                    Sign In to Portal &rarr;
+                </button>
+            </form>
+
+            <!-- Quick Demo Credentials for Fast Testing -->
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 8px;">Quick Sign-In:</div>
+                <div style="display: flex; gap: 8px; flex-direction: column;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="fillAuthForm('dhiraj@bmconsulting.co', '12345')" style="font-size: 12px; justify-content: flex-start;">
+                        🛡️ IT Administrator (dhiraj@bmconsulting.co)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-layout" id="app-layout" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">Aegis ITAM</span>
+                    <span class="brand-subtitle" id="sidebar-role-indicator">Admin Command Hub</span>
+                </div>
+            </div>
+
+            <!-- ADMIN NAVIGATION -->
+            <nav class="nav-menu" id="admin-nav-menu">
+                <div class="nav-section-title">EQUIPMENT &amp; ASSETS</div>
+                <button class="nav-item active" id="nav-assets-btn" onclick="switchTab('assets')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                    <span>Hardware Assets</span>
+                    <span class="nav-badge" id="nav-count-assets">0</span>
+                </button>
+                <button class="nav-item" id="nav-accessories-btn" onclick="switchTab('accessories')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v6m0 8v6M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M2 12h6m8 0h6M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24"></path>
+                    </svg>
+                    <span>Accessories</span>
+                    <span class="nav-badge" id="nav-count-accessories">0</span>
+                </button>
+                <button class="nav-item" id="nav-consumables-btn" onclick="switchTab('consumables')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    </svg>
+                    <span>Consumables</span>
+                    <span class="nav-badge" id="nav-count-consumables">0</span>
+                </button>
+                <button class="nav-item" id="nav-components-btn" onclick="switchTab('components')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                        <rect x="9" y="9" width="6" height="6"></rect>
+                        <line x1="9" y1="1" x2="9" y2="4"></line>
+                        <line x1="15" y1="1" x2="15" y2="4"></line>
+                        <line x1="9" y1="20" x2="9" y2="23"></line>
+                        <line x1="15" y1="20" x2="15" y2="23"></line>
+                    </svg>
+                    <span>Components</span>
+                    <span class="nav-badge" id="nav-count-components">0</span>
+                </button>
+                <button class="nav-item" id="nav-licenses-btn" onclick="switchTab('licenses')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2l-2 2m-1-1l2 2M3 13l7 7 10-10-7-7-10 10z"></path>
+                    </svg>
+                    <span>Software Licenses</span>
+                    <span class="nav-badge" id="nav-count-licenses">0</span>
+                </button>
+
+                <div class="nav-section-title" style="margin-top: 14px;">ORGANIZATION &amp; AUDIT</div>
+                <button class="nav-item" id="nav-users-btn" onclick="switchTab('users')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Users Directory</span>
+                    <span class="nav-badge badge-accent" id="nav-count-users">0</span>
+                </button>
+                <button class="nav-item" id="nav-activity-btn" onclick="switchTab('activity')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span>Activity Audit Log</span>
+                    <span class="nav-badge" id="nav-count-activity">0</span>
+                </button>
+                <button class="nav-item" id="nav-maintenance-btn" onclick="switchTab('maintenance')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span>Maintenance Logs</span>
+                </button>
+                <button class="nav-item" id="nav-analytics-btn" onclick="switchTab('analytics')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics &amp; Depts</span>
+                </button>
+                <button class="nav-item" id="nav-emails-btn" onclick="switchTab('emails')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <span>Email Outbox</span>
+                    <span class="nav-badge" id="nav-count-emails">0</span>
+                </button>
+            </nav>
+
+            <!-- EMPLOYEE PORTAL NAVIGATION (shown when logged in as employee or employee view active) -->
+            <nav class="nav-menu" id="employee-nav-menu" style="display: none;">
+                <div class="nav-section-title">MY EQUIPMENT PORTAL</div>
+                <button class="nav-item active" id="nav-emp-dashboard-btn" onclick="switchTab('employee-portal')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>My Assigned Hardware</span>
+                    <span class="nav-badge" id="nav-emp-count-assets">0</span>
+                </button>
+                <button class="nav-item" id="nav-emp-tickets-btn" onclick="scrollToEmpSection('emp-tickets-section')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span>Service Requests</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="pulse-indicator"></span>
+                    <div class="status-meta">
+                        <span class="status-name">Backend REST API</span>
+                        <span class="status-sub">Spring Boot 3.3 • Port 8085</span>
+                    </div>
+                </div>
+                <div class="sidebar-links">
+                    <a href="/swagger-ui.html" target="_blank" class="tool-link" id="link-swagger" title="Interactive API Docs">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Swagger API Docs
+                    </a>
+                    <a href="/h2-console" target="_blank" class="tool-link" id="link-h2" title="H2 Console (JDBC: jdbc:h2:mem:itamdb)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        H2 Database Console
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-title-group">
+                    <h1 id="page-main-heading">IT Asset Portfolio</h1>
+                    <p class="page-subtitle" id="page-sub-heading">Track, audit, provision, and maintain organization hardware and license lifecycle</p>
+                </div>
+                
+                <div class="topbar-actions">
+                    <!-- Session User Capsule / Auth Widget -->
+                    <div class="auth-widget" id="auth-widget">
+                        <div class="user-capsule" id="user-capsule" onclick="toggleUserDropdown()">
+                            <div class="user-avatar" id="capsule-avatar">AD</div>
+                            <div class="user-info-text">
+                                <span class="user-name" id="capsule-name">IT Administrator</span>
+                                <span class="user-meta-line">
+                                    <span class="role-pill pill-admin" id="capsule-role">ADMIN</span>
+                                    <span class="user-dept-label" id="capsule-dept">IT</span>
+                                </span>
+                            </div>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+
+                        <!-- Dropdown Menu -->
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="dropdown-header">
+                                <div class="dropdown-user-name" id="dd-user-name">IT Administrator</div>
+                                <div class="dropdown-user-email" id="dd-user-email">admin@company.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" id="dd-switch-view-btn" onclick="toggleRoleView()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                                <span id="dd-switch-label">Switch to Employee Portal</span>
+                            </button>
+                            <button class="dropdown-item" onclick="openProfileModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <span>My Account Profile</span>
+                            </button>
+                            <button class="dropdown-item" onclick="openChangePasswordModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Change Password</span>
+                            </button>
+                            <button class="dropdown-item" onclick="openLoginModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                                <span>Switch User / Sign In</span>
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item text-danger" onclick="logoutUser()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Action Buttons -->
+                    <button class="btn btn-secondary" id="btn-export-csv" onclick="exportAssetsCsv()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export CSV
+                    </button>
+                    <button class="btn btn-primary" id="btn-create-asset" onclick="openAssetModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Asset
+                    </button>
+                    <button class="btn btn-primary btn-gradient" id="btn-add-user-top" onclick="openAddUserModal()" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                        Add User
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Summary Stat Cards (Admin View) -->
+            <section class="metrics-grid" id="admin-metrics-grid">
+                <div class="metric-card" id="card-total-assets">
+                    <div class="metric-header">
+                        <span class="metric-label">Total Assets</span>
+                        <div class="metric-icon-wrap icon-purple">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="val-total-assets">--</div>
+                    <div class="metric-trend text-muted">Across all physical locations</div>
+                </div>
+
+                <div class="metric-card" id="card-assigned-assets">
+                    <div class="metric-header">
+                        <span class="metric-label">Assigned &amp; Active</span>
+                        <div class="metric-icon-wrap icon-green">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value text-green" id="val-assigned-assets">--</div>
+                    <div class="metric-trend text-muted" id="sub-assigned-pct">In active workforce use</div>
+                </div>
+
+                <div class="metric-card" id="card-available-assets">
+                    <div class="metric-header">
+                        <span class="metric-label">Available in Stock</span>
+                        <div class="metric-icon-wrap icon-blue">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value text-blue" id="val-available-assets">--</div>
+                    <div class="metric-trend text-muted">Ready for deployment</div>
+                </div>
+
+                <div class="metric-card" id="card-maintenance-assets">
+                    <div class="metric-header">
+                        <span class="metric-label">Under Service</span>
+                        <div class="metric-icon-wrap icon-amber">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value text-amber" id="val-maintenance-assets">--</div>
+                    <div class="metric-trend text-muted">Repairs &amp; inspections</div>
+                </div>
+
+                <div class="metric-card" id="card-asset-value">
+                    <div class="metric-header">
+                        <span class="metric-label">Portfolio Value</span>
+                        <div class="metric-icon-wrap icon-emerald">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value text-emerald" id="val-asset-value">--</div>
+                    <div class="metric-trend text-muted">Total acquisition cost</div>
+                </div>
+
+                <div class="metric-card" id="card-expiring-warranties">
+                    <div class="metric-header">
+                        <span class="metric-label">Warranty Alerts</span>
+                        <div class="metric-icon-wrap icon-rose">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </div>
+                    </div>
+                    <div class="metric-value text-rose" id="val-expiring-count">--</div>
+                    <div class="metric-trend text-muted">Expiring within 60 days</div>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 1: Hardware Assets (Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane active" id="pane-assets">
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="asset-search-input" placeholder="Search by Tag, Name, Serial, or Employee..." oninput="debounceSearch()">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filter-category" onchange="loadAssets()" class="select-control">
+                            <option value="">All Categories</option>
+                            <option value="LAPTOP">Laptops</option>
+                            <option value="DESKTOP">Desktops</option>
+                            <option value="SERVER">Servers</option>
+                            <option value="NETWORKING">Networking</option>
+                            <option value="MONITOR">Monitors</option>
+                            <option value="MOBILE_DEVICE">Mobile Devices</option>
+                            <option value="PERIPHERAL">Peripherals</option>
+                            <option value="ACCESSORY">Accessories (Docks, Chargers, Hubs)</option>
+                        </select>
+
+                        <select id="filter-status" onchange="loadAssets()" class="select-control">
+                            <option value="">All Statuses</option>
+                            <option value="AVAILABLE">Available</option>
+                            <option value="ASSIGNED">Assigned</option>
+                            <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+                            <option value="RESERVED">Reserved</option>
+                            <option value="RETIRED">Retired</option>
+                            <option value="LOST_OR_STOLEN">Lost / Stolen</option>
+                        </select>
+
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="assets-table">
+                        <thead>
+                            <tr>
+                                <th>Asset Tag</th>
+                                <th>Name &amp; Model</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Condition</th>
+                                <th>Assigned To</th>
+                                <th>Department</th>
+                                <th>Location</th>
+                                <th>Cost</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assets-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB: Accessories Inventory (Snipe-IT Quantity Tracking) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-accessories" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Accessories Inventory</h2>
+                        <p class="text-muted">Track keyboards, mice, chargers, and docking stations with total vs available quantity</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openAccessoryModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        + New Accessory
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="accessory-search-input" placeholder="Search accessories by name, model, manufacturer..." oninput="filterAccessoriesList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-accessory-category" onchange="filterAccessoriesList()" class="select-control">
+                            <option value="">All Categories</option>
+                            <option value="KEYBOARD">Keyboards</option>
+                            <option value="MOUSE">Mice / Pointers</option>
+                            <option value="DOCKING_STATION">Docking Stations</option>
+                            <option value="CHARGER">Chargers &amp; Adapters</option>
+                            <option value="HEADSET">Headsets &amp; Audio</option>
+                            <option value="CABLE">Cables &amp; Dongles</option>
+                            <option value="BAG_OR_CASE">Bags &amp; Sleeves</option>
+                            <option value="OTHER">Other Accessories</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetAccessoryFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="accessories-table">
+                        <thead>
+                            <tr>
+                                <th>Accessory Name</th>
+                                <th>Category</th>
+                                <th>Model / Part #</th>
+                                <th>Manufacturer</th>
+                                <th>Total Stock</th>
+                                <th>Checked Out</th>
+                                <th>Available</th>
+                                <th>Stock Health</th>
+                                <th>Cost</th>
+                                <th>Location</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accessories-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB: Consumables (Snipe-IT One-Way Dispensing) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-consumables" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Consumables Dispensing</h2>
+                        <p class="text-muted">One-way dispensing of toner, cables, safety supplies, and thermal paste with low-stock warnings</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openConsumableModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        + New Consumable
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="consumable-search-input" placeholder="Search consumables by name, SKU, manufacturer..." oninput="filterConsumablesList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-consumable-category" onchange="filterConsumablesList()" class="select-control">
+                            <option value="">All Categories</option>
+                            <option value="TONER_AND_INK">Toner &amp; Ink</option>
+                            <option value="CLEANING_SUPPLIES">Cleaning Supplies</option>
+                            <option value="BATTERIES">Batteries</option>
+                            <option value="THERMAL_PASTE">Thermal Paste</option>
+                            <option value="CABLES_AND_WIRES">Cables &amp; Wires</option>
+                            <option value="LABELS_AND_PAPER">Labels &amp; Paper</option>
+                            <option value="SAFETY_EQUIPMENT">Safety Equipment</option>
+                            <option value="OTHER">Other Consumables</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetConsumableFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="consumables-table">
+                        <thead>
+                            <tr>
+                                <th>Consumable Item</th>
+                                <th>Category</th>
+                                <th>SKU / Item #</th>
+                                <th>Manufacturer</th>
+                                <th>Total Stock</th>
+                                <th>Dispensed</th>
+                                <th>Remaining</th>
+                                <th>Min. Stock Level</th>
+                                <th>Unit Cost</th>
+                                <th>Location</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consumables-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB: Components (Snipe-IT Internal Hardware Installed into Assets) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-components" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Internal Components</h2>
+                        <p class="text-muted">Track RAM, NVMe SSDs, CPUs, and GPUs installed into workstations and host servers</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openComponentModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        + New Component
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="component-search-input" placeholder="Search components by name, specs, serial..." oninput="filterComponentsList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-component-category" onchange="filterComponentsList()" class="select-control">
+                            <option value="">All Categories</option>
+                            <option value="RAM">RAM / Memory</option>
+                            <option value="STORAGE">Storage / NVMe SSD / HDD</option>
+                            <option value="CPU">CPU / Processor</option>
+                            <option value="GPU">GPU / Graphics Card</option>
+                            <option value="MOTHERBOARD">Motherboard</option>
+                            <option value="POWER_SUPPLY">Power Supply / PSU</option>
+                            <option value="NETWORK_CARD">Network Interface Card</option>
+                            <option value="OTHER">Other Internal Component</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetComponentFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="components-table">
+                        <thead>
+                            <tr>
+                                <th>Component Name</th>
+                                <th>Category</th>
+                                <th>Serial / Part #</th>
+                                <th>Specifications</th>
+                                <th>Total Qty</th>
+                                <th>Installed</th>
+                                <th>Available</th>
+                                <th>Stock Health</th>
+                                <th>Cost</th>
+                                <th>Location</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="components-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 2: Software Licenses (Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-licenses" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Software Licenses &amp; Subscriptions</h2>
+                        <p class="text-muted">Track SaaS subscriptions, seat utilization, vendor licenses, and renewals</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openLicenseModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Software License
+                    </button>
+                </div>
+
+                <div class="cards-grid" id="licenses-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 3: Users & Onboarding (NEW - Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-users" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Organization Users &amp; Workforce Directory</h2>
+                        <p class="text-muted">Add employees with organization email, auto-dispatch onboarding credentials, and assign assets</p>
+                    </div>
+                    <button class="btn btn-primary btn-gradient" onclick="openAddUserModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        + Add New User &amp; Dispatch Mail
+                    </button>
+                </div>
+
+                <!-- User Stat Strip -->
+                <div class="user-stats-strip">
+                    <div class="user-stat-box">
+                        <span class="stat-count text-purple" id="stat-total-users">0</span>
+                        <span class="stat-name">Total Registered Users</span>
+                    </div>
+                    <div class="user-stat-box">
+                        <span class="stat-count text-green" id="stat-active-employees">0</span>
+                        <span class="stat-name">Active Employees</span>
+                    </div>
+                    <div class="user-stat-box">
+                        <span class="stat-count text-blue" id="stat-hardware-holders">0</span>
+                        <span class="stat-name">Employees with Hardware</span>
+                    </div>
+                    <div class="user-stat-box">
+                        <span class="stat-count text-amber" id="stat-admin-count">0</span>
+                        <span class="stat-name">IT System Admins</span>
+                    </div>
+                </div>
+
+                <!-- User Search & Filter Toolbar -->
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="user-search-input" placeholder="Search user by Name, Organization Email, Job Title..." oninput="filterUsersList()">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filter-user-dept" onchange="filterUsersList()" class="select-control">
+                            <option value="">All Departments</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="DevOps">DevOps</option>
+                            <option value="Product Design">Product Design</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                        <select id="filter-user-role" onchange="filterUsersList()" class="select-control">
+                            <option value="">All Roles</option>
+                            <option value="ADMIN">Admins Only</option>
+                            <option value="EMPLOYEE">Employees Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Employee / Name</th>
+                                <th>Organization Email</th>
+                                <th>Department &amp; Title</th>
+                                <th>Role</th>
+                                <th>Assigned Equipment</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB: Activity Audit Log (Snipe-IT Immutable Custody Trail) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-activity" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Custody &amp; Activity Audit Trail</h2>
+                        <p class="text-muted">Immutable audit log of all equipment check-outs, returns, audits, disposals, and part installations</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadActivityLogs()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        Refresh Audit Log
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="activity-search-input" placeholder="Search activity by item, employee, admin, or notes..." oninput="filterActivityList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-activity-action" onchange="filterActivityList()" class="select-control">
+                            <option value="">All Actions</option>
+                            <option value="CHECKOUT">Check Out</option>
+                            <option value="CHECKIN">Check In</option>
+                            <option value="AUDIT">Physical Audit</option>
+                            <option value="CREATE">Create</option>
+                            <option value="UPDATE">Update</option>
+                            <option value="DELETE">Delete</option>
+                            <option value="GIVEOUT">Dispense</option>
+                        </select>
+                        <select id="filter-activity-type" onchange="filterActivityList()" class="select-control">
+                            <option value="">All Item Types</option>
+                            <option value="ASSET">Hardware Assets</option>
+                            <option value="ACCESSORY">Accessories</option>
+                            <option value="CONSUMABLE">Consumables</option>
+                            <option value="COMPONENT">Components</option>
+                            <option value="LICENSE">Licenses</option>
+                            <option value="USER">User Accounts</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetActivityFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="activity-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Action</th>
+                                <th>Item Type</th>
+                                <th>Item Name / Tag</th>
+                                <th>Target User</th>
+                                <th>Performed By</th>
+                                <th>Details &amp; Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 4: Email Outbox (NEW - Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-emails" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Email Outbox &amp; Physical SMTP Dispatch</h2>
+                        <p class="text-muted">Live audit trail of onboarding emails, user login credentials, and physical inbox deliveries</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-primary" onclick="openSmtpModal()" id="btn-smtp-settings" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Configure Live SMTP
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadEmails()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SMTP Status Alert Banner -->
+                <div id="smtp-status-banner" style="margin-bottom: 20px; padding: 14px 18px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; gap: 12px;" id="smtp-banner-text">
+                        <span id="smtp-status-indicator" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #94a3b8;"></span>
+                        <span>Loading SMTP configuration...</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="openSmtpModal()" style="font-size: 12px; padding: 4px 12px;">Settings &amp; Test</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="emails-table">
+                        <thead>
+                            <tr>
+                                <th>Recipient</th>
+                                <th>Notification Type</th>
+                                <th>Email Subject</th>
+                                <th>Dispatched At</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emails-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 5: Maintenance Logs (Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-maintenance" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>Maintenance, Repair &amp; Service Records</h2>
+                        <p class="text-muted">Audit trail of repairs, hardware diagnostic passes, vendor RMA, and upgrades</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="maintenance-table">
+                        <thead>
+                            <tr>
+                                <th>Service Date</th>
+                                <th>Asset Tag &amp; Name</th>
+                                <th>Issue / Service Title</th>
+                                <th>Provider / Tech</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenance-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 6: Analytics & Depts (Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-analytics" style="display: none;">
+                <div class="analytics-layout">
+                    <div class="glass-card">
+                        <h3>Portfolio Distribution by Category</h3>
+                        <p class="text-muted">Hardware volume categorized by infrastructure tier</p>
+                        <div class="breakdown-list" id="analytics-categories">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3>Department Equipment Allocation</h3>
+                        <p class="text-muted">Hardware units distributed across organization units</p>
+                        <div class="breakdown-list" id="analytics-departments">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TAB 7: Employee Self-Service Portal (NEW) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-employee-portal" style="display: none;">
+                <!-- Employee Welcome Hero Card -->
+                <div class="emp-hero-card">
+                    <div class="emp-hero-main">
+                        <div class="emp-avatar-large" id="emp-hero-avatar">SJ</div>
+                        <div class="emp-hero-info">
+                            <div class="emp-hero-welcome">Welcome to your IT Equipment Hub</div>
+                            <h2 class="emp-hero-name" id="emp-hero-name">Sarah Jenkins</h2>
+                            <p class="emp-hero-title" id="emp-hero-title">Staff Distributed Systems Engineer • Engineering Department</p>
+                            <div class="emp-hero-tags">
+                                <span class="tag-pill" id="emp-hero-email">sarah.jenkins@company.com</span>
+                                <span class="tag-pill" id="emp-hero-dept">Department: Engineering</span>
+                                <span class="tag-pill tag-pill-active" id="emp-hero-status">Active Account</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emp-hero-actions">
+                        <button class="btn btn-secondary" onclick="openProfileModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            My Profile
+                        </button>
+                        <button class="btn btn-secondary" onclick="openChangePasswordModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Employee KPI Strip -->
+                <div class="metrics-grid" style="margin-top: 24px;">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">My Assigned Hardware</span>
+                            <div class="metric-icon-wrap icon-purple">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-purple" id="emp-val-assets-count">0</div>
+                        <div class="metric-trend text-muted">Active workstation &amp; devices</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Operational Status</span>
+                            <div class="metric-icon-wrap icon-green">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-green" id="emp-val-status">Operational</div>
+                        <div class="metric-trend text-muted">Hardware health &amp; readiness</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Service Tickets</span>
+                            <div class="metric-icon-wrap icon-amber">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-amber" id="emp-val-tickets-count">0</div>
+                        <div class="metric-trend text-muted">IT repair &amp; diagnostic logs</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: MY ASSIGNED HARDWARE -->
+                <div class="emp-section" id="emp-assets-section">
+                    <div class="section-action-header">
+                        <div>
+                            <h3>My Assigned Hardware Equipment</h3>
+                            <p class="text-muted">Laptops, monitors, and devices allocated exclusively to your profile</p>
+                        </div>
+                    </div>
+                    <div class="emp-assets-grid" id="emp-assets-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- SECTION 3: SERVICE HISTORY -->
+                <div class="emp-section" id="emp-tickets-section">
+                    <div class="section-action-header">
+                        <div>
+                            <h3>Equipment Service &amp; Support History</h3>
+                            <p class="text-muted">Status of repairs, diagnostic passes, and maintenance requests</p>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="emp-tickets-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Equipment</th>
+                                    <th>Issue / Request</th>
+                                    <th>Provider</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emp-tickets-tbody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODALS -->
+    <!-- ============================================================== -->
+
+    <!-- MODAL: Sign In / Switch User -->
+    <div class="modal-overlay" id="login-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Sign In to Aegis ITAM</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Enter your organization email and password</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('login-modal')">&times;</button>
+            </div>
+            
+            <!-- Fast 1-Click Demo Profiles -->
+            <div class="demo-profiles-strip">
+                <span class="demo-profiles-title">Quick Demo Sign-In:</span>
+                <div class="demo-chips">
+                    <button type="button" class="demo-chip chip-admin" onclick="fillLoginForm('admin@company.com', 'admin123')">
+                        🛡️ Admin (admin@company.com)
+                    </button>
+                    <button type="button" class="demo-chip chip-emp" onclick="fillLoginForm('sarah.jenkins@company.com', 'Welcome#2026')">
+                        💻 Sarah Jenkins (Engineer)
+                    </button>
+                    <button type="button" class="demo-chip chip-emp" onclick="fillLoginForm('david.chen@company.com', 'Welcome#2026')">
+                        ⚙️ David Chen (DevOps)
+                    </button>
+                </div>
+            </div>
+
+            <form id="login-form" onsubmit="submitLogin(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="login-email">Organization Email *</label>
+                    <input type="email" id="login-email" required placeholder="e.g. employee@company.com" autocomplete="username">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="login-password" style="margin-bottom: 0;">Password *</label>
+                        <span class="text-muted" style="font-size: 12px;">Default: Welcome#2026</span>
+                    </div>
+                    <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <div id="login-error-msg" class="alert-box alert-error" style="display: none; margin-bottom: 16px;"></div>
+                <div class="modal-footer" style="padding-top: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('login-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-block" id="btn-submit-login">Sign In &rarr;</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add New User (Onboarding) -->
+    <div class="modal-overlay" id="add-user-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h3>Onboard New Organization User</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Add team member and dispatch welcome email with credentials</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('add-user-modal')">&times;</button>
+            </div>
+            <form id="add-user-form" onsubmit="submitAddUser(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="user-full-name">Full Name *</label>
+                        <input type="text" id="user-full-name" required placeholder="e.g. Rachel Adams">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-email">Organization Email *</label>
+                        <input type="email" id="user-email" required placeholder="e.g. rachel.adams@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-dept">Department *</label>
+                        <select id="user-dept" required>
+                            <option value="Engineering">Engineering</option>
+                            <option value="DevOps">DevOps</option>
+                            <option value="Product Design">Product Design</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-title">Job Title</label>
+                        <input type="text" id="user-title" placeholder="e.g. Senior Backend Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-phone">Phone Number</label>
+                        <input type="text" id="user-phone" placeholder="e.g. +1 (555) 234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role">Role &amp; Permissions</label>
+                        <select id="user-role">
+                            <option value="EMPLOYEE">Employee (Self-Service Portal)</option>
+                            <option value="ADMIN">System Administrator (Full Control)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="user-init-password">Temporary Password</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="user-init-password" placeholder="Leave blank to auto-generate (e.g. Aegis#7294)">
+                            <button type="button" class="btn btn-secondary" onclick="generateRandomPassField()">Generate</button>
+                        </div>
+                        <span class="form-hint">The employee will receive this password along with login instructions in their welcome email.</span>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="user-send-email" checked>
+                            <span>Send welcome onboarding email to employee immediately</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-user-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-gradient" id="btn-submit-add-user">
+                        Create User &amp; Dispatch Mail &rarr;
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: User Created Success Alert -->
+    <div class="modal-overlay" id="user-success-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div class="success-header-row">
+                    <div class="success-icon-badge">✓</div>
+                    <div>
+                        <h3 style="margin: 0; color: #10b981;">User Added &amp; Email Dispatched</h3>
+                        <p class="text-muted" style="margin: 2px 0 0 0; font-size: 13px;">Onboarding notification queued to outbox</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeModal('user-success-modal')">&times;</button>
+            </div>
+            <div class="modal-body-content">
+                <p>The user account has been successfully created. The employee can now sign in with the following credentials:</p>
+                
+                <div class="creds-display-card">
+                    <div class="cred-item">
+                        <span class="cred-label">Organization Email / User ID:</span>
+                        <div class="cred-val-wrap">
+                            <code id="succ-email">user@company.com</code>
+                            <button class="btn-copy" onclick="copyText('succ-email')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="cred-item">
+                        <span class="cred-label">Temporary Password:</span>
+                        <div class="cred-val-wrap">
+                            <code id="succ-password">Aegis#1234</code>
+                            <button class="btn-copy" onclick="copyText('succ-password')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="cred-item">
+                        <span class="cred-label">Portal Sign-In Link:</span>
+                        <div class="cred-val-wrap">
+                            <code id="succ-link">http://localhost:8085/</code>
+                            <button class="btn-copy" onclick="copyText('succ-link')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-box alert-info" style="margin-top: 16px;">
+                    <strong>Email Status:</strong> Dispatched and recorded in the <em>Email Outbox</em>. You can inspect the rendered HTML email or resend it anytime.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="viewSentEmailForUser()">Preview Email Outbox</button>
+                <button type="button" class="btn btn-primary" onclick="closeModal('user-success-modal')">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: View Sent Email (Outbox Inspector) -->
+    <div class="modal-overlay" id="view-email-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="view-email-subject">Welcome to Aegis ITAM</h3>
+                    <p class="text-muted" id="view-email-meta" style="margin: 4px 0 0 0; font-size: 13px;">To: user@company.com • Sent: 2026-10-06</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('view-email-modal')">&times;</button>
+            </div>
+            <div class="email-preview-container" id="email-preview-body">
+                <!-- Sandboxed email HTML preview -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('view-email-modal')">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Employee Service Request -->
+    <div class="modal-overlay" id="emp-service-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Request Equipment Service / Repair</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Submit hardware issue to IT Operations &amp; Support</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('emp-service-modal')">&times;</button>
+            </div>
+            <form id="emp-service-form" onsubmit="submitEmpServiceRequest(event)">
+                <input type="hidden" id="emp-srv-asset-id">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label>Selected Equipment</label>
+                    <div class="selected-asset-box" id="emp-srv-asset-tag-display">AST-1001 (MacBook Pro 16)</div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="emp-srv-title">Issue Summary / Title *</label>
+                    <input type="text" id="emp-srv-title" required placeholder="e.g. Battery health degraded / Display flickering">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="emp-srv-desc">Detailed Description</label>
+                    <textarea id="emp-srv-desc" rows="3" placeholder="Describe the symptom, steps to reproduce, or repair needed..."></textarea>
+                </div>
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="emp-srv-urgency">Urgency</label>
+                        <select id="emp-srv-urgency">
+                            <option value="NORMAL">Normal (Standard queue)</option>
+                            <option value="HIGH">High (Work partially blocked)</option>
+                            <option value="CRITICAL">Critical (Machine non-functional)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-srv-phone">Contact Phone</label>
+                        <input type="text" id="emp-srv-phone" placeholder="e.g. +1 555-0199">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('emp-service-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Service Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Change Password -->
+    <div class="modal-overlay" id="change-pwd-modal" style="display: none;">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h3>Change Account Password</h3>
+                <button class="btn-close" onclick="closeModal('change-pwd-modal')">&times;</button>
+            </div>
+            <form id="change-pwd-form" onsubmit="submitChangePassword(event)">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="pwd-current">Current Password *</label>
+                    <input type="password" id="pwd-current" required placeholder="••••••••">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="pwd-new">New Password *</label>
+                    <input type="password" id="pwd-new" required minlength="6" placeholder="At least 6 characters">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="pwd-confirm">Confirm New Password *</label>
+                    <input type="password" id="pwd-confirm" required minlength="6" placeholder="••••••••">
+                </div>
+                <div id="pwd-error-msg" class="alert-box alert-error" style="display: none; margin-bottom: 14px;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('change-pwd-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Comprehensive User 360 Details & Equipment Drawer -->
+    <div class="modal-overlay" id="user-details-modal" style="display: none;">
+        <div class="modal-dialog modal-lg" style="max-width: 900px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="avatar-initial avatar-emp" id="ud-avatar" style="width: 48px; height: 48px; font-size: 1.15rem; flex-shrink: 0;">--</div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <h3 id="ud-name" style="margin: 0; font-size: 1.25rem;">User Name</h3>
+                            <span class="role-pill pill-employee" id="ud-role-pill">EMPLOYEE</span>
+                            <span class="pill pill-available" id="ud-status-pill" style="font-size: 0.72rem;"><span class="pill-dot"></span>ACTIVE</span>
+                        </div>
+                        <p class="text-muted" id="ud-title-dept" style="margin: 4px 0 0 0; font-size: 13px;">Job Title • Department</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeModal('user-details-modal')">&times;</button>
+            </div>
+            
+            <div class="modal-body-content" id="user-details-body" style="overflow-y: auto; padding: 20px 0; flex: 1; max-height: calc(88vh - 150px);">
+                <!-- Dynamically populated via openUserDetailsModal in app.js -->
+            </div>
+
+            <div class="modal-footer" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="ud-btn-resend" onclick="resendWelcomeEmailFromModal()">
+                        ✉️ Resend Credentials Email
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="ud-btn-assign" onclick="openAssignFromUserModal()">
+                        + Assign Hardware / Accessory
+                    </button>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('user-details-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: User Profile Details -->
+    <div class="modal-overlay" id="profile-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <h3>User Account Profile</h3>
+                <button class="btn-close" onclick="closeModal('profile-modal')">&times;</button>
+            </div>
+            <div class="modal-body-content" id="profile-modal-body">
+                <!-- Populated via JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('profile-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Create / Edit Asset -->
+    <div class="modal-overlay" id="asset-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="asset-modal-title">Register New Asset</h3>
+                <button class="btn-close" onclick="closeModal('asset-modal')">&times;</button>
+            </div>
+            <form id="asset-form" onsubmit="submitAsset(event)">
+                <input type="hidden" id="asset-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="asset-tag">Asset Tag *</label>
+                        <input type="text" id="asset-tag" required placeholder="e.g. AST-1008">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-name">Device Name *</label>
+                        <input type="text" id="asset-name" required placeholder="e.g. MacBook Pro 14 M3">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-category">Category *</label>
+                        <select id="asset-category" required>
+                            <option value="LAPTOP">Laptop</option>
+                            <option value="DESKTOP">Desktop Workstation</option>
+                            <option value="SERVER">Server / Host</option>
+                            <option value="NETWORKING">Networking Equipment</option>
+                            <option value="MONITOR">Monitor / Display</option>
+                            <option value="MOBILE_DEVICE">Mobile Device / Tablet</option>
+                            <option value="PERIPHERAL">Peripheral (Keyboard, Mouse, Headset)</option>
+                            <option value="ACCESSORY">Accessory (Docking Station, Charger, Hub, Adapter)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-manufacturer">Manufacturer</label>
+                        <input type="text" id="asset-manufacturer" placeholder="e.g. Apple, Dell, Lenovo">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-model">Model</label>
+                        <input type="text" id="asset-model" placeholder="e.g. Latitude 5540">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-serial">Serial Number</label>
+                        <input type="text" id="asset-serial" placeholder="e.g. SN-89420-X">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-status">Initial Status</label>
+                        <select id="asset-status">
+                            <option value="AVAILABLE">Available</option>
+                            <option value="ASSIGNED">Assigned</option>
+                            <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+                            <option value="RESERVED">Reserved</option>
+                            <option value="RETIRED">Retired</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-condition">Physical Condition</label>
+                        <select id="asset-condition">
+                            <option value="NEW">New</option>
+                            <option value="EXCELLENT" selected>Excellent</option>
+                            <option value="GOOD">Good</option>
+                            <option value="FAIR">Fair</option>
+                            <option value="DAMAGED">Damaged</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-cost">Purchase Cost ($)</label>
+                        <input type="number" step="0.01" id="asset-cost" placeholder="1850.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-purchase-date">Purchase Date</label>
+                        <input type="date" id="asset-purchase-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-warranty-date">Warranty Expiration Date</label>
+                        <input type="date" id="asset-warranty-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-location">Storage / Office Location</label>
+                        <input type="text" id="asset-location" placeholder="Floor 3 - Storage B">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="asset-specs">Technical Specifications</label>
+                        <textarea id="asset-specs" rows="2" placeholder="CPU, RAM, Storage, GPU, Screen Resolution..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="asset-notes">Internal Notes</label>
+                        <textarea id="asset-notes" rows="2" placeholder="Procurement reference, department notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('asset-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-asset">Save Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Assign Asset to Workforce -->
+    <div class="modal-overlay" id="assign-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <h3>Assign Asset to Team Member</h3>
+                <button class="btn-close" onclick="closeModal('assign-modal')">&times;</button>
+            </div>
+            <form id="assign-form" onsubmit="submitAssignAsset(event)">
+                <input type="hidden" id="assign-asset-id">
+                
+                <div class="form-group" id="assign-asset-picker-group" style="margin-bottom: 14px; display: none;">
+                    <label for="assign-asset-picker">Select Available Hardware or Accessory *</label>
+                    <select id="assign-asset-picker" class="select-control" onchange="onSelectAssetForAssignment()">
+                        <option value="">-- Choose Available Equipment --</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="assign-user-select">Select Organization User</label>
+                    <select id="assign-user-select" class="select-control" onchange="onSelectUserForAssignment()">
+                        <option value="">-- Choose from Registered Users --</option>
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                    <span class="form-hint">Selecting a registered user will auto-fill their email, name, and department and trigger an email alert!</span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="assign-emp-name">Employee Full Name *</label>
+                    <input type="text" id="assign-emp-name" required placeholder="e.g. Sarah Jenkins">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="assign-emp-email">Organization Email *</label>
+                    <input type="email" id="assign-emp-email" required placeholder="sarah.jenkins@company.com">
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="assign-emp-dept">Department *</label>
+                        <input type="text" id="assign-emp-dept" required placeholder="Engineering">
+                    </div>
+                    <div class="form-group">
+                        <label for="assign-date">Assignment Date</label>
+                        <input type="date" id="assign-date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('assign-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Record Maintenance -->
+    <div class="modal-overlay" id="maintenance-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <h3>Log Maintenance &amp; Repair</h3>
+                <button class="btn-close" onclick="closeModal('maintenance-modal')">&times;</button>
+            </div>
+            <form id="maintenance-form" onsubmit="submitMaintenance(event)">
+                <input type="hidden" id="maint-asset-id">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="maint-title">Service Action / Title *</label>
+                    <input type="text" id="maint-title" required placeholder="e.g. Battery replacement &amp; thermal paste">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="maint-provider">Service Provider / Technician</label>
+                    <input type="text" id="maint-provider" placeholder="e.g. AppleCare, Dell Support">
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="maint-cost">Service Cost ($)</label>
+                        <input type="number" step="0.01" id="maint-cost" placeholder="150.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="maint-status">Service Status</label>
+                        <select id="maint-status">
+                            <option value="COMPLETED">Completed</option>
+                            <option value="IN_PROGRESS" selected>In Progress</option>
+                            <option value="SCHEDULED">Scheduled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="maint-date">Service Date</label>
+                    <input type="date" id="maint-date">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="maint-desc">Details &amp; Diagnosis</label>
+                    <textarea id="maint-desc" rows="3" placeholder="Full diagnostic description, parts replaced..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('maintenance-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Record Maintenance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Software License -->
+    <div class="modal-overlay" id="license-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Add Software License</h3>
+                <button class="btn-close" onclick="closeModal('license-modal')">&times;</button>
+            </div>
+            <form id="license-form" onsubmit="submitLicense(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="lic-name">Software Name *</label>
+                        <input type="text" id="lic-name" required placeholder="e.g. Figma Enterprise">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-vendor">Vendor</label>
+                        <input type="text" id="lic-vendor" placeholder="e.g. Adobe, JetBrains">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-type">License Type</label>
+                        <select id="lic-type">
+                            <option value="SUBSCRIPTION">Subscription</option>
+                            <option value="PERPETUAL">Perpetual</option>
+                            <option value="OPEN_SOURCE">Enterprise OSS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-seats">Total Seats *</label>
+                        <input type="number" id="lic-seats" required min="1" placeholder="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-used">Used Seats</label>
+                        <input type="number" id="lic-used" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-cost">Annual Cost ($)</label>
+                        <input type="number" step="0.01" id="lic-cost" placeholder="12000.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-expiry">Expiry Date</label>
+                        <input type="date" id="lic-expiry">
+                    </div>
+                    <div class="form-group">
+                        <label for="lic-dept">Department</label>
+                        <input type="text" id="lic-dept" placeholder="All, Engineering, Design">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="lic-key">License Key / Reference</label>
+                        <input type="text" id="lic-key" placeholder="XXXX-XXXX-XXXX-XXXX">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('license-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save License</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Live SMTP Configuration & Testing -->
+    <div class="modal-overlay" id="smtp-modal" style="display: none;">
+        <div class="modal-dialog modal-md" style="max-width: 620px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="margin: 0;">Real SMTP Mail Server Configuration</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;">Deliver onboarding emails directly to employees' real Gmail / Outlook / corporate inboxes</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('smtp-modal')">&times;</button>
+            </div>
+            
+            <!-- Quick Preset Selectors -->
+            <div style="padding: 16px 24px; background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid #334155;">
+                <div style="font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Quick Provider Presets:</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applySmtpPreset('gmail')">Google Workspace / Gmail</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applySmtpPreset('office365')">Microsoft 365 / Outlook</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applySmtpPreset('brevo')">Brevo / Sendinblue</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applySmtpPreset('custom')">Custom SMTP</button>
+                </div>
+            </div>
+
+            <form id="smtp-form" onsubmit="submitSmtpSettings(event)" style="padding: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(30, 41, 59, 0.5); border: 1px solid #38bdf8; border-radius: 8px; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-weight: 600; color: #f8fafc; font-size: 14px;">Enable Real SMTP External Delivery</div>
+                        <div style="font-size: 12px; color: #94a3b8;">When active, new users and assigned assets dispatch actual emails over the internet</div>
+                    </div>
+                    <label class="switch-toggle" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+                        <input type="checkbox" id="smtp-enabled" style="opacity: 0; width: 0; height: 0;">
+                        <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px;"></span>
+                    </label>
+                </div>
+
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="smtp-host">SMTP Host Server *</label>
+                        <input type="text" id="smtp-host" required placeholder="smtp.gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-port">Port *</label>
+                        <input type="number" id="smtp-port" required value="587">
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="smtp-username">SMTP Username / Email *</label>
+                        <input type="text" id="smtp-username" placeholder="your-email@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-password">SMTP Password / App Password</label>
+                        <input type="password" id="smtp-password" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="smtp-from-email">Sender (From) Email</label>
+                        <input type="email" id="smtp-from-email" placeholder="notifications@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp-from-name">Sender Display Name</label>
+                        <input type="text" id="smtp-from-name" placeholder="Aegis IT Asset Management">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; margin-bottom: 16px; font-size: 13px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #cbd5e1;">
+                        <input type="checkbox" id="smtp-starttls" checked>
+                        <span>STARTTLS (Standard on Port 587)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #cbd5e1;">
+                        <input type="checkbox" id="smtp-ssl">
+                        <span>SSL / SMTPS (Port 465)</span>
+                    </label>
+                </div>
+
+                <!-- Helpful Provider Instruction -->
+                <div style="background: rgba(14, 165, 233, 0.1); border-left: 3px solid #0ea5e9; padding: 10px 14px; font-size: 12px; color: #cbd5e1; border-radius: 0 6px 6px 0; margin-bottom: 20px;">
+                    <strong>Google Workspace / Gmail Tip:</strong> Generate an <strong>App Password</strong> in your Google Account Security settings (Security &rarr; 2-Step Verification &rarr; App Passwords) and paste it into the Password field above.
+                </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SNIPE-IT: ASSET LABEL STICKER & BARCODE MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="asset-label-modal" style="display: none;">
+        <div class="modal-dialog modal-md" style="max-width: 520px;">
+            <div class="modal-header">
+                <div>
+                    <h3>Printable Asset Tag &amp; Barcode Label</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Snipe-IT sticker label with 2D QR Code &amp; Code-128 barcode</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('asset-label-modal')">&times;</button>
+            </div>
+
+            <div class="modal-body-content" style="padding: 24px; text-align: center; background: rgba(15, 23, 42, 0.4);">
+                <div id="printable-asset-label" class="printable-label-card">
+                    <div class="label-company-header">
+                        <span class="label-org-badge">AEGIS IT ENTERPRISE</span>
+                        <span class="label-category-badge" id="lbl-category">LAPTOP</span>
+                    </div>
+                    <div class="label-qr-wrap">
+                        <div id="lbl-qr-code" style="display: inline-block;"></div>
+                    </div>
+                    <div class="label-info-wrap">
+                        <div class="label-tag-number" id="lbl-tag">AST-1001</div>
+                        <div class="label-asset-name" id="lbl-name">MacBook Pro 16 M3 Max</div>
+                        <div class="label-meta-row">
+                            <span>S/N: <strong id="lbl-serial">C02G8013MD6T</strong></span>
+                            <span id="lbl-model-wrap">Model: <strong id="lbl-model">Mac15,7</strong></span>
+                        </div>
+                    </div>
+                    <div class="label-barcode-svg-wrap" id="lbl-barcode-container">
+                        <!-- Dynamic SVG Barcode lines -->
+                    </div>
+                    <div class="label-footer-note">PROPERTY OF ORGANIZATION • DO NOT REMOVE • SCAN TO AUDIT</div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('asset-label-modal')">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printAssetLabel()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print Label Sticker
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SNIPE-IT: CHECK OUT ASSET MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="checkout-asset-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Check Out Hardware Asset</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Assign custody of equipment with expected return date</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('checkout-asset-modal')">&times;</button>
+            </div>
+            <form id="checkout-asset-form" onsubmit="submitCheckoutAsset(event)">
+                <input type="hidden" id="checkout-asset-id">
+                <div class="selected-asset-box" id="checkout-asset-banner" style="margin-bottom: 16px;"></div>
+                
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="checkout-user-select">Select Organization User *</label>
+                    <select id="checkout-user-select" class="select-control" required onchange="onSelectUserForCheckout()">
+                        <option value="">-- Choose Employee --</option>
+                    </select>
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="checkout-emp-name">Employee Full Name *</label>
+                        <input type="text" id="checkout-emp-name" required placeholder="e.g. Sarah Jenkins">
+                    </div>
+                    <div class="form-group">
+                        <label for="checkout-emp-email">Organization Email *</label>
+                        <input type="email" id="checkout-emp-email" required placeholder="sarah.jenkins@company.com">
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="checkout-emp-dept">Department *</label>
+                        <input type="text" id="checkout-emp-dept" required placeholder="Engineering">
+                    </div>
+                    <div class="form-group">
+                        <label for="checkout-return-date">Expected Return Date</label>
+                        <input type="date" id="checkout-return-date">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="checkout-notes">Checkout Notes / Agreement</label>
+                    <textarea id="checkout-notes" rows="2" placeholder="Deployment notes, accessories provided, condition upon handover..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('checkout-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Check Out</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SNIPE-IT: CHECK IN ASSET MODAL (WITH CONDITION GRADING) -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="checkin-asset-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Check In Hardware Asset</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Return asset to inventory &amp; grade physical condition</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('checkin-asset-modal')">&times;</button>
+            </div>
+            <form id="checkin-asset-form" onsubmit="submitCheckinAsset(event)">
+                <input type="hidden" id="checkin-asset-id">
+                <div class="selected-asset-box" id="checkin-asset-banner" style="margin-bottom: 16px;"></div>
+                
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="checkin-status">Target Status *</label>
+                        <select id="checkin-status" required>
+                            <option value="AVAILABLE" selected>Available (Ready to Deploy)</option>
+                            <option value="UNDER_MAINTENANCE">Under Maintenance (Needs Service / Wipe)</option>
+                            <option value="RESERVED">Reserved</option>
+                            <option value="RETIRED">Retired / Decommissioned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkin-condition">Inspected Condition *</label>
+                        <select id="checkin-condition" required>
+                            <option value="EXCELLENT">Excellent (Like New)</option>
+                            <option value="GOOD" selected>Good (Normal Wear)</option>
+                            <option value="FAIR">Fair (Visible Scratches / Dents)</option>
+                            <option value="DAMAGED">Damaged (Requires Repair)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="checkin-notes">Check-In Notes</label>
+                    <textarea id="checkin-notes" rows="2" placeholder="Return inspection notes, charger returned, physical condition details..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('checkin-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Check In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SNIPE-IT: PHYSICAL AUDIT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="audit-asset-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Physical Asset Audit</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Verify physical location, barcode tag, and audit compliance</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('audit-asset-modal')">&times;</button>
+            </div>
+            <form id="audit-asset-form" onsubmit="submitAuditAsset(event)">
+                <input type="hidden" id="audit-asset-id">
+                <div class="selected-asset-box" id="audit-asset-banner" style="margin-bottom: 16px;"></div>
+                
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="audit-location">Verified Location</label>
+                        <input type="text" id="audit-location" placeholder="e.g. Floor 3 - Tech Storage">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-next-date">Next Scheduled Audit</label>
+                        <input type="date" id="audit-next-date">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="audit-notes">Audit Notes</label>
+                    <textarea id="audit-notes" rows="2" placeholder="Visual inspection passed, barcode label intact, verified in possession of..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('audit-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Physical Audit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ACCESSORIES: CREATE / EDIT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="accessory-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="acc-modal-title">Register New Accessory</h3>
+                <button class="btn-close" onclick="closeModal('accessory-modal')">&times;</button>
+            </div>
+            <form id="accessory-form" onsubmit="submitAccessory(event)">
+                <input type="hidden" id="acc-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="acc-name">Accessory Name *</label>
+                        <input type="text" id="acc-name" required placeholder="e.g. Magic Keyboard with Touch ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-category">Category *</label>
+                        <select id="acc-category" required>
+                            <option value="KEYBOARD">Keyboard</option>
+                            <option value="MOUSE">Mouse / Pointer</option>
+                            <option value="DOCKING_STATION">Docking Station</option>
+                            <option value="CHARGER">Charger &amp; Power Adapter</option>
+                            <option value="HEADSET">Headset / Audio</option>
+                            <option value="CABLE">Cable / Adapter Dongle</option>
+                            <option value="BAG_OR_CASE">Bag / Sleeve / Case</option>
+                            <option value="OTHER">Other Accessory</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-model">Model / Part Number</label>
+                        <input type="text" id="acc-model" placeholder="e.g. MK293LL/A">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-manufacturer">Manufacturer</label>
+                        <input type="text" id="acc-manufacturer" placeholder="e.g. Apple, Logitech, Dell">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-total-qty">Total Stock Quantity *</label>
+                        <input type="number" id="acc-total-qty" required min="1" placeholder="25">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-min-qty">Min. Stock Alert Threshold</label>
+                        <input type="number" id="acc-min-qty" min="0" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-cost">Unit Cost ($)</label>
+                        <input type="number" step="0.01" id="acc-cost" placeholder="179.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-purchase-date">Purchase Date</label>
+                        <input type="date" id="acc-purchase-date">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="acc-location">Storage Location</label>
+                        <input type="text" id="acc-location" placeholder="e.g. Floor 2 - Supply Closet Bin 4">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="acc-notes">Notes</label>
+                        <textarea id="acc-notes" rows="2" placeholder="Procurement reference, compatibility..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('accessory-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-acc">Save Accessory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ACCESSORIES: CHECK OUT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="accessory-checkout-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Check Out Accessory</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Deploy accessory units to employee</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('accessory-checkout-modal')">&times;</button>
+            </div>
+            <form id="acc-checkout-form" onsubmit="submitAccessoryCheckout(event)">
+                <input type="hidden" id="acc-checkout-id">
+                <div class="selected-asset-box" id="acc-checkout-banner" style="margin-bottom: 16px;"></div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="acc-checkout-user-select">Select Organization User *</label>
+                    <select id="acc-checkout-user-select" class="select-control" required onchange="onSelectUserForAccCheckout()">
+                        <option value="">-- Choose Employee --</option>
+                    </select>
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="acc-checkout-emp-name">Employee Full Name *</label>
+                        <input type="text" id="acc-checkout-emp-name" required placeholder="e.g. Sarah Jenkins">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-checkout-emp-email">Organization Email *</label>
+                        <input type="email" id="acc-checkout-emp-email" required placeholder="sarah.jenkins@company.com">
+                    </div>
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="acc-checkout-qty">Quantity to Check Out *</label>
+                        <input type="number" id="acc-checkout-qty" required min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-checkout-return-date">Expected Return Date</label>
+                        <input type="date" id="acc-checkout-return-date">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="acc-checkout-notes">Checkout Notes</label>
+                    <textarea id="acc-checkout-notes" rows="2" placeholder="Desk setup allocation, replacement..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('accessory-checkout-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Check Out Accessory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ACCESSORIES: VIEW ACTIVE CHECKOUTS & CHECK-IN MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="accessory-checkouts-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="acc-view-title">Checked Out Accessories</h3>
+                    <p class="text-muted" id="acc-view-sub" style="margin: 4px 0 0 0; font-size: 13px;">Active holders &amp; return custody</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('accessory-checkouts-modal')">&times;</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Email</th>
+                            <th>Qty</th>
+                            <th>Checkout Date</th>
+                            <th>Expected Return</th>
+                            <th>Notes</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="acc-checkouts-table-body">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('accessory-checkouts-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- CONSUMABLES: CREATE / EDIT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="consumable-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="con-modal-title">Register New Consumable</h3>
+                <button class="btn-close" onclick="closeModal('consumable-modal')">&times;</button>
+            </div>
+            <form id="consumable-form" onsubmit="submitConsumable(event)">
+                <input type="hidden" id="con-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="con-name">Item Name *</label>
+                        <input type="text" id="con-name" required placeholder="e.g. HP 58A Black LaserJet Toner">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-category">Category *</label>
+                        <select id="con-category" required>
+                            <option value="TONER_AND_INK">Toner &amp; Ink</option>
+                            <option value="CLEANING_SUPPLIES">Cleaning Supplies</option>
+                            <option value="BATTERIES">Batteries</option>
+                            <option value="THERMAL_PASTE">Thermal Paste</option>
+                            <option value="CABLES_AND_WIRES">Cables &amp; Wires</option>
+                            <option value="LABELS_AND_PAPER">Labels &amp; Paper</option>
+                            <option value="SAFETY_EQUIPMENT">Safety Equipment</option>
+                            <option value="OTHER">Other Consumable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="con-item-no">SKU / Item Number</label>
+                        <input type="text" id="con-item-no" placeholder="e.g. CF258A">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-manufacturer">Manufacturer</label>
+                        <input type="text" id="con-manufacturer" placeholder="e.g. HP, Noctua, Duracell">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-total-qty">Total Stock Quantity *</label>
+                        <input type="number" id="con-total-qty" required min="1" placeholder="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-min-qty">Min. Stock Alert Threshold</label>
+                        <input type="number" id="con-min-qty" min="0" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-cost">Unit Cost ($)</label>
+                        <input type="number" step="0.01" id="con-cost" placeholder="115.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-purchase-date">Purchase Date</label>
+                        <input type="date" id="con-purchase-date">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="con-location">Storage Location</label>
+                        <input type="text" id="con-location" placeholder="e.g. IT Stockroom Shelf 3">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="con-notes">Notes</label>
+                        <textarea id="con-notes" rows="2" placeholder="Compatible printer models, reorder link..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('consumable-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-con">Save Consumable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- CONSUMABLES: GIVE OUT (DISPENSE) MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="consumable-giveout-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Dispense Consumable</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Permanent one-way dispensing to workforce</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('consumable-giveout-modal')">&times;</button>
+            </div>
+            <form id="con-giveout-form" onsubmit="submitConsumableGiveout(event)">
+                <input type="hidden" id="con-giveout-id">
+                <div class="selected-asset-box" id="con-giveout-banner" style="margin-bottom: 16px;"></div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="con-giveout-user-select">Select Organization User *</label>
+                    <select id="con-giveout-user-select" class="select-control" required onchange="onSelectUserForConGiveout()">
+                        <option value="">-- Choose Employee --</option>
+                    </select>
+                </div>
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="con-giveout-emp-name">Employee Full Name *</label>
+                        <input type="text" id="con-giveout-emp-name" required placeholder="e.g. Sarah Jenkins">
+                    </div>
+                    <div class="form-group">
+                        <label for="con-giveout-emp-email">Organization Email *</label>
+                        <input type="email" id="con-giveout-emp-email" required placeholder="sarah.jenkins@company.com">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="con-giveout-qty">Quantity to Dispense *</label>
+                    <input type="number" id="con-giveout-qty" required min="1" value="1">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="con-giveout-notes">Dispensing Reason / Notes</label>
+                    <textarea id="con-giveout-notes" rows="2" placeholder="Printer toner replacement on Floor 2, remote work cables..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('consumable-giveout-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Dispense Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- CONSUMABLES: VIEW DISPENSE HISTORY MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="consumable-checkouts-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="con-view-title">Consumable Dispensing History</h3>
+                    <p class="text-muted" id="con-view-sub" style="margin: 4px 0 0 0; font-size: 13px;">One-way dispensing audit records</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('consumable-checkouts-modal')">&times;</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Email</th>
+                            <th>Qty</th>
+                            <th>Dispensed Date</th>
+                            <th>Dispensed By</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="con-checkouts-table-body">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('consumable-checkouts-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- COMPONENTS: CREATE / EDIT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="component-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="comp-modal-title">Register New Internal Component</h3>
+                <button class="btn-close" onclick="closeModal('component-modal')">&times;</button>
+            </div>
+            <form id="component-form" onsubmit="submitComponent(event)">
+                <input type="hidden" id="comp-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="comp-name">Component Name *</label>
+                        <input type="text" id="comp-name" required placeholder="e.g. Corsair Vengeance 32GB DDR5 5600MHz">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-category">Category *</label>
+                        <select id="comp-category" required>
+                            <option value="RAM">RAM / Memory</option>
+                            <option value="STORAGE">Storage / NVMe SSD / HDD</option>
+                            <option value="CPU">CPU / Processor</option>
+                            <option value="GPU">GPU / Graphics Card</option>
+                            <option value="MOTHERBOARD">Motherboard</option>
+                            <option value="POWER_SUPPLY">Power Supply / PSU</option>
+                            <option value="NETWORK_CARD">Network Interface Card</option>
+                            <option value="OTHER">Other Component</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-serial">Serial / Batch Number</label>
+                        <input type="text" id="comp-serial" placeholder="e.g. SN-COR-98214">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-total-qty">Total Stock Quantity *</label>
+                        <input type="number" id="comp-total-qty" required min="1" placeholder="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-min-qty">Min. Stock Alert Threshold</label>
+                        <input type="number" id="comp-min-qty" min="0" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-cost">Unit Cost ($)</label>
+                        <input type="number" step="0.01" id="comp-cost" placeholder="129.99">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-purchase-date">Purchase Date</label>
+                        <input type="date" id="comp-purchase-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-location">Storage Location</label>
+                        <input type="text" id="comp-location" placeholder="e.g. Bench B - Static Bag Rack">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="comp-specs">Technical Specifications</label>
+                        <textarea id="comp-specs" rows="2" placeholder="Speed, interface, form factor, PCIe Gen..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="comp-notes">Notes</label>
+                        <textarea id="comp-notes" rows="2" placeholder="Procurement reference, vendor warranty..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('component-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-comp">Save Component</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- COMPONENTS: INSTALL INTO ASSET MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="component-assign-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Install Component into Asset</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Attach part directly into a workstation or host server</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('component-assign-modal')">&times;</button>
+            </div>
+            <form id="comp-assign-form" onsubmit="submitComponentAssign(event)">
+                <input type="hidden" id="comp-assign-id">
+                <div class="selected-asset-box" id="comp-assign-banner" style="margin-bottom: 16px;"></div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="comp-assign-asset-select">Select Target Hardware Asset *</label>
+                    <select id="comp-assign-asset-select" class="select-control" required>
+                        <option value="">-- Choose Target Hardware --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="comp-assign-qty">Quantity to Install *</label>
+                    <input type="number" id="comp-assign-qty" required min="1" value="1">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="comp-assign-notes">Installation Notes</label>
+                    <textarea id="comp-assign-notes" rows="2" placeholder="Slot 2 upgrade, thermal pads applied..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('component-assign-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Install into Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- COMPONENTS: VIEW INSTALLED ASSETS MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="component-assignments-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="comp-view-title">Installed Asset Hosts</h3>
+                    <p class="text-muted" id="comp-view-sub" style="margin: 4px 0 0 0; font-size: 13px;">Physical hardware machines containing this component</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('component-assignments-modal')">&times;</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Asset Tag</th>
+                            <th>Hardware Device</th>
+                            <th>Installed Qty</th>
+                            <th>Installed Date</th>
+                            <th>Notes</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comp-assignments-table-body">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('component-assignments-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/js/qrcode.min.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
