@@ -2234,50 +2234,65 @@ function testQrLinkInTab() {
 // ==========================================================================
 // MODULE: MOBILE EQUIPMENT PASSPORT & QUICK PHYSICAL AUDIT
 // ==========================================================================
+function formatDate(dateVal) {
+    if (!dateVal) return 'N/A';
+    try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal);
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+        return String(dateVal);
+    }
+}
+
 async function openMobileAssetPassport(tag) {
     try {
-        const res = await fetch(`/api/assets/tag/${encodeURIComponent(tag)}`);
+        const res = await fetch(`/api/assets/tag/${encodeURIComponent(tag.trim())}`);
         if (!res.ok) {
             showToast(`Asset with tag "${tag}" not found in inventory.`, 'error');
+            if (!App.session) showAuthPage(null);
             return;
         }
         const asset = await res.json();
         App.scannedAsset = asset;
 
-        document.getElementById('scan-passport-category').textContent = (asset.category || 'ASSET').replace(/_/g, ' ');
+        const setText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val ?? '';
+        };
+
+        setText('scan-passport-category', (asset.category || 'ASSET').replace(/_/g, ' '));
         
         const statusEl = document.getElementById('scan-passport-status');
-        const st = asset.status || 'AVAILABLE';
-        statusEl.textContent = st.replace(/_/g, ' ');
-        if (st === 'AVAILABLE' || st === 'READY_TO_DEPLOY') {
-            statusEl.className = 'badge badge-success';
-        } else if (st === 'ASSIGNED' || st === 'DEPLOYED') {
-            statusEl.className = 'badge badge-info';
-        } else if (st === 'IN_REPAIR' || st === 'MAINTENANCE') {
-            statusEl.className = 'badge badge-warning';
-        } else {
-            statusEl.className = 'badge badge-secondary';
+        if (statusEl) {
+            const st = asset.status || 'AVAILABLE';
+            statusEl.textContent = st.replace(/_/g, ' ');
+            if (st === 'AVAILABLE' || st === 'READY_TO_DEPLOY') {
+                statusEl.className = 'badge badge-success';
+            } else if (st === 'ASSIGNED' || st === 'DEPLOYED') {
+                statusEl.className = 'badge badge-info';
+            } else if (st === 'IN_REPAIR' || st === 'MAINTENANCE') {
+                statusEl.className = 'badge badge-warning';
+            } else {
+                statusEl.className = 'badge badge-secondary';
+            }
         }
 
-        document.getElementById('scan-passport-name').textContent = asset.name || 'Unnamed Asset';
-        document.getElementById('scan-passport-tag').textContent = asset.assetTag;
-        document.getElementById('scan-passport-serial').textContent = asset.serialNumber || 'N/A';
-        document.getElementById('scan-passport-user').textContent = asset.assignedEmployeeName ? `${asset.assignedEmployeeName} (${asset.assignedEmployeeEmail || ''})` : 'Unassigned (In Storage)';
-        document.getElementById('scan-passport-dept').textContent = asset.assignedDepartment || asset.department || 'IT Stockroom';
-        document.getElementById('scan-passport-location').textContent = asset.location || 'Main Office';
-        
-        const condEl = document.getElementById('scan-passport-condition');
-        condEl.textContent = asset.condition || 'GOOD';
+        setText('scan-passport-name', asset.name || 'Unnamed Asset');
+        setText('scan-passport-tag', asset.assetTag || tag);
+        setText('scan-passport-serial', asset.serialNumber || 'N/A');
+        setText('scan-passport-user', asset.assignedEmployeeName ? `${asset.assignedEmployeeName} (${asset.assignedEmployeeEmail || ''})` : 'Unassigned (In Stockroom)');
+        setText('scan-passport-dept', asset.assignedDepartment || asset.department || 'IT Stockroom');
+        setText('scan-passport-location', asset.location || 'Main Office');
+        setText('scan-passport-condition', asset.condition || 'GOOD');
 
-        document.getElementById('scan-passport-model').textContent = `${asset.manufacturer || ''} ${asset.model || ''}`.trim() || 'N/A';
-        document.getElementById('scan-passport-cpu').textContent = asset.processor || asset.cpu || 'N/A';
-        document.getElementById('scan-passport-ram').textContent = asset.ram || asset.memory || 'N/A';
-        document.getElementById('scan-passport-storage').textContent = asset.storage || 'N/A';
+        setText('scan-passport-model', `${asset.manufacturer || ''} ${asset.model || ''}`.trim() || 'N/A');
+        setText('scan-passport-cpu', asset.processor || asset.cpu || 'N/A');
+        setText('scan-passport-ram', asset.ram || asset.memory || 'N/A');
+        setText('scan-passport-storage', asset.storage || 'N/A');
 
-        const lastAuditEl = document.getElementById('scan-passport-last-audit');
-        const nextAuditEl = document.getElementById('scan-passport-next-audit');
-        lastAuditEl.textContent = asset.lastAuditDate ? formatDate(asset.lastAuditDate) : 'Not yet audited';
-        nextAuditEl.textContent = asset.nextAuditDate ? formatDate(asset.nextAuditDate) : 'In 6 months';
+        setText('scan-passport-last-audit', asset.lastAuditDate ? formatDate(asset.lastAuditDate) : 'Not yet audited');
+        setText('scan-passport-next-audit', asset.nextAuditDate ? formatDate(asset.nextAuditDate) : 'In 6 months');
 
         // Reset verify button state
         const verifyBtn = document.getElementById('btn-quick-verify-audit');
@@ -2292,10 +2307,14 @@ async function openMobileAssetPassport(tag) {
             verifyBtn.style.borderColor = '';
         }
 
-        document.getElementById('mobile-asset-scan-modal').style.display = 'flex';
+        const modal = document.getElementById('mobile-asset-scan-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
     } catch (err) {
         console.error('Error fetching asset passport for tag:', tag, err);
-        showToast(`Could not load passport for tag "${tag}". Check network connection.`, 'error');
+        showToast(`Could not load passport: ${err.message || 'Check network connection'}`, 'error');
+        if (!App.session) showAuthPage(null);
     }
 }
 
@@ -2314,8 +2333,12 @@ async function submitMobileQuickAudit() {
         if (res.ok) {
             const updated = await res.json();
             App.scannedAsset = updated;
-            document.getElementById('scan-passport-last-audit').textContent = 'Verified Just Now (Today)';
-            document.getElementById('scan-passport-next-audit').textContent = updated.nextAuditDate ? formatDate(updated.nextAuditDate) : 'In 6 months';
+            
+            const lastAuditEl = document.getElementById('scan-passport-last-audit');
+            if (lastAuditEl) lastAuditEl.textContent = 'Verified Just Now (Today)';
+            
+            const nextAuditEl = document.getElementById('scan-passport-next-audit');
+            if (nextAuditEl) nextAuditEl.textContent = updated.nextAuditDate ? formatDate(updated.nextAuditDate) : 'In 6 months';
 
             if (btn) {
                 btn.innerHTML = `
@@ -2350,12 +2373,16 @@ async function submitMobileQuickAudit() {
     }
 }
 
-function goToFullDashboard() {
+function closeMobilePassportModal() {
     closeModal('mobile-asset-scan-modal');
     window.history.replaceState({}, document.title, window.location.pathname);
     if (!App.session) {
         showAuthPage(null);
     }
+}
+
+function goToFullDashboard() {
+    closeMobilePassportModal();
 }
 
 function renderBarcodeSvg(tag) {
