@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accessories")
-@Tag(name = "Accessories Management", description = "Snipe-IT style accessories quantity tracking & checkout")
+@Tag(name = "Accessories Management", description = "Accessories batch quantity tracking & employee checkout")
 @CrossOrigin(origins = "*")
 public class AccessoryController {
 

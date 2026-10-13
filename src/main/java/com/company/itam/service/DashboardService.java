@@ -79,7 +79,7 @@ public class DashboardService {
                 .collect(Collectors.groupingBy(Asset::getAssignedDepartment, Collectors.counting()));
         summary.setAssetsByDepartment(byDept);
 
-        // Snipe-IT Inventory Metrics
+        // Extended Inventory Metrics
         List<Accessory> accessories = accessoryRepository.findAll();
         summary.setTotalAccessories(accessories.size());
         summary.setLowStockAccessoriesCount(accessories.stream()

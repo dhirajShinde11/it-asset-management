@@ -81,7 +81,7 @@ public class UserDetailResponseDto {
         this.userActivityHistory = userActivityHistory != null ? userActivityHistory : new ArrayList<>();
     }
 
-    // Alias accessors for Snipe-IT compatibility
+    // Convenience alias accessors
     public List<AccessoryCheckout> getAccessoryCheckouts() {
         return assignedAccessories;
     }

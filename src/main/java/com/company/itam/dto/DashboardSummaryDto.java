@@ -17,7 +17,7 @@ public class DashboardSummaryDto {
     private Map<String, Long> assetsByCategory;
     private Map<String, Long> assetsByDepartment;
 
-    // Snipe-IT Metrics
+    // Extended Inventory Metrics
     private long totalAccessories;
     private long totalConsumables;
     private long totalComponents;

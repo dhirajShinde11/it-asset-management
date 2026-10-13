@@ -163,7 +163,7 @@ async function activateAppLayout() {
     const appLayout = document.getElementById('app-layout');
 
     if (authView) authView.style.display = 'none';
-    if (appLayout) appLayout.style.display = 'grid';
+    if (appLayout) appLayout.style.display = 'flex';
 
     renderSessionCapsule();
 
@@ -387,7 +387,7 @@ async function loadDashboardSummary() {
         document.getElementById('val-expiring-count').innerText = data.expiringWarrantiesCount;
         document.getElementById('nav-count-assets').innerText = data.totalAssets;
 
-        // Snipe-IT Inventory Counters
+        // Equipment Inventory Counters
         const setNav = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.innerText = val; };
         setNav('nav-count-accessories', data.totalAccessories);
         setNav('nav-count-consumables', data.totalConsumables);
@@ -2065,7 +2065,7 @@ function copyValue(text, label = 'Value') {
 }
 
 // ==========================================================================
-// SNIPE-IT: PRINTABLE ASSET LABEL & QR CODE GENERATION
+// MODULE: PRINTABLE ASSET LABEL & QR CODE GENERATION
 // ==========================================================================
 function openAssetLabelModal(assetId) {
     const asset = App.cachedAssets.find(a => a.id === assetId);
@@ -2138,7 +2138,7 @@ function printAssetLabel() {
 }
 
 // ==========================================================================
-// SNIPE-IT: HARDWARE ASSET CHECK-OUT / CHECK-IN / AUDIT
+// MODULE: HARDWARE ASSET CHECK-OUT / CHECK-IN / AUDIT
 // ==========================================================================
 function openCheckoutAssetModal(assetId) {
     const asset = App.cachedAssets.find(a => a.id === assetId);
@@ -2292,7 +2292,7 @@ async function submitAuditAsset(event) {
 }
 
 // ==========================================================================
-// SNIPE-IT: ACCESSORIES MANAGEMENT (QUANTITY TRACKING)
+// MODULE: ACCESSORIES MANAGEMENT (QUANTITY TRACKING)
 // ==========================================================================
 async function loadAccessories() {
     try {
@@ -2580,7 +2580,7 @@ async function deleteAccessory(id) {
 }
 
 // ==========================================================================
-// SNIPE-IT: CONSUMABLES MANAGEMENT (ONE-WAY DISPENSING)
+// MODULE: CONSUMABLES MANAGEMENT (ONE-WAY DISPENSING)
 // ==========================================================================
 async function loadConsumables() {
     try {
@@ -2843,7 +2843,7 @@ async function deleteConsumable(id) {
 }
 
 // ==========================================================================
-// SNIPE-IT: COMPONENTS MANAGEMENT (PARTS INSTALLED INTO ASSETS)
+// MODULE: COMPONENTS MANAGEMENT (PARTS INSTALLED INTO ASSETS)
 // ==========================================================================
 async function loadComponents() {
     try {
@@ -3120,7 +3120,7 @@ async function deleteComponent(id) {
 }
 
 // ==========================================================================
-// SNIPE-IT: CUSTODY & ACTIVITY AUDIT TRAIL
+// MODULE: CUSTODY & ACTIVITY AUDIT TRAIL
 // ==========================================================================
 async function loadActivityLogs() {
     try {

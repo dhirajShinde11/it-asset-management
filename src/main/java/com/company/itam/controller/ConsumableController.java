@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/consumables")
-@Tag(name = "Consumables Management", description = "Snipe-IT style consumable inventory & dispensing")
+@Tag(name = "Consumables Management", description = "Consumable supplies inventory & employee dispensing")
 @CrossOrigin(origins = "*")
 public class ConsumableController {
 

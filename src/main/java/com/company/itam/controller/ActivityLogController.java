@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/activity-logs")
-@Tag(name = "Activity & Audit Stream", description = "Snipe-IT real-time audit log of all check-in, check-out, and maintenance activities")
+@Tag(name = "Activity & Audit Stream", description = "Real-time audit log of all check-in, check-out, and maintenance activities")
 @CrossOrigin(origins = "*")
 public class ActivityLogController {
 

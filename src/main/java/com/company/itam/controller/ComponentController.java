@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/components")
-@Tag(name = "Components Management", description = "Snipe-IT style component parts tracking & asset installation")
+@Tag(name = "Components Management", description = "Modular component parts tracking & asset installation")
 @CrossOrigin(origins = "*")
 public class ComponentController {
 

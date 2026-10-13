@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $baseUrl = "http://localhost:8085"
 Write-Host "================================================="
-Write-Host "  AEGIS ITAM - SNIPE-IT VERIFICATION TEST SUITE"
+Write-Host "  AEGIS ITAM - FULL SYSTEM VERIFICATION SUITE"
 Write-Host "================================================="
 
 # 1. Test Static Web Assets
@@ -40,7 +40,7 @@ Write-Host "  [OK] Dashboard Summary loaded: Total Assets: $($dash.totalAssets),
 
 # 4. Test Hardware Asset Lifecycle (Create -> Checkout -> Audit -> Checkin -> Delete)
 Write-Host ""
-Write-Host "[4] Testing Asset Lifecycle (Snipe-IT workflows):"
+Write-Host "[4] Testing Asset Lifecycle (Hardware workflows):"
 $assetBody = @{
     assetTag = "AST-TEST-99"
     name = "Lenovo ThinkPad X1 Carbon Gen 12"
@@ -182,5 +182,5 @@ Write-Host "    Activity Trail: $($uDetail.activityLogs.Count)"
 
 Write-Host ""
 Write-Host "================================================="
-Write-Host "  ALL SNIPE-IT VERIFICATION TESTS PASSED 100%!" -ForegroundColor Green
+Write-Host "  ALL ALL VERIFICATION TESTS PASSED 100%!" -ForegroundColor Green
 Write-Host "================================================="
