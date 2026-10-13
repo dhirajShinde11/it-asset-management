@@ -318,12 +318,25 @@ function submitLogin(event) {
 }
 
 // -------------------------------------------------------
-// NAVIGATION
+// NAVIGATION & MOBILE RESPONSIVE DRAWER
 // -------------------------------------------------------
+function toggleMobileMenu() {
+    const navWrap = document.getElementById('sidebar-nav-wrap');
+    if (navWrap) {
+        navWrap.classList.toggle('open');
+    }
+}
+
 function switchTab(tabKey) {
     // If logged in as an EMPLOYEE, strictly lock navigation to employee-portal
     if (App.session && App.session.role === 'EMPLOYEE') {
         tabKey = 'employee-portal';
+    }
+
+    // Auto-close mobile drawer on tab selection
+    const navWrap = document.getElementById('sidebar-nav-wrap');
+    if (navWrap && navWrap.classList.contains('open')) {
+        navWrap.classList.remove('open');
     }
 
     const allTabs = ['assets', 'accessories', 'consumables', 'components', 'licenses', 'users', 'activity', 'emails', 'maintenance', 'analytics', 'employee-portal'];
