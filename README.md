@@ -92,8 +92,7 @@ The application will launch on **`http://localhost:8085`**.
 | :--- | :--- | :--- |
 | **Aegis ITAM Web Application** | `http://localhost:8085/` | Admin: `dhiraj@bmconsulting.co` / `12345` |
 | **Interactive Swagger API Docs** | `http://localhost:8085/swagger-ui.html` | Interactive REST explorer |
-| **OpenAPI Specification** | `http://localhost:8085/v3/api-docs` | OpenAPI 3 JSON Schema |
-| **H2 Web Console** | `http://localhost:8085/h2-console` | JDBC URL: `jdbc:h2:mem:itamdb` |
+| **MySQL Database (phpMyAdmin)** | `http://localhost/phpmyadmin` | Database: `itam_db` (Port: 3306) |
 
 ---
 

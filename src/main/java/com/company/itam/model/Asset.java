@@ -43,7 +43,7 @@ public class Asset {
     private AssetStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "item_condition", nullable = false)
     private AssetCondition condition;
 
     private BigDecimal purchaseCost;

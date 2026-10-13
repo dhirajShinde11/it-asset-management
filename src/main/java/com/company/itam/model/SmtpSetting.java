@@ -29,6 +29,7 @@ public class SmtpSetting {
 
     private boolean startTls = true;
 
+    @Column(name = "use_ssl")
     private boolean ssl = false;
 
     private boolean enabled = false;
