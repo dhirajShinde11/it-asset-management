@@ -3496,4 +3496,606 @@ function renderActivityTable(logs) {
     }).join('');
 }
 
+// ==============================================================
+// BULK DATA IMPORT & SPREADSHEET SYNC
+// ==============================================================
+App.bulkState = {
+    type: 'assets',
+    fileName: '',
+    rawCsv: '',
+    parsedRows: [],
+    detectedCount: 0,
+    dragInitialized: false
+};
+
+const BULK_TEMPLATES = {
+    assets: {
+        filename: 'itam_assets_template.csv',
+        title: 'Need standard hardware asset format?',
+        desc: 'Download template with tags, serials, status, cost, condition, and employee assignees.',
+        csv: 'Asset Tag,Name,Category,Manufacturer,Model,Serial,Status,Condition,Cost,Assigned To,Email,Department,Location,Warranty\n' +
+             'LT-2024-001,MacBook Pro 16",LAPTOP,Apple,M3 Pro 36GB,C02G12345678,ASSIGNED,EXCELLENT,2499.00,Sarah Jenkins,sarah.j@company.com,Engineering,San Francisco HQ,2027-01-15\n' +
+             'DT-2024-010,Precision 3660 Tower,DESKTOP,Dell,i9-13900K 64GB,DL99887766,AVAILABLE,GOOD,1850.00,,,IT Storage Room B,Austin Campus,2026-06-30\n' +
+             'SRV-2024-002,PowerEdge R750,SERVER,Dell,2x Xeon Silver 4314,SRV44332211,AVAILABLE,EXCELLENT,4200.00,,,Data Center Rack 04,Chicago Hub,2028-12-01\n' +
+             'MON-2024-055,UltraSharp 27" 4K,MONITOR,Dell,U2723QE,CN00112233,ASSIGNED,EXCELLENT,580.00,Marcus Brody,marcus.b@company.com,Product Design,San Francisco HQ,2026-08-15\n' +
+             'NET-2024-008,Catalyst 9300 48-Port,NETWORKING,Cisco,C9300-48P-A,FOC22334455,AVAILABLE,GOOD,3100.00,,,MDF Room 1,San Francisco HQ,2027-04-10\n'
+    },
+    users: {
+        filename: 'itam_users_template.csv',
+        title: 'Need employee onboarding format?',
+        desc: 'Download template with full names, organization emails, departments, job titles, and roles.',
+        csv: 'Full Name,Email,Department,Job Title,Phone,Role\n' +
+             'David Miller,david.m@company.com,Engineering,Senior Software Engineer,+1 555-0101,EMPLOYEE\n' +
+             'Rachel Green,rachel.g@company.com,Marketing,Brand Specialist,+1 555-0102,EMPLOYEE\n' +
+             'Thomas Wayne,thomas.w@company.com,IT Operations,Systems Administrator,+1 555-0103,ADMIN\n'
+    },
+    accessories: {
+        filename: 'itam_accessories_template.csv',
+        title: 'Need accessories stock format?',
+        desc: 'Download template with accessory names, categories, quantities, purchase costs, and locations.',
+        csv: 'Name,Category,Manufacturer,Model,Quantity,Cost,Location,Notes\n' +
+             'Magic Keyboard with Touch ID,Keyboards,Apple,A2449,15,199.00,IT Storage Room A,US Layout Wireless\n' +
+             'MX Master 3S Wireless Mouse,Mice,Logitech,910-006557,25,99.99,IT Storage Room A,Ergonomic Bluetooth\n' +
+             'CalDigit TS4 Thunderbolt 4 Dock,Docks,CalDigit,TS4-US,10,399.95,IT Storage Room B,230W Power Delivery\n'
+    },
+    consumables: {
+        filename: 'itam_consumables_template.csv',
+        title: 'Need consumables stock format?',
+        desc: 'Download template with consumable items, item numbers, quantities, costs, and storage bins.',
+        csv: 'Name,Category,Manufacturer,Item Number,Quantity,Cost,Location,Notes\n' +
+             'USB-C to USB-C Cable 2M,Cables,Anker,A8856,50,15.99,Bin C-12,100W Power Delivery Braided\n' +
+             'Cat6 Ethernet Patch Cable 3ft,Cables,Monoprice,11218,100,3.50,Bin C-04,Blue jacket molded boots\n' +
+             'HP 58A Black LaserJet Toner,Toner & Ink,HP,CF258A,8,114.99,Cabinet 2,High yield cartridge\n'
+    }
+};
+
+function openBulkImportModal(initialType = 'assets') {
+    App.bulkState.type = initialType;
+    App.bulkState.fileName = '';
+    App.bulkState.rawCsv = '';
+    App.bulkState.parsedRows = [];
+    App.bulkState.detectedCount = 0;
+
+    const fileInput = document.getElementById('bulk-file-input');
+    if (fileInput) fileInput.value = '';
+
+    const textarea = document.getElementById('bulk-csv-textarea');
+    if (textarea) textarea.value = '';
+
+    const pasteWrap = document.getElementById('bulk-text-paste-wrap');
+    if (pasteWrap) pasteWrap.style.display = 'none';
+
+    const dropzoneTitle = document.getElementById('bulk-dropzone-title');
+    if (dropzoneTitle) dropzoneTitle.textContent = 'Click to choose a CSV file or drag & drop it here';
+
+    const dropzoneSub = document.getElementById('bulk-dropzone-sub');
+    if (dropzoneSub) dropzoneSub.textContent = 'Supports UTF-8 CSV exports from Excel, Google Sheets, or Snipe-IT';
+
+    const previewWrap = document.getElementById('bulk-preview-wrap');
+    if (previewWrap) previewWrap.style.display = 'none';
+
+    const resultBanner = document.getElementById('bulk-result-banner');
+    if (resultBanner) {
+        resultBanner.style.display = 'none';
+        resultBanner.innerHTML = '';
+    }
+
+    const footerSummary = document.getElementById('bulk-footer-summary');
+    if (footerSummary) footerSummary.textContent = 'No file selected';
+
+    const execBtn = document.getElementById('btn-execute-bulk');
+    if (execBtn) {
+        execBtn.disabled = true;
+        execBtn.textContent = 'Import Records →';
+    }
+
+    setBulkImportType(initialType);
+
+    // Initialize drag-drop listeners once
+    initBulkDropzone();
+
+    const modal = document.getElementById('bulk-import-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function initBulkDropzone() {
+    if (App.bulkState.dragInitialized) return;
+    const dropzone = document.getElementById('bulk-dropzone');
+    if (!dropzone) return;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+        }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+            handleBulkDroppedFile(files[0]);
+        }
+    }, false);
+
+    App.bulkState.dragInitialized = true;
+}
+
+function setBulkImportType(type) {
+    App.bulkState.type = type;
+
+    // Toggle active tab buttons
+    ['assets', 'users', 'accessories', 'consumables'].forEach(t => {
+        const btn = document.getElementById(`bulk-type-${t}`);
+        if (btn) {
+            if (t === type) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+
+    // Update template banner
+    const meta = BULK_TEMPLATES[type] || BULK_TEMPLATES.assets;
+    const titleEl = document.getElementById('bulk-template-title');
+    if (titleEl) titleEl.textContent = meta.title;
+    const descEl = document.getElementById('bulk-template-desc');
+    if (descEl) descEl.textContent = meta.desc;
+
+    // Show/hide auto-create users checkbox (relevant for assets)
+    const autoUserWrap = document.getElementById('bulk-opt-users-wrap');
+    if (autoUserWrap) {
+        autoUserWrap.style.display = (type === 'assets') ? 'flex' : 'none';
+    }
+
+    // If data already loaded, re-process preview for current type
+    if (App.bulkState.rawCsv) {
+        processCsvData(App.bulkState.rawCsv);
+    }
+}
+
+function downloadCurrentBulkTemplate() {
+    const meta = BULK_TEMPLATES[App.bulkState.type] || BULK_TEMPLATES.assets;
+    const blob = new Blob([meta.csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', meta.filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Downloaded ${meta.filename} ✓`, 'success');
+}
+
+function handleBulkFileSelect(event) {
+    const file = event.target.files && event.target.files[0];
+    if (file) handleBulkDroppedFile(file);
+}
+
+function handleBulkDroppedFile(file) {
+    if (!file) return;
+    App.bulkState.fileName = file.name;
+
+    const titleEl = document.getElementById('bulk-dropzone-title');
+    if (titleEl) titleEl.textContent = `📄 Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    const subEl = document.getElementById('bulk-dropzone-sub');
+    if (subEl) subEl.textContent = 'Click to change file or drag another CSV';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        App.bulkState.rawCsv = e.target.result;
+        processCsvData(App.bulkState.rawCsv);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function toggleBulkTextPaste() {
+    const wrap = document.getElementById('bulk-text-paste-wrap');
+    if (wrap) {
+        wrap.style.display = (wrap.style.display === 'none' || !wrap.style.display) ? 'block' : 'none';
+        if (wrap.style.display === 'block') {
+            document.getElementById('bulk-csv-textarea')?.focus();
+        }
+    }
+}
+
+function handleBulkTextInput(text) {
+    App.bulkState.rawCsv = text;
+    App.bulkState.fileName = 'Pasted CSV Text';
+    const titleEl = document.getElementById('bulk-dropzone-title');
+    if (titleEl) titleEl.textContent = '📝 Using raw pasted CSV text';
+    processCsvData(text);
+}
+
+// RFC-4180 CSV parser handling quotes, escaped quotes, and multiline cells
+function parseCsv(text) {
+    if (!text) return [];
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // Strip UTF-8 BOM
+    let rows = [];
+    let currentRow = [''];
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+
+        if (c === '"') {
+            if (inQuotes && next === '"') {
+                currentRow[currentRow.length - 1] += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (c === ',' && !inQuotes) {
+            currentRow.push('');
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+            if (c === '\r' && next === '\n') i++;
+            rows.push(currentRow.map(f => f.trim()));
+            currentRow = [''];
+        } else {
+            currentRow[currentRow.length - 1] += c;
+        }
+    }
+    if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+        rows.push(currentRow.map(f => f.trim()));
+    }
+    return rows.filter(r => r.length > 0 && r.some(cell => cell !== ''));
+}
+
+function normalizeBulkHeader(h) {
+    if (!h) return '';
+    return h.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function getColValue(cols, headerMap, ...aliases) {
+    for (const a of aliases) {
+        const idx = headerMap[a];
+        if (idx !== undefined && idx < cols.length) {
+            const val = cols[idx];
+            if (val !== undefined && val !== null && val.trim() !== '') return val.trim();
+        }
+    }
+    return null;
+}
+
+function processCsvData(csvText) {
+    const table = parseCsv(csvText);
+    const previewWrap = document.getElementById('bulk-preview-wrap');
+    const resultBanner = document.getElementById('bulk-result-banner');
+    const execBtn = document.getElementById('btn-execute-bulk');
+    const footerSummary = document.getElementById('bulk-footer-summary');
+
+    if (!table || table.length < 2) {
+        if (previewWrap) previewWrap.style.display = 'none';
+        if (resultBanner) {
+            resultBanner.style.display = 'block';
+            resultBanner.className = 'alert-box alert-error';
+            resultBanner.innerHTML = '⚠️ CSV must contain at least 1 header line and 1 data row.';
+        }
+        if (execBtn) execBtn.disabled = true;
+        if (footerSummary) footerSummary.textContent = 'Invalid or empty CSV';
+        return;
+    }
+
+    if (resultBanner) resultBanner.style.display = 'none';
+
+    const headers = table[0];
+    const headerMap = {};
+    headers.forEach((h, i) => {
+        headerMap[normalizeBulkHeader(h)] = i;
+    });
+
+    const type = App.bulkState.type;
+    const parsedRows = [];
+
+    for (let r = 1; r < table.length; r++) {
+        const cols = table[r];
+        if (!cols || cols.length === 0 || cols.every(c => !c)) continue;
+
+        if (type === 'assets') {
+            const tag = getColValue(cols, headerMap, 'assettag', 'tag', 'asset_tag');
+            const name = getColValue(cols, headerMap, 'name', 'assetname', 'asset_name');
+            if (!tag && !name) continue;
+
+            parsedRows.push({
+                assetTag: tag || `AST-${1000 + r}`,
+                name: name || `Hardware Asset ${tag || r}`,
+                category: getColValue(cols, headerMap, 'category', 'type') || 'LAPTOP',
+                manufacturer: getColValue(cols, headerMap, 'manufacturer', 'make', 'brand') || '',
+                model: getColValue(cols, headerMap, 'model', 'modelnumber') || '',
+                serialNumber: getColValue(cols, headerMap, 'serial', 'serialnumber', 'serial_number', 'serial#') || '',
+                status: getColValue(cols, headerMap, 'status', 'state') || 'AVAILABLE',
+                condition: getColValue(cols, headerMap, 'condition') || 'GOOD',
+                purchaseCost: getColValue(cols, headerMap, 'cost', 'purchasecost', 'price') || '',
+                purchaseDate: getColValue(cols, headerMap, 'purchasedate', 'purchase_date') || '',
+                warrantyExpiryDate: getColValue(cols, headerMap, 'warranty', 'warrantyexpiry', 'warrantyexpirydate') || '',
+                location: getColValue(cols, headerMap, 'location', 'site') || '',
+                assignedEmployeeName: getColValue(cols, headerMap, 'assignedto', 'assignee', 'employee', 'assigned_to', 'employeename') || '',
+                assignedEmployeeEmail: getColValue(cols, headerMap, 'email', 'assignedemail', 'employeeemail', 'assigned_email') || '',
+                assignedDepartment: getColValue(cols, headerMap, 'department', 'dept') || '',
+                specifications: getColValue(cols, headerMap, 'specifications', 'specs') || '',
+                notes: getColValue(cols, headerMap, 'notes', 'comments') || ''
+            });
+        } else if (type === 'users') {
+            const email = getColValue(cols, headerMap, 'email', 'emailaddress', 'user_email');
+            const fullName = getColValue(cols, headerMap, 'fullname', 'name', 'full_name', 'employee_name');
+            if (!email && !fullName) continue;
+
+            parsedRows.push({
+                fullName: fullName || (email ? email.split('@')[0] : 'Employee'),
+                email: email || '',
+                department: getColValue(cols, headerMap, 'department', 'dept') || '',
+                jobTitle: getColValue(cols, headerMap, 'jobtitle', 'title', 'role_title', 'position') || '',
+                phoneNumber: getColValue(cols, headerMap, 'phone', 'phonenumber', 'telephone') || '',
+                role: getColValue(cols, headerMap, 'role', 'userrole') || 'EMPLOYEE',
+                initialPassword: getColValue(cols, headerMap, 'password', 'initialpassword') || ''
+            });
+        } else if (type === 'accessories') {
+            const name = getColValue(cols, headerMap, 'name', 'accessoryname');
+            if (!name) continue;
+            parsedRows.push({
+                name: name,
+                category: getColValue(cols, headerMap, 'category') || 'Keyboards',
+                manufacturer: getColValue(cols, headerMap, 'manufacturer', 'make') || '',
+                modelNumber: getColValue(cols, headerMap, 'model', 'modelnumber') || '',
+                totalQuantity: parseInt(getColValue(cols, headerMap, 'quantity', 'qty', 'totalquantity') || '10', 10),
+                purchaseCost: getColValue(cols, headerMap, 'cost', 'purchasecost', 'price') || '',
+                location: getColValue(cols, headerMap, 'location') || '',
+                notes: getColValue(cols, headerMap, 'notes') || ''
+            });
+        } else if (type === 'consumables') {
+            const name = getColValue(cols, headerMap, 'name', 'consumablename');
+            if (!name) continue;
+            parsedRows.push({
+                name: name,
+                category: getColValue(cols, headerMap, 'category') || 'Cables',
+                manufacturer: getColValue(cols, headerMap, 'manufacturer', 'make') || '',
+                itemNumber: getColValue(cols, headerMap, 'itemnumber', 'partnumber', 'sku') || '',
+                totalQuantity: parseInt(getColValue(cols, headerMap, 'quantity', 'qty', 'totalquantity') || '25', 10),
+                purchaseCost: getColValue(cols, headerMap, 'cost', 'purchasecost', 'price') || '',
+                location: getColValue(cols, headerMap, 'location') || '',
+                notes: getColValue(cols, headerMap, 'notes') || ''
+            });
+        }
+    }
+
+    App.bulkState.parsedRows = parsedRows;
+    App.bulkState.detectedCount = parsedRows.length;
+
+    if (parsedRows.length === 0) {
+        if (previewWrap) previewWrap.style.display = 'none';
+        if (resultBanner) {
+            resultBanner.style.display = 'block';
+            resultBanner.className = 'alert-box alert-error';
+            resultBanner.innerHTML = '⚠️ No valid records could be parsed. Check column headers against sample template.';
+        }
+        if (execBtn) execBtn.disabled = true;
+        if (footerSummary) footerSummary.textContent = '0 valid rows detected';
+        return;
+    }
+
+    // Render Preview Table
+    renderBulkPreview(type, parsedRows);
+
+    if (previewWrap) previewWrap.style.display = 'block';
+    if (footerSummary) footerSummary.textContent = `✓ ${parsedRows.length} valid records ready to import`;
+    if (execBtn) {
+        execBtn.disabled = false;
+        execBtn.textContent = `Import ${parsedRows.length} Records →`;
+    }
+}
+
+function renderBulkPreview(type, rows) {
+    const thead = document.getElementById('bulk-preview-thead');
+    const tbody = document.getElementById('bulk-preview-tbody');
+    const countLabel = document.getElementById('bulk-preview-count-label');
+    const statusBadge = document.getElementById('bulk-preview-status-badge');
+
+    if (countLabel) countLabel.textContent = `Previewing ${Math.min(6, rows.length)} of ${rows.length} Records`;
+    if (statusBadge) statusBadge.textContent = `✓ ${rows.length} Ready`;
+
+    const sample = rows.slice(0, 6);
+
+    if (type === 'assets') {
+        thead.innerHTML = `<tr>
+            <th>Tag</th>
+            <th>Asset Name</th>
+            <th>Category</th>
+            <th>Model / Make</th>
+            <th>Serial</th>
+            <th>Status</th>
+            <th>Cost</th>
+            <th>Assignee</th>
+        </tr>`;
+        tbody.innerHTML = sample.map(r => `<tr>
+            <td><strong style="color:var(--status-blue)">${escapeHtml(r.assetTag)}</strong></td>
+            <td>${escapeHtml(r.name)}</td>
+            <td><span class="category-tag">${escapeHtml(r.category)}</span></td>
+            <td>${escapeHtml((r.manufacturer + ' ' + r.model).trim() || '–')}</td>
+            <td style="font-family:var(--font-mono);font-size:11px">${escapeHtml(r.serialNumber || '–')}</td>
+            <td><span class="badge ${r.status.toLowerCase().includes('assign') ? 'badge-assigned' : 'badge-available'}">${escapeHtml(r.status)}</span></td>
+            <td>${r.purchaseCost ? '$' + escapeHtml(r.purchaseCost) : '–'}</td>
+            <td>${escapeHtml(r.assignedEmployeeName || r.assignedEmployeeEmail || '–')}</td>
+        </tr>`).join('');
+    } else if (type === 'users') {
+        thead.innerHTML = `<tr>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Job Title</th>
+            <th>Phone</th>
+            <th>Role</th>
+        </tr>`;
+        tbody.innerHTML = sample.map(r => `<tr>
+            <td><strong>${escapeHtml(r.fullName)}</strong></td>
+            <td style="color:var(--status-blue)">${escapeHtml(r.email)}</td>
+            <td>${escapeHtml(r.department || '–')}</td>
+            <td>${escapeHtml(r.jobTitle || '–')}</td>
+            <td>${escapeHtml(r.phoneNumber || '–')}</td>
+            <td><span class="badge ${r.role === 'ADMIN' ? 'badge-danger' : 'badge-primary'}">${escapeHtml(r.role)}</span></td>
+        </tr>`).join('');
+    } else if (type === 'accessories') {
+        thead.innerHTML = `<tr>
+            <th>Accessory Name</th>
+            <th>Category</th>
+            <th>Make / Model</th>
+            <th>Quantity</th>
+            <th>Cost</th>
+            <th>Location</th>
+        </tr>`;
+        tbody.innerHTML = sample.map(r => `<tr>
+            <td><strong>${escapeHtml(r.name)}</strong></td>
+            <td><span class="category-tag">${escapeHtml(r.category)}</span></td>
+            <td>${escapeHtml((r.manufacturer + ' ' + r.modelNumber).trim() || '–')}</td>
+            <td><strong>${r.totalQuantity}</strong></td>
+            <td>${r.purchaseCost ? '$' + escapeHtml(r.purchaseCost) : '–'}</td>
+            <td>${escapeHtml(r.location || '–')}</td>
+        </tr>`).join('');
+    } else if (type === 'consumables') {
+        thead.innerHTML = `<tr>
+            <th>Consumable Item</th>
+            <th>Category</th>
+            <th>Item Number</th>
+            <th>Quantity</th>
+            <th>Cost</th>
+            <th>Location</th>
+        </tr>`;
+        tbody.innerHTML = sample.map(r => `<tr>
+            <td><strong>${escapeHtml(r.name)}</strong></td>
+            <td><span class="category-tag">${escapeHtml(r.category)}</span></td>
+            <td style="font-family:var(--font-mono);font-size:11px">${escapeHtml(r.itemNumber || '–')}</td>
+            <td><strong>${r.totalQuantity}</strong></td>
+            <td>${r.purchaseCost ? '$' + escapeHtml(r.purchaseCost) : '–'}</td>
+            <td>${escapeHtml(r.location || '–')}</td>
+        </tr>`).join('');
+    }
+}
+
+async function executeBulkImport() {
+    const rows = App.bulkState.parsedRows;
+    if (!rows || rows.length === 0) {
+        showToast('No records ready to import', 'error');
+        return;
+    }
+
+    const type = App.bulkState.type;
+    const updateExisting = document.getElementById('bulk-opt-update')?.checked || false;
+    const autoCreateUsers = document.getElementById('bulk-opt-autouser')?.checked || false;
+    const execBtn = document.getElementById('btn-execute-bulk');
+    const resultBanner = document.getElementById('bulk-result-banner');
+
+    if (execBtn) {
+        execBtn.disabled = true;
+        execBtn.innerHTML = '⏳ Importing Data...';
+    }
+
+    try {
+        let endpoint = '/api/bulk/assets';
+        let payload = {};
+
+        if (type === 'assets') {
+            endpoint = '/api/bulk/assets';
+            payload = { assets: rows, updateExisting, autoCreateUsers };
+        } else if (type === 'users') {
+            endpoint = '/api/bulk/users';
+            payload = { users: rows, updateExisting };
+        } else if (type === 'accessories') {
+            endpoint = '/api/bulk/accessories';
+            payload = { accessories: rows, updateExisting };
+        } else if (type === 'consumables') {
+            endpoint = '/api/bulk/consumables';
+            payload = { consumables: rows, updateExisting };
+        }
+
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({ message: res.statusText }));
+            throw new Error(errData.message || 'Import failed with server error ' + res.status);
+        }
+
+        const data = await res.json();
+
+        // Render summary banner
+        if (resultBanner) {
+            resultBanner.style.display = 'block';
+            resultBanner.className = 'alert-box ' + (data.success ? 'alert-success' : 'alert-warning');
+            resultBanner.innerHTML = `
+                <div style="font-weight:700;font-size:14px;margin-bottom:8px">
+                    ${data.success ? '🎉 Bulk Import Completed Successfully!' : '⚠️ Bulk Import Completed with Notices'}
+                </div>
+                <div style="font-size:13px;margin-bottom:12px;color:rgba(255,255,255,0.9)">${escapeHtml(data.message || '')}</div>
+                <div class="bulk-stats-grid">
+                    <div class="bulk-stat-pill" style="background:rgba(255,255,255,0.05)">
+                        <span class="num">${data.totalRows}</span>
+                        <span class="label">Total Processed</span>
+                    </div>
+                    <div class="bulk-stat-pill" style="background:var(--status-green-bg);border-color:var(--status-green)">
+                        <span class="num" style="color:var(--status-green)">${data.createdCount}</span>
+                        <span class="label">Created New</span>
+                    </div>
+                    <div class="bulk-stat-pill" style="background:var(--status-blue-bg);border-color:var(--status-blue)">
+                        <span class="num" style="color:var(--status-blue)">${data.updatedCount}</span>
+                        <span class="label">Updated</span>
+                    </div>
+                    <div class="bulk-stat-pill" style="background:var(--status-amber-bg);border-color:var(--status-amber)">
+                        <span class="num" style="color:var(--status-amber)">${data.skippedCount}</span>
+                        <span class="label">Skipped</span>
+                    </div>
+                </div>
+                ${(data.warnings && data.warnings.length > 0) ? `
+                    <div style="margin-top:10px;font-size:12px;color:var(--status-amber);max-height:80px;overflow-y:auto;">
+                        ${data.warnings.map(w => `<div>• ${escapeHtml(w)}</div>`).join('')}
+                    </div>` : ''}
+            `;
+        }
+
+        showToast(`Bulk Import: ${data.createdCount} created, ${data.updatedCount} updated ✓`, 'success');
+
+        if (execBtn) {
+            execBtn.textContent = 'Import Completed ✓';
+            execBtn.disabled = true;
+        }
+
+        // Refresh system data in background
+        if (type === 'assets') {
+            if (typeof loadAssets === 'function') loadAssets();
+            if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+            if (typeof loadActivityLogs === 'function') loadActivityLogs();
+        } else if (type === 'users') {
+            if (typeof loadUsers === 'function') loadUsers();
+            if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        } else if (type === 'accessories') {
+            if (typeof loadAccessories === 'function') loadAccessories();
+        } else if (type === 'consumables') {
+            if (typeof loadConsumables === 'function') loadConsumables();
+        }
+
+    } catch (err) {
+        console.error('Bulk import error:', err);
+        if (resultBanner) {
+            resultBanner.style.display = 'block';
+            resultBanner.className = 'alert-box alert-error';
+            resultBanner.innerHTML = `<strong>Error during import:</strong> ${escapeHtml(err.message)}`;
+        }
+        showToast('Bulk import failed: ' + err.message, 'error');
+        if (execBtn) {
+            execBtn.disabled = false;
+            execBtn.textContent = 'Try Import Again →';
+        }
+    }
+}
+
+
 

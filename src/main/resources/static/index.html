@@ -286,6 +286,14 @@
                         </svg>
                         Export CSV
                     </button>
+                    <button class="btn btn-secondary" id="btn-bulk-import" onclick="openBulkImportModal()" title="Bulk Upload / Import Data via CSV">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Bulk Import
+                    </button>
                     <button class="btn btn-primary" id="btn-create-asset" onclick="openAssetModal()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -409,6 +417,15 @@
 
                         <button class="btn btn-icon" title="Reset Filters" onclick="resetFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+
+                        <button class="btn btn-secondary btn-sm" onclick="openBulkImportModal('assets')" title="Bulk Import Hardware Assets" style="white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Bulk Import
                         </button>
                     </div>
                 </div>
@@ -651,10 +668,20 @@
                         <h2>Organization Users &amp; Workforce Directory</h2>
                         <p class="text-muted">Add employees with organization email, auto-dispatch onboarding credentials, and assign assets</p>
                     </div>
-                    <button class="btn btn-primary btn-gradient" onclick="openAddUserModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                        + Add New User &amp; Dispatch Mail
-                    </button>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="openBulkImportModal('users')" title="Bulk Onboard Users via CSV" style="display: flex; align-items: center; gap: 6px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Bulk Import Users
+                        </button>
+                        <button class="btn btn-primary btn-gradient" onclick="openAddUserModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                            + Add New User &amp; Dispatch Mail
+                        </button>
+                    </div>
                 </div>
 
                 <!-- User Stat Strip -->
@@ -2447,6 +2474,133 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('component-assignments-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- BULK DATA IMPORT MODAL -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="bulk-import-modal" style="display: none;">
+        <div class="modal-dialog modal-lg" style="max-width: 860px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-indigo);">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Bulk Data Import
+                    </h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Batch import assets, employee rosters, accessories, or consumables using CSV spreadsheets</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('bulk-import-modal')">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 20px 24px;">
+                <!-- Step 1: Select Target Entity -->
+                <div style="margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #cbd5e1;">1. Select Data Type to Import:</div>
+                <div class="bulk-type-selector">
+                    <button type="button" class="bulk-type-btn active" id="bulk-type-assets" onclick="setBulkImportType('assets')">
+                        💻 Hardware Assets
+                    </button>
+                    <button type="button" class="bulk-type-btn" id="bulk-type-users" onclick="setBulkImportType('users')">
+                        👥 Employees / Users
+                    </button>
+                    <button type="button" class="bulk-type-btn" id="bulk-type-accessories" onclick="setBulkImportType('accessories')">
+                        🎧 Accessories
+                    </button>
+                    <button type="button" class="bulk-type-btn" id="bulk-type-consumables" onclick="setBulkImportType('consumables')">
+                        🖨️ Consumables
+                    </button>
+                </div>
+
+                <!-- Template Download Banner -->
+                <div class="bulk-template-bar">
+                    <div>
+                        <div style="font-weight: 600; font-size: 13px; color: #e2e8f0;" id="bulk-template-title">Need the standard spreadsheet format?</div>
+                        <div style="font-size: 12px; color: #94a3b8;" id="bulk-template-desc">Download a sample CSV file with standard headers and valid example rows.</div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="downloadCurrentBulkTemplate()" style="background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.4); color: #fff; display: flex; align-items: center; gap: 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download Sample Template (.CSV)
+                    </button>
+                </div>
+
+                <!-- Step 2: Upload CSV / Dropzone -->
+                <div style="margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #cbd5e1;">2. Upload or Drag &amp; Drop CSV File:</div>
+                <div class="bulk-dropzone" id="bulk-dropzone" onclick="document.getElementById('bulk-file-input').click()">
+                    <div class="bulk-dropzone-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div style="font-weight: 600; font-size: 14px; color: #f8fafc;" id="bulk-dropzone-title">Click to choose a CSV file or drag &amp; drop it here</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;" id="bulk-dropzone-sub">Supports UTF-8 CSV exports from Excel, Google Sheets, or Snipe-IT</div>
+                    <input type="file" id="bulk-file-input" accept=".csv,text/csv" onchange="handleBulkFileSelect(event)" style="display: none;">
+                </div>
+
+                <!-- Quick CSV Text Paste Toggle -->
+                <div style="margin-bottom: 14px;">
+                    <button type="button" class="btn btn-link btn-sm" onclick="toggleBulkTextPaste()" style="font-size: 12px; color: var(--primary-indigo); padding: 0; background: none; border: none; cursor: pointer; text-decoration: underline;">
+                        &plusmn; Or paste raw CSV text directly
+                    </button>
+                    <div id="bulk-text-paste-wrap" style="display: none; margin-top: 8px;">
+                        <textarea id="bulk-csv-textarea" rows="4" style="width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 12px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #f8fafc; padding: 10px;" placeholder="Paste CSV content here (including header row)..." oninput="handleBulkTextInput(this.value)"></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 3: Options -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding: 12px 14px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="bulk-opt-update" checked>
+                        <span><strong>Update existing records</strong> if Asset Tag or Email is already registered</span>
+                    </label>
+                    <label id="bulk-opt-users-wrap" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="bulk-opt-autouser" checked>
+                        <span><strong>Auto-create employee profiles</strong> if assigned employee email does not exist yet</span>
+                    </label>
+                </div>
+
+                <!-- Step 4: Live Data Preview -->
+                <div id="bulk-preview-wrap" class="bulk-preview-wrap" style="display: none;">
+                    <div class="bulk-preview-header">
+                        <span id="bulk-preview-count-label">Parsed Data Preview</span>
+                        <span class="badge badge-success" id="bulk-preview-status-badge">Ready to import</span>
+                    </div>
+                    <div class="bulk-preview-scroll">
+                        <table class="data-table" style="margin: 0; font-size: 12px;">
+                            <thead id="bulk-preview-thead">
+                                <!-- Populated dynamically -->
+                            </thead>
+                            <tbody id="bulk-preview-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Results Summary (After Import) -->
+                <div id="bulk-result-banner" style="display: none; margin-top: 16px;"></div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer" style="justify-content: space-between;">
+                <div style="font-size: 13px; color: var(--text-muted);" id="bulk-footer-summary">No file selected</div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('bulk-import-modal')">Close</button>
+                    <button type="button" class="btn btn-primary" id="btn-execute-bulk" onclick="executeBulkImport()" disabled>
+                        Import Records &rarr;
+                    </button>
+                </div>
             </div>
         </div>
     </div>
