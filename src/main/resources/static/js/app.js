@@ -2118,7 +2118,7 @@ function getSelectedQrBaseUrl() {
         if (App.networkInfo && App.networkInfo.lanUrl) {
             return App.networkInfo.lanUrl;
         }
-        return `http://10.229.34.29:${window.location.port || '8085'}`;
+        return `http://${(App.networkInfo && App.networkInfo.lanIp) || '192.168.6.116'}:${window.location.port || '8085'}`;
     }
     return window.location.origin;
 }
@@ -2151,7 +2151,7 @@ function populateQrHostPresetOptions() {
     if (!select) return;
 
     const port = (App.networkInfo && App.networkInfo.serverPort) || window.location.port || '8085';
-    const detectedLanIp = (App.networkInfo && App.networkInfo.lanIp) || '10.229.34.29';
+    const detectedLanIp = (App.networkInfo && App.networkInfo.lanIp) || '192.168.6.116';
     const lanUrl = (App.networkInfo && App.networkInfo.lanUrl) || `http://${detectedLanIp}:${port}`;
     const browserOrigin = window.location.origin;
 
