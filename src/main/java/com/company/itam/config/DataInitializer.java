@@ -35,18 +35,6 @@ public class DataInitializer {
             );
             admin.setPhoneNumber("+91 98765 43210");
             userRepository.save(admin);
-
-            // Typo alias variant
-            AppUser adminAlt = new AppUser(
-                    "Dhiraj (IT Administrator)",
-                    "dhiraj@bmcosulting.co",
-                    authService.hashPassword("12345"),
-                    "Information Technology",
-                    "Principal IT Infrastructure Architect",
-                    UserRole.ADMIN
-            );
-            adminAlt.setPhoneNumber("+91 98765 43210");
-            userRepository.save(adminAlt);
         };
     }
 }
