@@ -15,7 +15,10 @@ const App = {
     cachedAccessories: [],
     cachedConsumables: [],
     cachedComponents: [],
+    cachedLicenses: [],
     cachedActivity: [],
+    sortField: null,
+    sortAsc: true,
     searchTimer: null,
     lastCreatedUser: null,  // Holds data for success modal
     networkInfo: null,      // Server LAN IP & URL for mobile QR codes
@@ -76,6 +79,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const capsule = document.getElementById('user-capsule');
         if (dropdown && capsule && !capsule.contains(e.target)) {
             dropdown.style.display = 'none';
+        }
+    });
+
+    // Global listener: Keyboard shortcut for Spotlight Search (Ctrl+K, Cmd+K, or '/')
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+            e.preventDefault();
+            openSpotlightSearch();
+        } else if (e.key === '/' && document.activeElement && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            openSpotlightSearch();
+        } else if (e.key === 'Escape') {
+            closeSpotlightSearch();
         }
     });
 });
@@ -430,24 +446,31 @@ async function loadDashboardSummary() {
 }
 
 // -------------------------------------------------------
-// ASSETS TABLE
+// ASSETS TABLE & ADVANCED CONTROLS
 // -------------------------------------------------------
 async function loadAssets() {
     const query = document.getElementById('asset-search-input')?.value.trim() || '';
     const category = document.getElementById('filter-category')?.value || '';
     const status = document.getElementById('filter-status')?.value || '';
+    const department = document.getElementById('filter-dept')?.value || '';
+    const condition = document.getElementById('filter-condition')?.value || '';
 
     const params = new URLSearchParams();
     if (query) params.append('query', query);
     if (category) params.append('category', category);
     if (status) params.append('status', status);
+    if (department) params.append('department', department);
 
     try {
         const res = await fetch(`/api/assets?${params.toString()}`);
         if (!res.ok) return;
-        const assets = await res.json();
+        let assets = await res.json();
+        if (condition) {
+            assets = assets.filter(a => (a.condition || '').toUpperCase() === condition.toUpperCase());
+        }
         App.cachedAssets = assets;
-        renderAssetsTable(assets);
+        applySortToCachedAssets();
+        renderAssetsTable(App.cachedAssets);
     } catch (err) {
         console.error('Error loading assets:', err);
     }
@@ -459,19 +482,21 @@ function debounceSearch() {
 }
 
 function resetFilters() {
-    document.getElementById('asset-search-input').value = '';
-    document.getElementById('filter-category').value = '';
-    document.getElementById('filter-status').value = '';
+    if (document.getElementById('asset-search-input')) document.getElementById('asset-search-input').value = '';
+    if (document.getElementById('filter-category')) document.getElementById('filter-category').value = '';
+    if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+    if (document.getElementById('filter-dept')) document.getElementById('filter-dept').value = '';
+    if (document.getElementById('filter-condition')) document.getElementById('filter-condition').value = '';
     loadAssets();
 }
 
 function renderAssetsTable(assets) {
     const tbody = document.getElementById('assets-table-body');
-    const table = document.getElementById('assets-table');
     if (!tbody) return;
 
     if (!assets || assets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px; color: var(--text-muted);">No assets match your filters. Try resetting.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 40px; color: var(--text-muted);">No assets match your search/filters. Try resetting filters or add a new asset.</td></tr>';
+        updateSelectedAssetsBar();
         return;
     }
 
@@ -494,9 +519,12 @@ function renderAssetsTable(assets) {
         }
 
         const conditionBadge = `<span class="cond-badge cond-${(a.condition||'').toLowerCase()}">${a.condition || '–'}</span>`;
-        const costStr = a.purchaseCost ? '$' + Number(a.purchaseCost).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '–';
+        const costStr = a.purchaseCost != null ? '$' + Number(a.purchaseCost).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '–';
 
         return `<tr>
+            <td style="text-align: center;">
+                <input type="checkbox" class="asset-row-select" value="${a.id}" onchange="updateSelectedAssetsBar()" title="Select Asset ${escapeHtml(a.assetTag)}">
+            </td>
             <td><span class="asset-tag-badge">${escapeHtml(a.assetTag)}</span></td>
             <td>
                 <span class="asset-name-title">${escapeHtml(a.name)}</span>
@@ -517,13 +545,273 @@ function renderAssetsTable(assets) {
                         : `<button class="btn-table-action" onclick="openCheckoutAssetModal(${a.id})" title="Check Out Hardware" style="color:var(--status-blue);border-color:rgba(56,189,248,0.3)">Check-Out</button>`
                     }
                     <button class="btn-table-action" onclick="openAuditAssetModal(${a.id})" title="Physical Custody Audit">Audit</button>
-                    <button class="btn-table-action" onclick="openEditAssetModal(${a.id})" title="Edit">Edit</button>
-                    <button class="btn-table-action" onclick="openMaintenanceModal(${a.id})" title="Service">Service</button>
+                    <button class="btn-table-action" onclick="openEditAssetModal(${a.id})" title="Edit Details">Edit</button>
+                    <button class="btn-table-action" onclick="cloneAsset(${a.id})" title="Clone Asset (Duplicate Specs)">Clone</button>
+                    <button class="btn-table-action" onclick="openMaintenanceModal(${a.id})" title="Service & Maintenance">Service</button>
                     <button class="btn-table-action danger" onclick="deleteAsset(${a.id})" title="Delete">&times;</button>
                 </div>
             </td>
         </tr>`;
     }).join('');
+
+    updateSelectedAssetsBar();
+}
+
+function sortAssets(field) {
+    if (App.sortField === field) {
+        App.sortAsc = !App.sortAsc;
+    } else {
+        App.sortField = field;
+        App.sortAsc = true;
+    }
+    const sortKeys = ['assetTag', 'name', 'status', 'assignedEmployeeName', 'purchaseCost'];
+    sortKeys.forEach(f => {
+        const el = document.getElementById(`sort-${f}`);
+        if (el) {
+            if (f === App.sortField) {
+                el.textContent = App.sortAsc ? ' ▲' : ' ▼';
+            } else {
+                el.textContent = '';
+            }
+        }
+    });
+    applySortToCachedAssets();
+    renderAssetsTable(App.cachedAssets);
+}
+
+function applySortToCachedAssets() {
+    if (!App.sortField || !App.cachedAssets || App.cachedAssets.length === 0) return;
+    const field = App.sortField;
+    const asc = App.sortAsc;
+    App.cachedAssets.sort((a, b) => {
+        let valA = a[field] ?? '';
+        let valB = b[field] ?? '';
+        if (field === 'purchaseCost') {
+            const numA = parseFloat(valA) || 0;
+            const numB = parseFloat(valB) || 0;
+            return asc ? numA - numB : numB - numA;
+        }
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return asc ? -1 : 1;
+        if (valA > valB) return asc ? 1 : -1;
+        return 0;
+    });
+}
+
+function toggleSelectAllAssets(masterCheckbox) {
+    const isChecked = !!masterCheckbox?.checked;
+    document.querySelectorAll('.asset-row-select').forEach(cb => {
+        cb.checked = isChecked;
+    });
+    updateSelectedAssetsBar();
+}
+
+function updateSelectedAssetsBar() {
+    const allBoxes = document.querySelectorAll('.asset-row-select');
+    const checkedBoxes = document.querySelectorAll('.asset-row-select:checked');
+    const bar = document.getElementById('assets-bulk-bar');
+    const countBadge = document.getElementById('bulk-selected-count');
+    const master = document.getElementById('assets-select-all');
+
+    const count = checkedBoxes.length;
+    if (bar) {
+        if (count > 0) {
+            bar.classList.add('visible');
+            if (countBadge) countBadge.textContent = `${count} Selected`;
+        } else {
+            bar.classList.remove('visible');
+        }
+    }
+
+    if (master && allBoxes.length > 0) {
+        master.checked = (count === allBoxes.length);
+        master.indeterminate = (count > 0 && count < allBoxes.length);
+    } else if (master) {
+        master.checked = false;
+        master.indeterminate = false;
+    }
+}
+
+function deselectAllAssets() {
+    const master = document.getElementById('assets-select-all');
+    if (master) {
+        master.checked = false;
+        master.indeterminate = false;
+    }
+    document.querySelectorAll('.asset-row-select').forEach(cb => { cb.checked = false; });
+    updateSelectedAssetsBar();
+}
+
+function getSelectedAssetIds() {
+    return Array.from(document.querySelectorAll('.asset-row-select:checked')).map(cb => Number(cb.value));
+}
+
+async function bulkCheckinSelectedAssets() {
+    const ids = getSelectedAssetIds();
+    if (ids.length === 0) {
+        showToast('No assets selected.', 'warning');
+        return;
+    }
+    if (!confirm(`Are you sure you want to Check In ${ids.length} selected asset(s) back to available inventory?`)) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/assets/bulk-checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ids)
+        });
+        const data = await res.json();
+        showToast(`Successfully checked in ${data.checkedInCount || ids.length} asset(s)!`, 'success');
+        deselectAllAssets();
+        await loadAssets();
+        if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        if (typeof loadActivityLogs === 'function') loadActivityLogs();
+    } catch (err) {
+        console.error('Bulk checkin error:', err);
+        showToast('Failed to check in selected assets: ' + err.message, 'error');
+    }
+}
+
+async function bulkChangeStatusSelectedAssets(newStatus) {
+    if (!newStatus) return;
+    const ids = getSelectedAssetIds();
+    if (ids.length === 0) {
+        showToast('No assets selected.', 'warning');
+        const sel = document.getElementById('bulk-status-select');
+        if (sel) sel.value = '';
+        return;
+    }
+    const readable = newStatus.replace(/_/g, ' ');
+    if (!confirm(`Update status of ${ids.length} selected asset(s) to "${readable}"?`)) {
+        const sel = document.getElementById('bulk-status-select');
+        if (sel) sel.value = '';
+        return;
+    }
+    try {
+        const res = await fetch('/api/assets/bulk-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids, status: newStatus })
+        });
+        const data = await res.json();
+        showToast(`Updated status for ${data.updatedCount || ids.length} asset(s) to ${readable}!`, 'success');
+        const sel = document.getElementById('bulk-status-select');
+        if (sel) sel.value = '';
+        deselectAllAssets();
+        await loadAssets();
+        if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        if (typeof loadActivityLogs === 'function') loadActivityLogs();
+    } catch (err) {
+        console.error('Bulk status change error:', err);
+        showToast('Failed to update status: ' + err.message, 'error');
+        const sel = document.getElementById('bulk-status-select');
+        if (sel) sel.value = '';
+    }
+}
+
+async function bulkDeleteSelectedAssets() {
+    const ids = getSelectedAssetIds();
+    if (ids.length === 0) {
+        showToast('No assets selected.', 'warning');
+        return;
+    }
+    if (!confirm(`⚠️ DANGER: Are you sure you want to permanently DELETE ${ids.length} selected asset(s)?\nThis action cannot be undone.`)) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/assets/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ids)
+        });
+        const data = await res.json();
+        showToast(`Deleted ${data.deletedCount || ids.length} asset(s).`, 'success');
+        deselectAllAssets();
+        await loadAssets();
+        if (typeof loadDashboardSummary === 'function') loadDashboardSummary();
+        if (typeof loadActivityLogs === 'function') loadActivityLogs();
+    } catch (err) {
+        console.error('Bulk delete error:', err);
+        showToast('Failed to delete assets: ' + err.message, 'error');
+    }
+}
+
+function bulkExportSelectedAssets() {
+    const ids = getSelectedAssetIds();
+    if (ids.length === 0) {
+        showToast('No assets selected to export.', 'warning');
+        return;
+    }
+    const selectedAssets = (App.cachedAssets || []).filter(a => ids.includes(a.id));
+    if (selectedAssets.length === 0) {
+        showToast('No asset data found to export.', 'warning');
+        return;
+    }
+
+    const headers = ['Asset Tag', 'Name', 'Category', 'Manufacturer', 'Model', 'Serial Number', 'Status', 'Condition', 'Assigned Employee', 'Assigned Email', 'Department', 'Location', 'Purchase Cost', 'Purchase Date', 'Warranty Expiry', 'Notes'];
+    const rows = selectedAssets.map(a => [
+        `"${(a.assetTag || '').replace(/"/g, '""')}"`,
+        `"${(a.name || '').replace(/"/g, '""')}"`,
+        `"${(a.category || '').replace(/"/g, '""')}"`,
+        `"${(a.manufacturer || '').replace(/"/g, '""')}"`,
+        `"${(a.model || '').replace(/"/g, '""')}"`,
+        `"${(a.serialNumber || '').replace(/"/g, '""')}"`,
+        `"${(a.status || '').replace(/"/g, '""')}"`,
+        `"${(a.condition || '').replace(/"/g, '""')}"`,
+        `"${(a.assignedEmployeeName || '').replace(/"/g, '""')}"`,
+        `"${(a.assignedEmployeeEmail || '').replace(/"/g, '""')}"`,
+        `"${(a.assignedDepartment || '').replace(/"/g, '""')}"`,
+        `"${(a.location || '').replace(/"/g, '""')}"`,
+        `"${a.purchaseCost != null ? a.purchaseCost : ''}"`,
+        `"${(a.purchaseDate || '')}"`,
+        `"${(a.warrantyExpiryDate || '')}"`,
+        `"${(a.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `selected_it_assets_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${selectedAssets.length} asset(s) to CSV!`, 'success');
+}
+
+function cloneAsset(id) {
+    const src = (App.cachedAssets || []).find(a => a.id === id);
+    if (!src) return;
+    openAssetModal();
+    const title = document.getElementById('asset-modal-title');
+    if (title) title.textContent = `Clone Asset Template (from ${src.assetTag})`;
+
+    document.getElementById('asset-id').value = '';
+    const tagInput = document.getElementById('asset-tag');
+    if (tagInput) {
+        tagInput.value = '';
+        tagInput.placeholder = 'e.g. AST-' + Math.floor(1000 + Math.random() * 9000);
+    }
+    const serialInput = document.getElementById('asset-serial');
+    if (serialInput) {
+        serialInput.value = '';
+        serialInput.placeholder = 'Enter new device serial number';
+    }
+
+    if (document.getElementById('asset-name')) document.getElementById('asset-name').value = src.name || '';
+    if (document.getElementById('asset-category')) document.getElementById('asset-category').value = src.category || 'LAPTOP';
+    if (document.getElementById('asset-manufacturer')) document.getElementById('asset-manufacturer').value = src.manufacturer || '';
+    if (document.getElementById('asset-model')) document.getElementById('asset-model').value = src.model || '';
+    if (document.getElementById('asset-status')) document.getElementById('asset-status').value = 'AVAILABLE';
+    if (document.getElementById('asset-condition')) document.getElementById('asset-condition').value = src.condition || 'NEW';
+    if (document.getElementById('asset-cost')) document.getElementById('asset-cost').value = src.purchaseCost != null ? src.purchaseCost : '';
+    if (document.getElementById('asset-location')) document.getElementById('asset-location').value = src.location || '';
+    if (document.getElementById('asset-specs')) document.getElementById('asset-specs').value = src.specifications || '';
+    if (document.getElementById('asset-notes')) document.getElementById('asset-notes').value = `Cloned from ${src.assetTag}. ` + (src.notes || '');
+
+    showToast(`Cloned specifications from ${src.assetTag}. Provide a new Tag & Serial.`, 'info');
 }
 
 // -------------------------------------------------------
@@ -814,12 +1102,38 @@ async function loadLicenses() {
         const res = await fetch('/api/licenses');
         if (!res.ok) return;
         const licenses = await res.json();
+        App.cachedLicenses = licenses;
         const navBadge = document.getElementById('nav-count-licenses');
         if (navBadge) navBadge.innerText = licenses.length;
-        renderLicenseCards('licenses-grid', licenses);
+        filterLicensesList();
     } catch (err) {
         console.error('Error loading licenses:', err);
     }
+}
+
+function filterLicensesList() {
+    const query = (document.getElementById('license-search-input')?.value || '').toLowerCase().trim();
+    const typeFilter = document.getElementById('filter-license-type')?.value || '';
+
+    let filtered = App.cachedLicenses || [];
+    if (query) {
+        filtered = filtered.filter(l =>
+            (l.softwareName && l.softwareName.toLowerCase().includes(query)) ||
+            (l.vendor && l.vendor.toLowerCase().includes(query)) ||
+            (l.licenseKey && l.licenseKey.toLowerCase().includes(query)) ||
+            (l.department && l.department.toLowerCase().includes(query))
+        );
+    }
+    if (typeFilter) {
+        filtered = filtered.filter(l => l.licenseType === typeFilter);
+    }
+    renderLicenseCards('licenses-grid', filtered);
+}
+
+function resetLicenseFilters() {
+    if (document.getElementById('license-search-input')) document.getElementById('license-search-input').value = '';
+    if (document.getElementById('filter-license-type')) document.getElementById('filter-license-type').value = '';
+    filterLicensesList();
 }
 
 function renderLicenseCards(containerId, licenses) {
@@ -997,6 +1311,13 @@ function filterUsersList() {
     renderUsersTable(App.cachedUsers);
 }
 
+function resetUserFilters() {
+    if (document.getElementById('user-search-input')) document.getElementById('user-search-input').value = '';
+    if (document.getElementById('filter-user-role')) document.getElementById('filter-user-role').value = '';
+    if (document.getElementById('filter-user-dept')) document.getElementById('filter-user-dept').value = '';
+    renderUsersTable(App.cachedUsers);
+}
+
 function openAddUserModal() {
     document.getElementById('add-user-form').reset();
     document.getElementById('add-user-modal').style.display = 'flex';
@@ -1107,11 +1428,42 @@ async function loadEmails() {
         const badge = document.getElementById('nav-count-emails');
         if (badge) badge.textContent = emails.length;
 
-        renderEmailsTable(emails);
+        filterEmailsList();
         await checkSmtpStatus();
     } catch (err) {
         console.error('Error loading emails:', err);
     }
+}
+
+function filterEmailsList() {
+    const query = (document.getElementById('email-search-input')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('filter-email-status')?.value || '';
+
+    let filtered = App.cachedEmails || [];
+    if (query) {
+        filtered = filtered.filter(e =>
+            (e.recipientEmail && e.recipientEmail.toLowerCase().includes(query)) ||
+            (e.recipientName && e.recipientName.toLowerCase().includes(query)) ||
+            (e.subject && e.subject.toLowerCase().includes(query)) ||
+            (e.emailType && e.emailType.toLowerCase().includes(query))
+        );
+    }
+    if (statusFilter) {
+        if (statusFilter === 'DELIVERED_TO_OUTBOX') {
+            filtered = filtered.filter(e => e.status === 'DELIVERED_TO_OUTBOX' || e.status === 'DELIVERED_TO_INBOX');
+        } else if (statusFilter === 'SMTP_SENT') {
+            filtered = filtered.filter(e => e.status && e.status.includes('SMTP'));
+        } else if (statusFilter === 'PENDING') {
+            filtered = filtered.filter(e => e.status === 'PENDING');
+        }
+    }
+    renderEmailsTable(filtered);
+}
+
+function resetEmailFilters() {
+    if (document.getElementById('email-search-input')) document.getElementById('email-search-input').value = '';
+    if (document.getElementById('filter-email-status')) document.getElementById('filter-email-status').value = '';
+    renderEmailsTable(App.cachedEmails || []);
 }
 
 async function checkSmtpStatus() {
@@ -4201,6 +4553,180 @@ async function executeBulkImport() {
             execBtn.textContent = 'Try Import Again →';
         }
     }
+}
+
+// -------------------------------------------------------
+// GLOBAL SPOTLIGHT SEARCH (Ctrl + K / Cmd + K / /)
+// -------------------------------------------------------
+function openSpotlightSearch() {
+    const modal = document.getElementById('spotlight-search-modal');
+    const input = document.getElementById('spotlight-input');
+    const results = document.getElementById('spotlight-results');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 60);
+    }
+    if (results) {
+        results.innerHTML = `
+            <div style="padding: 28px 16px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+                Type an asset tag, serial, model, employee name, email, software license, or accessory...
+            </div>`;
+    }
+}
+
+function closeSpotlightSearch() {
+    const modal = document.getElementById('spotlight-search-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function closeSpotlightOnBackdrop(e) {
+    if (e.target.id === 'spotlight-search-modal') {
+        closeSpotlightSearch();
+    }
+}
+
+let spotlightTimer = null;
+function handleSpotlightInput(val) {
+    clearTimeout(spotlightTimer);
+    const query = (val || '').trim();
+    const results = document.getElementById('spotlight-results');
+    if (!results) return;
+
+    if (!query) {
+        results.innerHTML = `
+            <div style="padding: 28px 16px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+                Type an asset tag, serial, model, employee name, email, software license, or accessory...
+            </div>`;
+        return;
+    }
+
+    spotlightTimer = setTimeout(async () => {
+        try {
+            results.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Searching all IT records...</div>`;
+            const res = await fetch(`/api/system/search?q=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error('Search failed');
+            const data = await res.json();
+            renderSpotlightResults(data, query);
+        } catch (err) {
+            results.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--status-red); font-size: 13px;">Search error: ${escapeHtml(err.message)}</div>`;
+        }
+    }, 180);
+}
+
+function renderSpotlightResults(data, query) {
+    const results = document.getElementById('spotlight-results');
+    if (!results) return;
+
+    const assets = data.assets || [];
+    const users = data.users || [];
+    const licenses = data.licenses || [];
+    const accessories = data.accessories || [];
+
+    const total = assets.length + users.length + licenses.length + accessories.length;
+    if (total === 0) {
+        results.innerHTML = `
+            <div style="padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                No IT records found matching "<strong style="color:var(--text-primary)">${escapeHtml(query)}</strong>".
+            </div>`;
+        return;
+    }
+
+    let html = '';
+
+    if (assets.length > 0) {
+        html += `<div class="spotlight-section-title">Hardware Assets (${assets.length})</div>`;
+        assets.forEach(a => {
+            const statusClass = `pill-${a.status.toLowerCase().replace(/_/g, '-')}`;
+            html += `
+                <div class="spotlight-item" onclick="jumpToAssetFromSpotlight('${escapeHtml(a.assetTag)}')">
+                    <div class="spotlight-item-icon">💻</div>
+                    <div class="spotlight-item-body">
+                        <div class="spotlight-item-title">${escapeHtml(a.name)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">(${escapeHtml(a.assetTag)})</span></div>
+                        <div class="spotlight-item-sub">
+                            ${escapeHtml(a.manufacturer || '')} ${escapeHtml(a.model || '')} 
+                            ${a.assignedEmployeeName ? `&bull; Assigned to <strong style="color:#cbd5e1">${escapeHtml(a.assignedEmployeeName)}</strong>` : '&bull; <span style="color:#10b981">Available</span>'}
+                        </div>
+                    </div>
+                    <span class="pill ${statusClass}" style="font-size:11px;">${a.status.replace(/_/g, ' ')}</span>
+                </div>`;
+        });
+    }
+
+    if (users.length > 0) {
+        html += `<div class="spotlight-section-title">Employees &amp; Staff (${users.length})</div>`;
+        users.forEach(u => {
+            html += `
+                <div class="spotlight-item" onclick="jumpToUserFromSpotlight('${escapeHtml(u.email)}')">
+                    <div class="spotlight-item-icon">👤</div>
+                    <div class="spotlight-item-body">
+                        <div class="spotlight-item-title">${escapeHtml(u.fullName)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">(${escapeHtml(u.email)})</span></div>
+                        <div class="spotlight-item-sub">${escapeHtml(u.department || 'No Dept')} &bull; ${escapeHtml(u.jobTitle || 'Employee')}</div>
+                    </div>
+                    <span class="role-pill pill-${u.role === 'ADMIN' ? 'admin' : 'employee'}" style="font-size:11px;">${u.role}</span>
+                </div>`;
+        });
+    }
+
+    if (licenses.length > 0) {
+        html += `<div class="spotlight-section-title">Software Licenses (${licenses.length})</div>`;
+        licenses.forEach(l => {
+            html += `
+                <div class="spotlight-item" onclick="jumpToTab('licenses')">
+                    <div class="spotlight-item-icon">🔑</div>
+                    <div class="spotlight-item-body">
+                        <div class="spotlight-item-title">${escapeHtml(l.softwareName)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">(${escapeHtml(l.vendor || '')})</span></div>
+                        <div class="spotlight-item-sub">${escapeHtml(l.department || 'All')} &bull; Seats: ${l.usedSeats || 0} / ${l.totalSeats || 1} &bull; ${l.licenseType || 'Subscription'}</div>
+                    </div>
+                    <span class="category-tag" style="font-size:11px;">License</span>
+                </div>`;
+        });
+    }
+
+    if (accessories.length > 0) {
+        html += `<div class="spotlight-section-title">Accessories (${accessories.length})</div>`;
+        accessories.forEach(acc => {
+            html += `
+                <div class="spotlight-item" onclick="jumpToTab('accessories')">
+                    <div class="spotlight-item-icon">🔌</div>
+                    <div class="spotlight-item-body">
+                        <div class="spotlight-item-title">${escapeHtml(acc.name)}</div>
+                        <div class="spotlight-item-sub">${escapeHtml(acc.category || 'Accessory')} &bull; In Stock: ${acc.totalQuantity - acc.checkedOutQuantity} / ${acc.totalQuantity}</div>
+                    </div>
+                    <span class="cond-badge cond-good" style="font-size:11px;">Hardware</span>
+                </div>`;
+        });
+    }
+
+    results.innerHTML = html;
+}
+
+function jumpToAssetFromSpotlight(assetTag) {
+    closeSpotlightSearch();
+    switchTab('assets');
+    const searchInput = document.getElementById('asset-search-input');
+    if (searchInput) {
+        searchInput.value = assetTag;
+        loadAssets();
+    }
+}
+
+function jumpToUserFromSpotlight(email) {
+    closeSpotlightSearch();
+    switchTab('users');
+    const searchInput = document.getElementById('user-search-input');
+    if (searchInput) {
+        searchInput.value = email;
+        filterUsersList();
+    }
+}
+
+function jumpToTab(tabName) {
+    closeSpotlightSearch();
+    switchTab(tabName);
 }
 
 

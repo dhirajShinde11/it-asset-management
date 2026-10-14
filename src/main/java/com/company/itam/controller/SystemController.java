@@ -1,25 +1,24 @@
 package com.company.itam.controller;
 
+import com.company.itam.repository.AccessoryRepository;
+import com.company.itam.repository.AssetRepository;
+import com.company.itam.repository.SoftwareLicenseRepository;
+import com.company.itam.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/system")
 @CrossOrigin(origins = "*")
-@Tag(name = "System Info", description = "Server network addresses and system discovery")
+@Tag(name = "System Info", description = "Server network addresses, system discovery, and global search")
 public class SystemController {
 
     @Value("${server.port:8085}")
@@ -27,6 +26,41 @@ public class SystemController {
 
     @Value("${itam.server.host:}")
     private String configuredHost;
+
+    private final AssetRepository assetRepository;
+    private final UserRepository userRepository;
+    private final SoftwareLicenseRepository softwareLicenseRepository;
+    private final AccessoryRepository accessoryRepository;
+
+    public SystemController(AssetRepository assetRepository,
+                            UserRepository userRepository,
+                            SoftwareLicenseRepository softwareLicenseRepository,
+                            AccessoryRepository accessoryRepository) {
+        this.assetRepository = assetRepository;
+        this.userRepository = userRepository;
+        this.softwareLicenseRepository = softwareLicenseRepository;
+        this.accessoryRepository = accessoryRepository;
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Unified global search across assets, users, licenses, accessories")
+    public ResponseEntity<Map<String, Object>> globalSearch(@RequestParam(required = false, defaultValue = "") String q) {
+        Map<String, Object> results = new HashMap<>();
+        String query = (q != null) ? q.trim() : "";
+        if (query.length() < 1) {
+            results.put("assets", Collections.emptyList());
+            results.put("users", Collections.emptyList());
+            results.put("licenses", Collections.emptyList());
+            results.put("accessories", Collections.emptyList());
+            return ResponseEntity.ok(results);
+        }
+
+        results.put("assets", assetRepository.searchAssets(query));
+        results.put("users", userRepository.searchUsers(query));
+        results.put("licenses", softwareLicenseRepository.searchLicenses(query));
+        results.put("accessories", accessoryRepository.findByNameContainingIgnoreCase(query));
+        return ResponseEntity.ok(results);
+    }
 
     @GetMapping("/network-info")
     @Operation(summary = "Get server local network IP and port for mobile QR code links")

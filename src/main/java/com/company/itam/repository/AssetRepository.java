@@ -39,6 +39,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
            "LOWER(a.manufacturer) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(a.assignedEmployeeName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(a.assignedEmployeeEmail) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(a.assignedDepartment) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(a.location) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Asset> searchAssets(@Param("query") String query);

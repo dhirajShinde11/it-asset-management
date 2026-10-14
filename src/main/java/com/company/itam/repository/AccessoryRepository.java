@@ -10,4 +10,5 @@ import java.util.List;
 public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
     List<Accessory> findByCategoryIgnoreCase(String category);
     List<Accessory> findByRemainingQuantityLessThanEqual(Integer threshold);
+    List<Accessory> findByNameContainingIgnoreCase(String name);
 }

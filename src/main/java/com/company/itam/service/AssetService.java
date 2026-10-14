@@ -36,6 +36,10 @@ public class AssetService {
 
     @Transactional(readOnly = true)
     public List<Asset> getAllAssets(String query, AssetCategory category, AssetStatus status) {
+        return getAllAssets(query, category, status, null);
+    }
+
+    public List<Asset> getAllAssets(String query, AssetCategory category, AssetStatus status, String department) {
         List<Asset> assets;
         if (query != null && !query.trim().isEmpty()) {
             assets = assetRepository.searchAssets(query.trim());
@@ -46,6 +50,7 @@ public class AssetService {
         return assets.stream()
                 .filter(a -> category == null || a.getCategory() == category)
                 .filter(a -> status == null || a.getStatus() == status)
+                .filter(a -> department == null || department.isBlank() || (a.getAssignedDepartment() != null && a.getAssignedDepartment().equalsIgnoreCase(department.trim())))
                 .collect(Collectors.toList());
     }
 
@@ -204,5 +209,31 @@ public class AssetService {
         asset.setAssignedDate(dto.getAssignedDate());
         asset.setSpecifications(dto.getSpecifications());
         asset.setNotes(dto.getNotes());
+    }
+
+    @Transactional
+    public Asset updateAssetStatus(Long id, AssetStatus newStatus, String notes) {
+        Asset asset = getAssetById(id);
+        AssetStatus oldStatus = asset.getStatus();
+        asset.setStatus(newStatus);
+        if (newStatus == AssetStatus.AVAILABLE || newStatus == AssetStatus.RETIRED || newStatus == AssetStatus.LOST_OR_STOLEN) {
+            asset.setAssignedEmployeeName(null);
+            asset.setAssignedEmployeeEmail(null);
+            asset.setAssignedDepartment(null);
+            asset.setAssignedDate(null);
+        }
+        Asset saved = assetRepository.save(asset);
+        activityLogService.log(
+            com.company.itam.model.ActivityAction.UPDATED,
+            com.company.itam.model.ItemType.ASSET,
+            asset.getId(),
+            asset.getAssetTag(),
+            asset.getName(),
+            asset.getAssignedEmployeeName(),
+            asset.getAssignedEmployeeEmail(),
+            "IT Admin",
+            "Status changed from " + oldStatus + " to " + newStatus + (notes != null ? " (" + notes + ")" : "")
+        );
+        return saved;
     }
 }

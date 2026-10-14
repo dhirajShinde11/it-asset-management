@@ -41,8 +41,9 @@ public class AssetController {
     public ResponseEntity<List<Asset>> getAllAssets(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) AssetCategory category,
-            @RequestParam(required = false) AssetStatus status) {
-        return ResponseEntity.ok(assetService.getAllAssets(query, category, status));
+            @RequestParam(required = false) AssetStatus status,
+            @RequestParam(required = false) String department) {
+        return ResponseEntity.ok(assetService.getAllAssets(query, category, status, department));
     }
 
     @GetMapping("/{id}")
@@ -99,6 +100,63 @@ public class AssetController {
     public ResponseEntity<Void> deleteAsset(@PathVariable Long id) {
         assetService.deleteAsset(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/bulk-delete")
+    @Operation(summary = "Bulk delete multiple assets by IDs")
+    public ResponseEntity<java.util.Map<String, Object>> bulkDeleteAssets(@RequestBody List<Long> ids) {
+        int count = 0;
+        for (Long id : ids) {
+            try {
+                assetService.deleteAsset(id);
+                count++;
+            } catch (Exception ignored) {}
+        }
+        java.util.Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("success", true);
+        resp.put("deletedCount", count);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/bulk-checkin")
+    @Operation(summary = "Bulk check-in multiple assets back to available inventory")
+    public ResponseEntity<java.util.Map<String, Object>> bulkCheckinAssets(@RequestBody List<Long> ids) {
+        int count = 0;
+        for (Long id : ids) {
+            try {
+                com.company.itam.dto.AssetCheckinDto dto = new com.company.itam.dto.AssetCheckinDto();
+                dto.setCheckinNotes("Bulk checkin by Admin");
+                assetService.checkinAsset(id, dto);
+                count++;
+            } catch (Exception ignored) {}
+        }
+        java.util.Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("success", true);
+        resp.put("checkedInCount", count);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/bulk-status")
+    @Operation(summary = "Bulk update status for multiple assets")
+    public ResponseEntity<java.util.Map<String, Object>> bulkUpdateStatus(@RequestBody java.util.Map<String, Object> req) {
+        @SuppressWarnings("unchecked")
+        List<Object> rawIds = (List<Object>) req.get("ids");
+        String statusStr = (String) req.get("status");
+        int count = 0;
+        if (rawIds != null && statusStr != null) {
+            com.company.itam.model.AssetStatus newStatus = com.company.itam.model.AssetStatus.valueOf(statusStr);
+            for (Object item : rawIds) {
+                try {
+                    Long id = Long.valueOf(item.toString());
+                    assetService.updateAssetStatus(id, newStatus, "Bulk status change");
+                    count++;
+                } catch (Exception ignored) {}
+            }
+        }
+        java.util.Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("success", true);
+        resp.put("updatedCount", count);
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{id}/maintenance")

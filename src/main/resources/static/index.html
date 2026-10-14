@@ -277,6 +277,13 @@
                         </div>
                     </div>
 
+                    <!-- Quick Global Search Capsule -->
+                    <div class="global-search-pill" onclick="openSpotlightSearch()" title="Spotlight Quick Search (Ctrl + K or /)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <span>Search ITAM...</span>
+                        <kbd class="shortcut-badge">Ctrl K</kbd>
+                    </div>
+
                     <!-- Live LAN Network Access Pill -->
                     <div id="lan-share-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 7px 12px; font-size: 12px; color: var(--status-green); cursor: pointer;" onclick="openNetworkShareModal()" title="Click to view QR code and share links for other devices on this Wi-Fi">
                         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-green); box-shadow: 0 0 8px var(--status-green);"></span>
@@ -424,7 +431,29 @@
                             <option value="LOST_OR_STOLEN">Lost / Stolen</option>
                         </select>
 
-                        <button class="btn btn-icon" title="Reset Filters" onclick="resetFilters()">
+                        <select id="filter-dept" onchange="loadAssets()" class="select-control">
+                            <option value="">All Departments</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="DevOps">DevOps</option>
+                            <option value="Product Design">Product Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+
+                        <select id="filter-condition" onchange="loadAssets()" class="select-control">
+                            <option value="">All Conditions</option>
+                            <option value="NEW">New</option>
+                            <option value="EXCELLENT">Excellent</option>
+                            <option value="GOOD">Good</option>
+                            <option value="FAIR">Fair</option>
+                            <option value="DAMAGED">Damaged</option>
+                        </select>
+
+                        <button class="btn btn-icon" title="Reset All Filters" onclick="resetFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                         </button>
 
@@ -443,15 +472,16 @@
                     <table class="data-table" id="assets-table">
                         <thead>
                             <tr>
-                                <th>Asset Tag</th>
-                                <th>Name &amp; Model</th>
+                                <th style="width: 38px; text-align: center;"><input type="checkbox" id="assets-select-all" onchange="toggleSelectAllAssets(this)" title="Select All Assets"></th>
+                                <th class="sortable-th" onclick="sortAssets('assetTag')">Asset Tag <span class="sort-indicator" id="sort-assetTag">↕</span></th>
+                                <th class="sortable-th" onclick="sortAssets('name')">Name &amp; Model <span class="sort-indicator" id="sort-name">↕</span></th>
                                 <th>Category</th>
-                                <th>Status</th>
+                                <th class="sortable-th" onclick="sortAssets('status')">Status <span class="sort-indicator" id="sort-status">↕</span></th>
                                 <th>Condition</th>
-                                <th>Assigned To</th>
+                                <th class="sortable-th" onclick="sortAssets('assignedEmployeeName')">Assigned To <span class="sort-indicator" id="sort-assignedEmployeeName">↕</span></th>
                                 <th>Department</th>
                                 <th>Location</th>
-                                <th>Cost</th>
+                                <th class="sortable-th" onclick="sortAssets('purchaseCost')">Cost <span class="sort-indicator" id="sort-purchaseCost">↕</span></th>
                                 <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
@@ -459,6 +489,32 @@
                             <!-- Populated dynamically via JS -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Floating Bulk Actions Bar -->
+                <div id="assets-bulk-bar" class="bulk-actions-floating-bar">
+                    <span class="bulk-badge" id="bulk-selected-count">0 Selected</span>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="bulkCheckinSelectedAssets()" title="Return selected assets to Available inventory">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        Check In
+                    </button>
+                    <select id="bulk-status-select" onchange="bulkChangeStatusSelectedAssets(this.value)" class="select-control" style="font-size: 12px; padding: 5px 8px; height: 32px; background: rgba(255,255,255,0.08); width: auto;">
+                        <option value="">Change Status...</option>
+                        <option value="AVAILABLE">Mark Available</option>
+                        <option value="UNDER_MAINTENANCE">Mark Under Maintenance</option>
+                        <option value="RESERVED">Mark Reserved</option>
+                        <option value="RETIRED">Mark Retired</option>
+                        <option value="LOST_OR_STOLEN">Mark Lost / Stolen</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="bulkExportSelectedAssets()" title="Export selected assets to CSV">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Export CSV
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="bulkDeleteSelectedAssets()" title="Delete selected assets permanently">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Delete
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="deselectAllAssets()" style="padding: 5px 8px;" title="Clear Selection">&times; Clear</button>
                 </div>
             </section>
 
@@ -663,6 +719,27 @@
                     </button>
                 </div>
 
+                <!-- Software License Search & Filter Toolbar -->
+                <div class="toolbar" style="margin-bottom: 20px;">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="license-search-input" placeholder="Search licenses by software name, vendor, license key, or department..." oninput="filterLicensesList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-license-type" onchange="filterLicensesList()" class="select-control">
+                            <option value="">All License Types</option>
+                            <option value="Subscription">Subscription / SaaS</option>
+                            <option value="Perpetual">Perpetual</option>
+                            <option value="Volume">Volume / Enterprise</option>
+                            <option value="OEM">OEM</option>
+                            <option value="Open Source">Open Source</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetLicenseFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="cards-grid" id="licenses-grid">
                     <!-- Populated dynamically via JS -->
                 </div>
@@ -737,6 +814,9 @@
                             <option value="ADMIN">Admins Only</option>
                             <option value="EMPLOYEE">Employees Only</option>
                         </select>
+                        <button class="btn btn-icon" title="Reset User Filters" onclick="resetUserFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
                     </div>
                 </div>
 
@@ -848,12 +928,30 @@
                 </div>
 
                 <!-- SMTP Status Alert Banner -->
-                <div id="smtp-status-banner" style="margin-bottom: 20px; padding: 14px 18px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155;">
+                <div id="smtp-status-banner" style="margin-bottom: 16px; padding: 14px 18px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155;">
                     <div style="display: flex; align-items: center; gap: 12px;" id="smtp-banner-text">
                         <span id="smtp-status-indicator" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #94a3b8;"></span>
                         <span>Loading SMTP configuration...</span>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="openSmtpModal()" style="font-size: 12px; padding: 4px 12px;">Settings &amp; Test</button>
+                </div>
+
+                <!-- Email Outbox Search & Filter Toolbar -->
+                <div class="toolbar" style="margin-bottom: 16px;">
+                    <div class="search-input-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="email-search-input" placeholder="Search outbox emails by recipient, subject, or email type..." oninput="filterEmailsList()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-email-status" onchange="filterEmailsList()" class="select-control">
+                            <option value="">All Statuses</option>
+                            <option value="DELIVERED_TO_OUTBOX">Delivered / Sent</option>
+                            <option value="FAILED">Failed</option>
+                        </select>
+                        <button class="btn btn-icon" title="Reset Filters" onclick="resetEmailFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-container">
@@ -2719,6 +2817,26 @@
                         Import Records &rarr;
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL: GLOBAL SPOTLIGHT SEARCH / COMMAND PALETTE               -->
+    <!-- ============================================================== -->
+    <div class="modal-overlay" id="spotlight-search-modal" style="display: none; z-index: 1100;" onclick="closeSpotlightOnBackdrop(event)">
+        <div class="spotlight-dialog" onclick="event.stopPropagation()">
+            <div class="spotlight-input-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="spotlight-input" placeholder="Type to search assets, serials, employees, licenses, or actions... (ESC to close)" autocomplete="off" oninput="handleSpotlightInput(this.value)">
+                <span class="shortcut-badge">ESC</span>
+            </div>
+            <div class="spotlight-results" id="spotlight-results-container">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="spotlight-footer">
+                <div><span>Tip: Press <strong>Ctrl + K</strong> or <strong>/</strong> anywhere to search</span></div>
+                <div><span style="font-family: monospace;">Aegis Enterprise ITAM Spotlight</span></div>
             </div>
         </div>
     </div>
