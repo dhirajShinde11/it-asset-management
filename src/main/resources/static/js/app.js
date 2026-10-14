@@ -3754,6 +3754,12 @@ function setBulkImportType(type) {
         autoUserWrap.style.display = (type === 'assets') ? 'flex' : 'none';
     }
 
+    // Show/hide welcome email checkbox (relevant for users and assets)
+    const emailWrap = document.getElementById('bulk-opt-email-wrap');
+    if (emailWrap) {
+        emailWrap.style.display = (type === 'users' || type === 'assets') ? 'flex' : 'none';
+    }
+
     // If data already loaded, re-process preview for current type
     if (App.bulkState.rawCsv) {
         processCsvData(App.bulkState.rawCsv);
@@ -4087,6 +4093,7 @@ async function executeBulkImport() {
     const type = App.bulkState.type;
     const updateExisting = document.getElementById('bulk-opt-update')?.checked || false;
     const autoCreateUsers = document.getElementById('bulk-opt-autouser')?.checked || false;
+    const sendWelcomeEmail = document.getElementById('bulk-opt-sendemail')?.checked !== false;
     const execBtn = document.getElementById('btn-execute-bulk');
     const resultBanner = document.getElementById('bulk-result-banner');
 
@@ -4101,10 +4108,10 @@ async function executeBulkImport() {
 
         if (type === 'assets') {
             endpoint = '/api/bulk/assets';
-            payload = { assets: rows, updateExisting, autoCreateUsers };
+            payload = { assets: rows, updateExisting, autoCreateUsers, sendWelcomeEmail };
         } else if (type === 'users') {
             endpoint = '/api/bulk/users';
-            payload = { users: rows, updateExisting };
+            payload = { users: rows, updateExisting, sendWelcomeEmail };
         } else if (type === 'accessories') {
             endpoint = '/api/bulk/accessories';
             payload = { accessories: rows, updateExisting };

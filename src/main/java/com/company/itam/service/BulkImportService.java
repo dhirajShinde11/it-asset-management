@@ -28,19 +28,22 @@ public class BulkImportService {
     private final ConsumableRepository consumableRepository;
     private final AuthService authService;
     private final ActivityLogService activityLogService;
+    private final EmailService emailService;
 
     public BulkImportService(AssetRepository assetRepository,
                              UserRepository userRepository,
                              AccessoryRepository accessoryRepository,
                              ConsumableRepository consumableRepository,
                              AuthService authService,
-                             ActivityLogService activityLogService) {
+                             ActivityLogService activityLogService,
+                             EmailService emailService) {
         this.assetRepository = assetRepository;
         this.userRepository = userRepository;
         this.accessoryRepository = accessoryRepository;
         this.consumableRepository = consumableRepository;
         this.authService = authService;
         this.activityLogService = activityLogService;
+        this.emailService = emailService;
     }
 
     /**
@@ -85,14 +88,14 @@ public class BulkImportService {
 
                 // Update existing asset
                 Asset asset = existingOpt.get();
-                populateAssetFields(asset, row, request.isAutoCreateUsers());
+                populateAssetFields(asset, row, request.isAutoCreateUsers(), request.isSendWelcomeEmail());
                 assetRepository.save(asset);
                 result.setUpdatedCount(result.getUpdatedCount() + 1);
             } else {
                 // Create new asset
                 Asset asset = new Asset();
                 asset.setAssetTag(tag);
-                populateAssetFields(asset, row, request.isAutoCreateUsers());
+                populateAssetFields(asset, row, request.isAutoCreateUsers(), request.isSendWelcomeEmail());
                 Asset saved = assetRepository.save(asset);
                 result.setCreatedCount(result.getCreatedCount() + 1);
             }
@@ -175,8 +178,18 @@ public class BulkImportService {
                 user.setPassword(authService.hashPassword(pwd));
                 user.setTemporaryPassword(pwd);
 
-                userRepository.save(user);
+                AppUser saved = userRepository.save(user);
                 result.setCreatedCount(result.getCreatedCount() + 1);
+
+                if (request.isSendWelcomeEmail()) {
+                    try {
+                        emailService.sendWelcomeEmail(saved, pwd, null);
+                        log.info("Dispatched welcome onboarding email to bulk imported user: {}", normalizedEmail);
+                    } catch (Exception e) {
+                        log.warn("Failed to dispatch welcome email to {}: {}", normalizedEmail, e.getMessage());
+                        result.getWarnings().add("User '" + normalizedEmail + "' created, but email dispatch failed: " + e.getMessage());
+                    }
+                }
             }
         }
 
@@ -357,7 +370,7 @@ public class BulkImportService {
     // Helper Methods
     // -------------------------------------------------------------
 
-    private void populateAssetFields(Asset asset, BulkAssetRowDto row, boolean autoCreateUsers) {
+    private void populateAssetFields(Asset asset, BulkAssetRowDto row, boolean autoCreateUsers, boolean sendWelcomeEmail) {
         asset.setName(clean(row.getName()));
         asset.setCategory(parseCategory(row.getCategory()));
         asset.setManufacturer(clean(row.getManufacturer()));
@@ -384,7 +397,7 @@ public class BulkImportService {
             }
 
             if (autoCreateUsers && assigneeEmail != null && assigneeEmail.contains("@")) {
-                ensureUserExists(assigneeEmail.toLowerCase(), assigneeName, assignedDept);
+                ensureUserExists(assigneeEmail.toLowerCase(), assigneeName, assignedDept, sendWelcomeEmail);
             }
         }
 
@@ -396,7 +409,7 @@ public class BulkImportService {
         }
     }
 
-    private void ensureUserExists(String email, String name, String dept) {
+    private void ensureUserExists(String email, String name, String dept, boolean sendWelcomeEmail) {
         if (!userRepository.existsByEmailIgnoreCase(email)) {
             AppUser u = new AppUser();
             u.setEmail(email);
@@ -407,8 +420,15 @@ public class BulkImportService {
             String pwd = "Pass@" + (1000 + (int)(Math.random() * 9000));
             u.setPassword(authService.hashPassword(pwd));
             u.setTemporaryPassword(pwd);
-            userRepository.save(u);
+            AppUser saved = userRepository.save(u);
             log.info("Auto-registered employee profile for bulk imported asset: {}", email);
+            if (sendWelcomeEmail) {
+                try {
+                    emailService.sendWelcomeEmail(saved, pwd, null);
+                } catch (Exception e) {
+                    log.warn("Failed to dispatch welcome email to auto-created user {}: {}", email, e.getMessage());
+                }
+            }
         }
     }
 

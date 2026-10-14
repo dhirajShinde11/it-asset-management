@@ -7,6 +7,7 @@ public class BulkAssetImportRequest {
     private List<BulkAssetRowDto> assets = new ArrayList<>();
     private boolean updateExisting = false;
     private boolean autoCreateUsers = true;
+    private boolean sendWelcomeEmail = true;
 
     public BulkAssetImportRequest() {}
 
@@ -18,4 +19,7 @@ public class BulkAssetImportRequest {
 
     public boolean isAutoCreateUsers() { return autoCreateUsers; }
     public void setAutoCreateUsers(boolean autoCreateUsers) { this.autoCreateUsers = autoCreateUsers; }
+
+    public boolean isSendWelcomeEmail() { return sendWelcomeEmail; }
+    public void setSendWelcomeEmail(boolean sendWelcomeEmail) { this.sendWelcomeEmail = sendWelcomeEmail; }
 }
