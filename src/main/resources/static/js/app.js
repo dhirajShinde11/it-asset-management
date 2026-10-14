@@ -2102,9 +2102,33 @@ async function fetchNetworkInfo() {
         if (res.ok) {
             App.networkInfo = await res.json();
             console.log('[ITAM] Server network discovery:', App.networkInfo);
+
+            // Update Topbar LAN Sharing Pill with live IP or Hostname
+            const pillLabel = document.getElementById('lan-share-label');
+            if (pillLabel && App.networkInfo.lanUrl) {
+                const displayHost = App.networkInfo.lanIp || App.networkInfo.hostName || 'Connected';
+                pillLabel.innerHTML = `LAN: <strong>${escapeHtml(displayHost)}:${App.networkInfo.serverPort || 8085}</strong>`;
+                const pill = document.getElementById('lan-share-pill');
+                if (pill) {
+                    pill.title = `Live address: ${App.networkInfo.lanUrl} (Click to copy and share with anyone on your Wi-Fi)`;
+                }
+            }
         }
     } catch (e) {
         console.warn('[ITAM] Network info fetch error:', e);
+    }
+}
+
+function copyLanUrl() {
+    const url = (App.networkInfo && (App.networkInfo.lanUrl || App.networkInfo.hostnameUrl)) || window.location.origin;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast(`Copied LAN URL: ${url} ✓ (Share with anyone on this Wi-Fi)`, 'success');
+        }).catch(() => {
+            prompt('Copy this link for users on your network:', url);
+        });
+    } else {
+        prompt('Copy this link for users on your network:', url);
     }
 }
 
@@ -2113,12 +2137,11 @@ function getSelectedQrBaseUrl() {
     if (select && select.value) {
         return select.value;
     }
-    // Smart fallback if select is not yet loaded:
+    // Smart dynamic fallback:
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         if (App.networkInfo && App.networkInfo.lanUrl) {
             return App.networkInfo.lanUrl;
         }
-        return `http://${(App.networkInfo && App.networkInfo.lanIp) || '192.168.6.116'}:${window.location.port || '8085'}`;
     }
     return window.location.origin;
 }
@@ -2151,21 +2174,35 @@ function populateQrHostPresetOptions() {
     if (!select) return;
 
     const port = (App.networkInfo && App.networkInfo.serverPort) || window.location.port || '8085';
-    const detectedLanIp = (App.networkInfo && App.networkInfo.lanIp) || '192.168.6.116';
+    const detectedLanIp = (App.networkInfo && App.networkInfo.lanIp) || window.location.hostname;
     const lanUrl = (App.networkInfo && App.networkInfo.lanUrl) || `http://${detectedLanIp}:${port}`;
     const browserOrigin = window.location.origin;
 
     const options = [
         {
             value: lanUrl,
-            label: `📱 Mobile Wi-Fi (Host PC LAN): ${lanUrl}`
+            label: `📱 Current Wi-Fi / LAN (Auto-Detected): ${lanUrl}`
         }
     ];
+
+    if (App.networkInfo && App.networkInfo.hostnameUrl && App.networkInfo.hostnameUrl !== lanUrl) {
+        options.push({
+            value: App.networkInfo.hostnameUrl,
+            label: `💻 Computer Name (Localhost Name): ${App.networkInfo.hostnameUrl}`
+        });
+    }
+
+    if (App.networkInfo && App.networkInfo.mdnsUrl && App.networkInfo.mdnsUrl !== lanUrl) {
+        options.push({
+            value: App.networkInfo.mdnsUrl,
+            label: `🍏 Local Hostname (mDNS): ${App.networkInfo.mdnsUrl}`
+        });
+    }
 
     if (browserOrigin !== lanUrl) {
         options.push({
             value: browserOrigin,
-            label: `💻 Desktop Browser (Local): ${browserOrigin}`
+            label: `🖥️ Desktop Browser (Local): ${browserOrigin}`
         });
     }
 

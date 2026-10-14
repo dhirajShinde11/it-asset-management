@@ -34,9 +34,11 @@ public class SystemController {
         Map<String, Object> info = new HashMap<>();
         java.util.List<String> ips = discoverLanIps();
         String primaryIp = ips.isEmpty() ? "127.0.0.1" : ips.get(0);
+        String hostName = getMachineHostName();
         
         info.put("serverPort", serverPort);
         info.put("lanIp", primaryIp);
+        info.put("hostName", hostName);
         info.put("availableIps", ips);
         
         String effectiveHost = (configuredHost != null && !configuredHost.isBlank())
@@ -48,7 +50,17 @@ public class SystemController {
                 : "http://" + effectiveHost + ":" + serverPort;
                 
         info.put("lanUrl", lanUrl);
+        info.put("hostnameUrl", "http://" + hostName + ":" + serverPort);
+        info.put("mdnsUrl", "http://" + hostName.toLowerCase() + ".local:" + serverPort);
         return ResponseEntity.ok(info);
+    }
+
+    private String getMachineHostName() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+            return "localhost";
+        }
     }
 
     private java.util.List<String> discoverLanIps() {
@@ -58,6 +70,12 @@ public class SystemController {
             while (interfaces.hasMoreElements()) {
                 NetworkInterface iface = interfaces.nextElement();
                 if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) continue;
+                
+                String display = iface.getDisplayName().toLowerCase();
+                // Exclude common virtual adapters like vEthernet, VirtualBox, VMware, WSL
+                if (display.contains("virtual") || display.contains("vmware") || display.contains("vbox") || display.contains("wsl")) {
+                    continue;
+                }
                 
                 Enumeration<InetAddress> addresses = iface.getInetAddresses();
                 while (addresses.hasMoreElements()) {

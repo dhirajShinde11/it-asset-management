@@ -277,6 +277,13 @@
                         </div>
                     </div>
 
+                    <!-- Live LAN Network Access Pill -->
+                    <div id="lan-share-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 7px 12px; font-size: 12px; color: var(--status-green); cursor: pointer;" onclick="copyLanUrl()" title="Click to copy live network link for other devices on this Wi-Fi">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-green); box-shadow: 0 0 8px var(--status-green);"></span>
+                        <span id="lan-share-label">LAN: Auto-Detecting...</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 2px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+
                     <!-- Dynamic Action Buttons -->
                     <button class="btn btn-secondary" id="btn-export-csv" onclick="exportAssetsCsv()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
