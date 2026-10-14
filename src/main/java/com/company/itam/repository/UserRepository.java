@@ -27,4 +27,9 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
            "LOWER(u.jobTitle) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<AppUser> searchUsers(@org.springframework.data.repository.query.Param("query") String query);
+
+    Optional<AppUser> findFirstByFullNameIgnoreCase(String fullName);
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM AppUser u WHERE LOWER(TRIM(u.fullName)) = LOWER(TRIM(:name)) OR LOWER(TRIM(u.fullName)) LIKE LOWER(CONCAT(TRIM(:name), '%')) OR LOWER(TRIM(:name)) LIKE LOWER(CONCAT(TRIM(u.fullName), '%')) ORDER BY LENGTH(u.fullName) ASC")
+    List<AppUser> findBestMatchByName(@org.springframework.data.repository.query.Param("name") String name);
 }

@@ -381,6 +381,26 @@ public class BulkImportService {
         String assigneeEmail = clean(row.getAssignedEmployeeEmail());
         String assignedDept = clean(row.getAssignedDepartment());
 
+        // Smart Employee Reconciliation: Auto-resolve email & department from employee roster
+        if (assigneeEmail == null && assigneeName != null && !assigneeName.trim().isEmpty()) {
+            List<AppUser> matchedUsers = userRepository.findBestMatchByName(assigneeName.trim());
+            if (!matchedUsers.isEmpty()) {
+                AppUser matched = matchedUsers.get(0);
+                assigneeEmail = matched.getEmail();
+                assigneeName = matched.getFullName();
+                if (assignedDept == null || assignedDept.trim().isEmpty()) {
+                    assignedDept = matched.getDepartment();
+                }
+            }
+        } else if (assigneeEmail != null && !assigneeEmail.trim().isEmpty()) {
+            Optional<AppUser> userOpt = userRepository.findByEmailIgnoreCase(assigneeEmail.trim());
+            if (userOpt.isPresent()) {
+                AppUser matched = userOpt.get();
+                if (assigneeName == null || assigneeName.trim().isEmpty()) assigneeName = matched.getFullName();
+                if (assignedDept == null || assignedDept.trim().isEmpty()) assignedDept = matched.getDepartment();
+            }
+        }
+
         asset.setStatus(parseStatus(row.getStatus(), assigneeEmail != null ? assigneeEmail : assigneeName));
         asset.setCondition(parseCondition(row.getCondition()));
         asset.setPurchaseCost(parseCost(row.getPurchaseCost()));

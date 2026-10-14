@@ -403,13 +403,16 @@ function switchTab(tabKey) {
         if (sub) sub.innerText = headings[tabKey][1];
     }
 
+    if (tabKey === 'assets') { loadAssets(); loadDashboardSummary(); }
     if (tabKey === 'accessories') loadAccessories();
     if (tabKey === 'consumables') loadConsumables();
     if (tabKey === 'components') loadComponents();
+    if (tabKey === 'licenses') loadLicenses();
     if (tabKey === 'activity') loadActivityLogs();
-    if (tabKey === 'analytics') renderAnalyticsBreakdowns();
+    if (tabKey === 'analytics') { loadDashboardSummary(); if (typeof renderAnalyticsBreakdowns === 'function') renderAnalyticsBreakdowns(); }
     if (tabKey === 'emails') loadEmails();
     if (tabKey === 'users') loadUsers();
+    if (tabKey === 'employee-portal' && typeof loadEmployeePortalOverview === 'function') loadEmployeePortalOverview();
 }
 
 // -------------------------------------------------------
@@ -421,25 +424,42 @@ async function loadDashboardSummary() {
         if (!res.ok) return;
         const data = await res.json();
 
-        document.getElementById('val-total-assets').innerText = data.totalAssets;
-        document.getElementById('val-assigned-assets').innerText = data.assignedAssets;
-        document.getElementById('val-available-assets').innerText = data.availableAssets;
-        document.getElementById('val-maintenance-assets').innerText = data.maintenanceAssets;
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null) el.innerText = val;
+        };
+
+        setVal('val-total-assets', data.totalAssets);
+        setVal('val-assigned-assets', data.assignedAssets);
+        setVal('val-available-assets', data.availableAssets);
+        setVal('val-maintenance-assets', data.maintenanceAssets);
 
         const valEl = document.getElementById('val-asset-value');
-        valEl.innerText = data.totalAssetValue ? '$' + Number(data.totalAssetValue).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$0.00';
+        if (valEl) {
+            valEl.innerText = data.totalAssetValue ? '$' + Number(data.totalAssetValue).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '$0.00';
+        }
 
-        document.getElementById('val-expiring-count').innerText = data.expiringWarrantiesCount;
-        document.getElementById('nav-count-assets').innerText = data.totalAssets;
+        setVal('val-expiring-count', data.expiringWarrantiesCount);
+        setVal('nav-count-assets', data.totalAssets);
+
+        // Sub-trend percentages
+        if (data.totalAssets > 0) {
+            const pct = Math.round((data.assignedAssets / data.totalAssets) * 100);
+            const subAssigned = document.getElementById('sub-assigned-pct');
+            if (subAssigned) subAssigned.textContent = `${pct}% in active workforce use`;
+        }
 
         // Equipment Inventory Counters
         const setNav = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.innerText = val; };
         setNav('nav-count-accessories', data.totalAccessories);
         setNav('nav-count-consumables', data.totalConsumables);
         setNav('nav-count-components', data.totalComponents);
-        if (data.recentActivityLogs) setNav('nav-count-activity', data.recentActivityLogs.length);
+        if (data.recentActivity) setNav('nav-count-activity', data.recentActivity.length);
 
         window.lastDashboardSummary = data;
+        if (typeof renderAnalyticsBreakdowns === 'function') {
+            renderAnalyticsBreakdowns();
+        }
     } catch (err) {
         console.error('Dashboard summary error:', err);
     }
@@ -471,6 +491,15 @@ async function loadAssets() {
         App.cachedAssets = assets;
         applySortToCachedAssets();
         renderAssetsTable(App.cachedAssets);
+
+        const navCount = document.getElementById('nav-count-assets');
+        if (navCount && !query && !category && !status && !department && !condition) {
+            navCount.innerText = assets.length;
+        }
+        // Update dashboard metrics in background
+        if (typeof loadDashboardSummary === 'function') {
+            loadDashboardSummary();
+        }
     } catch (err) {
         console.error('Error loading assets:', err);
     }

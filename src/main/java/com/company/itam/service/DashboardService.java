@@ -93,7 +93,11 @@ public class DashboardService {
                 .count());
 
         summary.setTotalComponents(componentRepository.count());
-        summary.setRecentActivity(activityLogRepository.findTop50ByOrderByTimestampDesc());
+        try {
+            summary.setRecentActivity(activityLogRepository.findTop50ByOrderByTimestampDesc());
+        } catch (Exception ignored) {
+            summary.setRecentActivity(java.util.Collections.emptyList());
+        }
 
         return summary;
     }

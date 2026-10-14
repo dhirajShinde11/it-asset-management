@@ -78,7 +78,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         UserResponseDto userDto = mapToDto(user);
-        List<Asset> assignedAssets = assetRepository.findByAssignedEmployeeEmailIgnoreCase(user.getEmail());
+        List<Asset> assignedAssets = assetRepository.findByAssignedEmployeeEmailOrName(user.getEmail(), user.getFullName());
 
         BigDecimal totalValue = assignedAssets.stream()
                 .map(Asset::getPurchaseCost)
@@ -244,7 +244,7 @@ public class UserService {
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLastLoginAt(user.getLastLoginAt());
 
-        List<Asset> assets = assetRepository.findByAssignedEmployeeEmailIgnoreCase(user.getEmail());
+        List<Asset> assets = assetRepository.findByAssignedEmployeeEmailOrName(user.getEmail(), user.getFullName());
         dto.setAssignedAssetsCount(assets.size());
         dto.setAssignedAssetTags(assets.stream()
                 .map(a -> a.getAssetTag() + " (" + a.getName() + ")")

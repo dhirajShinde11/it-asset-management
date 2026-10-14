@@ -49,7 +49,7 @@ public class EmployeePortalController {
     public ResponseEntity<EmployeeOverviewDto> getOverview(@RequestParam String email) {
         UserResponseDto user = userService.getUserByEmail(email);
 
-        List<Asset> assignedAssets = assetRepository.findByAssignedEmployeeEmailIgnoreCase(email);
+        List<Asset> assignedAssets = assetRepository.findByAssignedEmployeeEmailOrName(email, user != null ? user.getFullName() : null);
 
         // Fetch maintenance tickets associated with their assigned assets
         List<MaintenanceRecord> serviceHistory = new ArrayList<>();
@@ -69,7 +69,11 @@ public class EmployeePortalController {
     @GetMapping("/assets")
     @Operation(summary = "List all hardware assets currently assigned to employee")
     public ResponseEntity<List<Asset>> getMyAssets(@RequestParam String email) {
-        return ResponseEntity.ok(assetRepository.findByAssignedEmployeeEmailIgnoreCase(email));
+        UserResponseDto user = null;
+        try {
+            user = userService.getUserByEmail(email);
+        } catch (Exception ignored) {}
+        return ResponseEntity.ok(assetRepository.findByAssignedEmployeeEmailOrName(email, user != null ? user.getFullName() : null));
     }
 
     @PostMapping("/service-request")

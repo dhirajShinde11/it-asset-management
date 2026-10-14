@@ -27,6 +27,11 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     List<Asset> findByAssignedEmployeeEmailIgnoreCase(String email);
 
+    @Query("SELECT a FROM Asset a WHERE " +
+           "(a.assignedEmployeeEmail IS NOT NULL AND LOWER(a.assignedEmployeeEmail) = LOWER(:email)) OR " +
+           "(:name IS NOT NULL AND LOWER(a.assignedEmployeeName) = LOWER(:name))")
+    List<Asset> findByAssignedEmployeeEmailOrName(@Param("email") String email, @Param("name") String name);
+
     long countByAssignedEmployeeEmailIgnoreCase(String email);
 
     List<Asset> findByWarrantyExpiryDateBetween(LocalDate start, LocalDate end);
