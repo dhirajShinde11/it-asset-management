@@ -2132,6 +2132,68 @@ function copyLanUrl() {
     }
 }
 
+function openNetworkShareModal() {
+    if (!App.networkInfo) {
+        fetchNetworkInfo().then(() => populateAndShowNetworkShareModal());
+    } else {
+        populateAndShowNetworkShareModal();
+    }
+}
+
+function populateAndShowNetworkShareModal() {
+    const port = (App.networkInfo && App.networkInfo.serverPort) || 8085;
+    const hostname = (App.networkInfo && App.networkInfo.hostName) || window.location.hostname || 'DESKTOP-GA6UVF3';
+    const lanIp = (App.networkInfo && App.networkInfo.lanIp) || window.location.hostname;
+    
+    const hostnameUrl = (App.networkInfo && App.networkInfo.hostnameUrl) || `http://${hostname}:${port}`;
+    const mdnsUrl = (App.networkInfo && App.networkInfo.mdnsUrl) || `http://${hostname.toLowerCase()}.local:${port}`;
+    const lanUrl = (App.networkInfo && App.networkInfo.lanUrl) || `http://${lanIp}:${port}`;
+
+    const hostInput = document.getElementById('net-share-hostname-url');
+    if (hostInput) hostInput.value = hostnameUrl;
+
+    const mdnsInput = document.getElementById('net-share-mdns-url');
+    if (mdnsInput) mdnsInput.value = mdnsUrl;
+
+    const lanInput = document.getElementById('net-share-lan-url');
+    if (lanInput) lanInput.value = lanUrl;
+
+    const statusEl = document.getElementById('net-share-status');
+    if (statusEl) {
+        statusEl.textContent = `Online: Port ${port} (Auto-Detected: ${lanIp})`;
+    }
+
+    // Render QR Code in modal pointing to the live network URL
+    const qrContainer = document.getElementById('net-share-qr');
+    if (qrContainer) {
+        qrContainer.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+                text: lanUrl,
+                width: 120,
+                height: 120,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+    }
+
+    const modal = document.getElementById('network-share-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeNetworkShareModal() {
+    const modal = document.getElementById('network-share-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Auto-detect IP changes whenever tab regains focus or periodically
+window.addEventListener('focus', () => {
+    fetchNetworkInfo();
+});
+setInterval(fetchNetworkInfo, 45000);
+
 function getSelectedQrBaseUrl() {
     const select = document.getElementById('qr-host-preset-select');
     if (select && select.value) {
