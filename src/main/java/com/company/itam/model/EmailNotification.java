@@ -25,7 +25,7 @@ public class EmailNotification {
     @Column(nullable = false)
     private String emailType;
 
-    @Column(length = 10000)
+    @Column(columnDefinition = "LONGTEXT")
     private String content;
 
     private String temporaryPassword;

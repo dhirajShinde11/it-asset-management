@@ -174,11 +174,16 @@ async function submitAuthPageLogin(event) {
         };
         localStorage.setItem('itam_session', JSON.stringify(App.session));
 
+        // Preserve pending URL params if any
+        const urlParams = new URLSearchParams(window.location.search);
+        const pendingTab = urlParams.get('tab');
+        const pendingTicket = urlParams.get('ticket');
+
         // Clean query parameter from URL
         window.history.replaceState({}, document.title, window.location.pathname);
 
         // Activate layout
-        activateAppLayout();
+        activateAppLayout(pendingTab, pendingTicket);
         showToast(`Welcome back, ${data.fullName}!`, 'success');
 
     } catch (err) {
@@ -190,7 +195,7 @@ async function submitAuthPageLogin(event) {
     }
 }
 
-async function activateAppLayout() {
+async function activateAppLayout(overrideTab, overrideTicket) {
     const authView = document.getElementById('auth-view');
     const appLayout = document.getElementById('app-layout');
 
@@ -222,8 +227,24 @@ async function activateAppLayout() {
         document.getElementById('sidebar-role-indicator').textContent = 'Admin Command Hub';
 
         showAdminLayout();
-        switchTab('assets');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetTab = overrideTab || urlParams.get('tab') || 'assets';
+        const targetTicket = overrideTicket || urlParams.get('ticket');
+
+        switchTab(targetTab);
         await refreshAll();
+
+        if (targetTicket) {
+            setTimeout(async () => {
+                const searchEl = document.getElementById('ticket-search');
+                if (searchEl) {
+                    searchEl.value = targetTicket;
+                    filterTickets();
+                }
+                openTicketByNumber(targetTicket);
+            }, 350);
+        }
     }
 }
 
@@ -1533,9 +1554,22 @@ function renderEmailsTable(emails) {
     }
 
     tbody.innerHTML = emails.map(e => {
-        const typeBadge = e.emailType === 'WELCOME_ONBOARDING'
-            ? '<span class="role-pill pill-admin" style="font-size:0.7rem">ONBOARDING</span>'
-            : '<span class="role-pill pill-employee" style="font-size:0.7rem">ASSET ASSIGN</span>';
+        let typeBadge = '';
+        if (e.emailType === 'WELCOME_ONBOARDING') {
+            typeBadge = '<span class="role-pill pill-admin" style="font-size:0.7rem">ONBOARDING</span>';
+        } else if (e.emailType === 'ASSET_ASSIGNED') {
+            typeBadge = '<span class="role-pill pill-employee" style="font-size:0.7rem">ASSET ASSIGN</span>';
+        } else if (e.emailType === 'TICKET_TECHNICIAN_ALERT') {
+            typeBadge = '<span class="role-pill" style="font-size:0.7rem;background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.4);font-weight:700;">🚨 TECH ALERT</span>';
+        } else if (e.emailType === 'TICKET_REASSIGNED_ALERT') {
+            typeBadge = '<span class="role-pill" style="font-size:0.7rem;background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);font-weight:700;">🔄 TECH ASSIGN</span>';
+        } else if (e.emailType === 'TICKET_CREATED') {
+            typeBadge = '<span class="role-pill" style="font-size:0.7rem;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)">TICKET CONFIRM</span>';
+        } else if (e.emailType === 'TICKET_UPDATED') {
+            typeBadge = '<span class="role-pill" style="font-size:0.7rem;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)">TICKET UPDATE</span>';
+        } else {
+            typeBadge = `<span class="role-pill" style="font-size:0.7rem">${escapeHtml(e.emailType || 'GENERAL')}</span>`;
+        }
         const sentDate = e.sentAt ? new Date(e.sentAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '–';
 
         let statusBadge = '';
@@ -5235,6 +5269,20 @@ async function openTicketDetailModal(ticketId) {
     } catch (err) {
         showToast(err.message, 'error');
         closeModal('ticket-detail-modal');
+    }
+}
+
+async function openTicketByNumber(ticketNumber) {
+    if (!ticketNumber) return;
+    try {
+        const res = await fetch(`/api/tickets/number/${encodeURIComponent(ticketNumber)}`);
+        if (!res.ok) return;
+        const t = await res.json();
+        if (t && t.id) {
+            openTicketDetailModal(t.id);
+        }
+    } catch (e) {
+        console.warn('Could not auto-open ticket by number:', ticketNumber, e);
     }
 }
 

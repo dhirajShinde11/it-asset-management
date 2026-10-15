@@ -81,10 +81,20 @@ public class TicketService {
                 "Created IT ticket [" + saved.getCategory() + " / " + saved.getPriority() + "]"
         );
 
+        // 1. Dispatch confirmation email to requester
         try {
             emailService.sendTicketCreatedNotification(saved);
         } catch (Exception e) {
-            log.warn("Could not dispatch ticket created email: {}", e.getMessage());
+            log.warn("Could not dispatch ticket created email to requester {}: {}", saved.getRequesterEmail(), e.getMessage());
+        }
+
+        // 2. Dispatch alert email to assigned technician
+        try {
+            TechnicianInfo tech = resolveTechnician(saved.getAssignedTo());
+            emailService.sendTicketTechnicianAlert(saved, tech.email(), tech.name());
+            log.info("Dispatched technician alert email for ticket {} to {} ({})", saved.getTicketNumber(), tech.name(), tech.email());
+        } catch (Exception e) {
+            log.warn("Could not dispatch technician alert email for ticket {}: {}", saved.getTicketNumber(), e.getMessage());
         }
 
         return saved;
@@ -93,6 +103,7 @@ public class TicketService {
     public Ticket updateTicket(Long id, TicketUpdateDto dto, String updatedBy) {
         Ticket ticket = getTicketById(id);
         TicketStatus oldStatus = ticket.getStatus();
+        String oldAssignedTo = ticket.getAssignedTo();
 
         if (dto.getStatus() != null) {
             ticket.setStatus(dto.getStatus());
@@ -108,8 +119,15 @@ public class TicketService {
         if (dto.getCategory() != null) {
             ticket.setCategory(dto.getCategory());
         }
-        if (dto.getAssignedTo() != null) {
-            ticket.setAssignedTo(dto.getAssignedTo());
+
+        boolean reassigned = false;
+        if (dto.getAssignedTo() != null && !dto.getAssignedTo().isBlank()) {
+            String cleanOld = (oldAssignedTo != null) ? oldAssignedTo.trim() : "";
+            String cleanNew = dto.getAssignedTo().trim();
+            if (!cleanNew.equalsIgnoreCase(cleanOld)) {
+                ticket.setAssignedTo(cleanNew);
+                reassigned = true;
+            }
         }
         if (dto.getResolutionNotes() != null) {
             ticket.setResolutionNotes(dto.getResolutionNotes());
@@ -127,7 +145,7 @@ public class TicketService {
                 saved.getRequesterName(),
                 saved.getRequesterEmail(),
                 updatedBy != null ? updatedBy : "IT Admin",
-                "Status changed from " + oldStatus + " to " + saved.getStatus()
+                "Status: " + oldStatus + " -> " + saved.getStatus() + (reassigned ? (", Reassigned to: " + saved.getAssignedTo()) : "")
         );
 
         if (oldStatus != saved.getStatus()) {
@@ -138,7 +156,71 @@ public class TicketService {
             }
         }
 
+        if (reassigned) {
+            try {
+                TechnicianInfo tech = resolveTechnician(saved.getAssignedTo());
+                emailService.sendTicketReassignedToTechnicianNotification(saved, tech.email(), tech.name(), updatedBy);
+                log.info("Dispatched ticket reassignment notification for {} to {} ({})", saved.getTicketNumber(), tech.name(), tech.email());
+            } catch (Exception e) {
+                log.warn("Could not dispatch technician reassignment notification: {}", e.getMessage());
+            }
+        }
+
         return saved;
+    }
+
+    public record TechnicianInfo(String email, String name) {}
+
+    public TechnicianInfo resolveTechnician(String assignedTo) {
+        String email = null;
+        String name = (assignedTo != null && !assignedTo.isBlank()) ? assignedTo.trim() : "IT Support";
+
+        if (assignedTo != null && !assignedTo.isBlank()) {
+            String trimmed = assignedTo.trim();
+            if (trimmed.contains("@")) {
+                email = trimmed.toLowerCase();
+                Optional<AppUser> user = userRepository.findByEmailIgnoreCase(email);
+                if (user.isPresent()) {
+                    name = user.get().getFullName();
+                }
+            } else {
+                Optional<AppUser> user = userRepository.findFirstByFullNameIgnoreCase(trimmed);
+                if (user.isEmpty()) {
+                    List<AppUser> matches = userRepository.findBestMatchByName(trimmed);
+                    if (!matches.isEmpty()) {
+                        user = Optional.of(matches.get(0));
+                    }
+                }
+                if (user.isPresent()) {
+                    email = user.get().getEmail();
+                    name = user.get().getFullName();
+                }
+            }
+        }
+
+        // Fallback: if not resolved, lookup primary admin dhiraj@bmconsulting.co or first ADMIN user
+        if (email == null || email.isBlank()) {
+            Optional<AppUser> dhiraj = userRepository.findByEmailIgnoreCase("dhiraj@bmconsulting.co");
+            if (dhiraj.isPresent()) {
+                email = dhiraj.get().getEmail();
+                if (assignedTo == null || assignedTo.isBlank() || assignedTo.equalsIgnoreCase("Dhiraj Shinde")) {
+                    name = dhiraj.get().getFullName();
+                }
+            } else {
+                List<AppUser> admins = userRepository.findByRole(UserRole.ADMIN);
+                if (!admins.isEmpty()) {
+                    email = admins.get(0).getEmail();
+                    if (assignedTo == null || assignedTo.isBlank()) {
+                        name = admins.get(0).getFullName();
+                    }
+                } else {
+                    email = "dhiraj@bmconsulting.co";
+                    name = "Dhiraj Shinde";
+                }
+            }
+        }
+
+        return new TechnicianInfo(email, name);
     }
 
     @Transactional(readOnly = true)

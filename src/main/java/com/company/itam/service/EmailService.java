@@ -4,6 +4,8 @@ import com.company.itam.model.AppUser;
 import com.company.itam.model.Asset;
 import com.company.itam.model.EmailNotification;
 import com.company.itam.model.SmtpSetting;
+import com.company.itam.model.Ticket;
+import com.company.itam.model.TicketPriority;
 import com.company.itam.repository.EmailNotificationRepository;
 import com.company.itam.repository.SmtpSettingRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -50,6 +52,16 @@ public class EmailService {
 
     @Value("${itam.mail.enabled:true}")
     private boolean propMailEnabled;
+
+    @Value("${itam.server.host:}")
+    private String propServerHost;
+
+    public String getBasePortalUrl() {
+        if (propServerHost != null && !propServerHost.isBlank()) {
+            return "http://" + propServerHost.trim() + ":" + serverPort;
+        }
+        return "http://localhost:" + serverPort;
+    }
 
     public EmailService(EmailNotificationRepository emailRepository, SmtpSettingRepository smtpSettingRepository) {
         this.emailRepository = emailRepository;
@@ -410,8 +422,8 @@ public class EmailService {
                 + "</html>";
     }
 
-    public EmailNotification sendTicketCreatedNotification(com.company.itam.model.Ticket ticket) {
-        String portalUrl = "http://localhost:" + serverPort + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
+    public EmailNotification sendTicketCreatedNotification(Ticket ticket) {
+        String portalUrl = getBasePortalUrl() + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
         String subject = "IT Support Ticket Created: [" + ticket.getTicketNumber() + "] " + ticket.getTitle();
         String htmlContent = buildTicketEmailHtml(ticket, portalUrl, "Support Ticket Registered",
                 "Your IT support ticket has been received by the IT Helpdesk team. A technician will review and action this request.");
@@ -431,8 +443,8 @@ public class EmailService {
         return saved;
     }
 
-    public EmailNotification sendTicketUpdatedNotification(com.company.itam.model.Ticket ticket) {
-        String portalUrl = "http://localhost:" + serverPort + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
+    public EmailNotification sendTicketUpdatedNotification(Ticket ticket) {
+        String portalUrl = getBasePortalUrl() + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
         String subject = "IT Ticket Status Updated: [" + ticket.getTicketNumber() + "] " + ticket.getStatus();
         String message = "Your IT support ticket has been updated to <strong>" + ticket.getStatus() + "</strong>."
                 + (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank() 
@@ -452,6 +464,169 @@ public class EmailService {
         EmailNotification saved = emailRepository.save(notification);
         dispatchViaSmtp(saved);
         return saved;
+    }
+
+    public EmailNotification sendTicketTechnicianAlert(Ticket ticket, String technicianEmail, String technicianName) {
+        String dashboardUrl = getBasePortalUrl() + "/?tab=tickets&ticket=" + java.net.URLEncoder.encode(ticket.getTicketNumber(), java.nio.charset.StandardCharsets.UTF_8);
+
+        String prioEmoji = "📋";
+        String prioColor = "#3b82f6";
+        if (ticket.getPriority() != null) {
+            switch (ticket.getPriority()) {
+                case CRITICAL -> {
+                    prioEmoji = "🚨";
+                    prioColor = "#ef4444";
+                }
+                case HIGH -> {
+                    prioEmoji = "⚠️";
+                    prioColor = "#f59e0b";
+                }
+                case LOW -> {
+                    prioEmoji = "ℹ️";
+                    prioColor = "#64748b";
+                }
+                default -> {
+                    prioEmoji = "📋";
+                    prioColor = "#3b82f6";
+                }
+            }
+        }
+
+        String reqName = (ticket.getRequesterName() != null && !ticket.getRequesterName().isBlank())
+                ? ticket.getRequesterName()
+                : "Employee";
+
+        String subject = prioEmoji + " New IT Support Ticket: [" + ticket.getTicketNumber() + "] "
+                + ticket.getTitle() + " (Requester: " + reqName + ")";
+
+        String htmlContent = buildTechnicianTicketAlertHtml(ticket, technicianName, dashboardUrl, prioColor, false, null);
+
+        EmailNotification notification = new EmailNotification();
+        notification.setRecipientEmail(technicianEmail);
+        notification.setRecipientName(technicianName != null && !technicianName.isBlank() ? technicianName : "IT Technician");
+        notification.setSubject(subject);
+        notification.setEmailType("TICKET_TECHNICIAN_ALERT");
+        notification.setContent(htmlContent);
+        notification.setPortalUrl(dashboardUrl);
+        notification.setStatus("DELIVERED_TO_OUTBOX");
+        notification.setSentAt(LocalDateTime.now());
+
+        EmailNotification saved = emailRepository.save(notification);
+        log.info("Dispatched technician alert notification for ticket {} to {} ({})", ticket.getTicketNumber(), technicianName, technicianEmail);
+        dispatchViaSmtp(saved);
+        return saved;
+    }
+
+    public EmailNotification sendTicketReassignedToTechnicianNotification(Ticket ticket, String technicianEmail, String technicianName, String updatedBy) {
+        String dashboardUrl = getBasePortalUrl() + "/?tab=tickets&ticket=" + java.net.URLEncoder.encode(ticket.getTicketNumber(), java.nio.charset.StandardCharsets.UTF_8);
+
+        String subject = "🔄 IT Ticket Reassigned to You: [" + ticket.getTicketNumber() + "] " + ticket.getTitle();
+        String htmlContent = buildTechnicianTicketAlertHtml(ticket, technicianName, dashboardUrl, "#f59e0b", true, updatedBy);
+
+        EmailNotification notification = new EmailNotification();
+        notification.setRecipientEmail(technicianEmail);
+        notification.setRecipientName(technicianName != null && !technicianName.isBlank() ? technicianName : "IT Technician");
+        notification.setSubject(subject);
+        notification.setEmailType("TICKET_REASSIGNED_ALERT");
+        notification.setContent(htmlContent);
+        notification.setPortalUrl(dashboardUrl);
+        notification.setStatus("DELIVERED_TO_OUTBOX");
+        notification.setSentAt(LocalDateTime.now());
+
+        EmailNotification saved = emailRepository.save(notification);
+        log.info("Dispatched technician reassignment notification for ticket {} to {} ({})", ticket.getTicketNumber(), technicianName, technicianEmail);
+        dispatchViaSmtp(saved);
+        return saved;
+    }
+
+    private String buildTechnicianTicketAlertHtml(Ticket ticket, String technicianName,
+                                                  String dashboardUrl, String prioColor,
+                                                  boolean isReassignment, String updatedBy) {
+        String headerTitle = isReassignment ? "IT Support Ticket Reassigned" : "New IT Incident Ticket Logged";
+        String headerSub = isReassignment
+                ? "This ticket has been reassigned to you by " + escapeHtml(updatedBy != null ? updatedBy : "IT Admin") + " for triage & resolution."
+                : "A new support ticket has been raised by an employee and routed to your queue for action.";
+
+        String headerBg = isReassignment
+                ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                : (ticket.getPriority() == TicketPriority.CRITICAL
+                    ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
+                    : "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)");
+
+        StringBuilder assetHtml = new StringBuilder();
+        if (ticket.getAsset() != null) {
+            Asset a = ticket.getAsset();
+            assetHtml.append("<div style='background:#0f172a; border:1px solid #334155; border-radius:8px; padding:18px; margin:20px 0;'>")
+                     .append("<div style='font-size:13px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;'>💻 Attached Hardware Information</div>")
+                     .append("<table style='width:100%; border-collapse:collapse; font-size:14px; color:#cbd5e1;'>")
+                     .append("<tr><td style='padding:4px 0; color:#94a3b8; width:140px;'><strong>Device:</strong></td><td style='color:#f8fafc; font-weight:600;'>")
+                     .append(escapeHtml(a.getName())).append(" (").append(escapeHtml(a.getManufacturer() != null ? a.getManufacturer() : "")).append(" ").append(escapeHtml(a.getModel() != null ? a.getModel() : "")).append(")</td></tr>")
+                     .append("<tr><td style='padding:4px 0; color:#94a3b8;'><strong>Asset Tag:</strong></td><td><code style='color:#38bdf8; font-family:monospace; font-weight:700; background:#1e293b; padding:2px 6px; border-radius:4px;'>")
+                     .append(escapeHtml(a.getAssetTag())).append("</code></td></tr>")
+                     .append("<tr><td style='padding:4px 0; color:#94a3b8;'><strong>Serial Number:</strong></td><td>")
+                     .append(escapeHtml(a.getSerialNumber() != null ? a.getSerialNumber() : "N/A")).append("</td></tr>")
+                     .append("<tr><td style='padding:4px 0; color:#94a3b8;'><strong>Specifications:</strong></td><td>")
+                     .append(escapeHtml(a.getSpecifications() != null ? a.getSpecifications() : "Standard")).append("</td></tr>")
+                     .append("<tr><td style='padding:4px 0; color:#94a3b8;'><strong>Condition / Status:</strong></td><td>")
+                     .append(a.getCondition()).append(" &bull; <span style='color:#38bdf8;'>").append(a.getStatus()).append("</span></td></tr>")
+                     .append("</table></div>");
+        }
+
+        String replyMailto = "mailto:" + escapeHtml(ticket.getRequesterEmail()) + "?subject="
+                + escapeHtml("Re: [" + ticket.getTicketNumber() + "] " + ticket.getTitle());
+
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><style>"
+                + "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #e2e8f0; margin: 0; padding: 24px; -webkit-font-smoothing: antialiased; }"
+                + ".card { max-width: 640px; margin: 0 auto; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }"
+                + ".header { background: " + headerBg + "; padding: 32px 24px; text-align: center; color: white; }"
+                + ".header h1 { margin: 0 0 6px 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }"
+                + ".header p { margin: 0; opacity: 0.95; font-size: 14px; }"
+                + ".body { padding: 30px 24px; line-height: 1.6; color: #cbd5e1; font-size: 15px; }"
+                + ".box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 18px; margin: 20px 0; }"
+                + ".box-title { font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }"
+                + ".row { margin-bottom: 8px; font-size: 14px; }"
+                + ".row strong { color: #94a3b8; display: inline-block; width: 140px; }"
+                + ".btn-primary { display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%); color: #ffffff !important; text-decoration: none; font-weight: 700; padding: 14px 28px; border-radius: 8px; font-size: 15px; box-shadow: 0 4px 14px rgba(99,102,241,0.4); margin: 6px; }"
+                + ".btn-secondary { display: inline-block; background: #334155; color: #e2e8f0 !important; text-decoration: none; font-weight: 600; padding: 14px 22px; border-radius: 8px; font-size: 14px; border: 1px solid #475569; margin: 6px; }"
+                + ".footer { border-top: 1px solid #334155; padding: 22px 24px; text-align: center; font-size: 12px; color: #64748b; background: #162032; }"
+                + "</style></head><body><div class='card'>"
+                + "  <div class='header'>"
+                + "    <h1>" + escapeHtml(headerTitle) + "</h1>"
+                + "    <p>" + escapeHtml(headerSub) + "</p>"
+                + "  </div>"
+                + "  <div class='body'>"
+                + "    <h2 style='color:#f8fafc; font-size:18px; margin-top:0;'>Hello " + escapeHtml(technicianName != null && !technicianName.isBlank() ? technicianName : "Technician") + ",</h2>"
+                + "    <p>A support ticket has been routed to you for technical assessment and resolution. Please review the ticket details below:</p>"
+                + "    <div class='box'>"
+                + "      <div class='box-title'>📋 Ticket Overview</div>"
+                + "      <div class='row'><strong>Ticket Number:</strong> <code style='font-family:monospace; font-weight:700; color:#38bdf8; background:#1e293b; padding:3px 8px; border-radius:4px;'>" + escapeHtml(ticket.getTicketNumber()) + "</code></div>"
+                + "      <div class='row'><strong>Priority:</strong> <span style='font-weight:700; color:" + prioColor + "; background:#1e293b; padding:3px 10px; border-radius:4px; border:1px solid " + prioColor + "44;'>" + ticket.getPriority() + "</span></div>"
+                + "      <div class='row'><strong>Category:</strong> " + ticket.getCategory() + "</div>"
+                + "      <div class='row'><strong>Current Status:</strong> <span style='color:#38bdf8; font-weight:600;'>" + ticket.getStatus() + "</span></div>"
+                + "      <div class='row'><strong>Assigned To:</strong> " + escapeHtml(ticket.getAssignedTo() != null ? ticket.getAssignedTo() : "Unassigned") + "</div>"
+                + "    </div>"
+                + "    <div class='box'>"
+                + "      <div class='box-title'>👤 Requester Profile</div>"
+                + "      <div class='row'><strong>Employee Name:</strong> " + escapeHtml(ticket.getRequesterName()) + "</div>"
+                + "      <div class='row'><strong>Organization Email:</strong> <a href='mailto:" + escapeHtml(ticket.getRequesterEmail()) + "' style='color:#38bdf8; font-weight:600; text-decoration:none;'>" + escapeHtml(ticket.getRequesterEmail()) + "</a></div>"
+                + "      <div class='row'><strong>Department:</strong> " + escapeHtml(ticket.getRequesterDepartment() != null ? ticket.getRequesterDepartment() : "General") + "</div>"
+                + "    </div>"
+                + "    <div style='background:#0f172a; border:1px solid #334155; border-left:4px solid #38bdf8; border-radius:8px; padding:18px; margin:20px 0;'>"
+                + "      <div class='box-title' style='color:#38bdf8; margin-bottom:8px;'>⚠️ Reported Issue</div>"
+                + "      <div style='font-size:16px; font-weight:700; color:#f8fafc; margin-bottom:10px;'>" + escapeHtml(ticket.getTitle()) + "</div>"
+                + "      <div style='font-size:14px; line-height:1.6; color:#cbd5e1; white-space:pre-wrap; background:#1e293b; padding:14px; border-radius:6px; border:1px solid #334155;'>" + escapeHtml(ticket.getDescription() != null ? ticket.getDescription() : "No additional description provided.") + "</div>"
+                + "    </div>"
+                + assetHtml.toString()
+                + "    <div style='text-align:center; margin:32px 0 16px 0;'>"
+                + "      <a href='" + escapeHtml(dashboardUrl) + "' class='btn-primary' target='_blank'>Open Helpdesk &amp; Triage Ticket &rarr;</a>"
+                + "      <a href='" + replyMailto + "' class='btn-secondary'>Direct Reply to Employee</a>"
+                + "    </div>"
+                + "    <p style='font-size:12px; color:#94a3b8; text-align:center; margin-top:20px;'>Helpdesk Link: <a href='" + escapeHtml(dashboardUrl) + "' style='color:#38bdf8; word-break:break-all;'>" + escapeHtml(dashboardUrl) + "</a></p>"
+                + "  </div>"
+                + "  <div class='footer'>"
+                + "    &copy; " + LocalDateTime.now().getYear() + " Aegis IT Asset Management • IT Service Desk &amp; Infrastructure Operations"
+                + "  </div>"
+                + "</div></body></html>";
     }
 
     private String buildTicketEmailHtml(com.company.itam.model.Ticket ticket, String portalUrl, String headerTitle, String bodyMessage) {
