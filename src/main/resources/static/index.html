@@ -156,6 +156,13 @@
                     <span>Activity Audit Log</span>
                     <span class="nav-badge" id="nav-count-activity">0</span>
                 </button>
+                <button class="nav-item" id="nav-tickets-btn" onclick="switchTab('tickets')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 0 0-2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 1 1 0-4V7a2 2 0 0 0-2-2H5z"></path>
+                    </svg>
+                    <span>IT Tickets</span>
+                    <span class="nav-badge" id="nav-count-tickets">0</span>
+                </button>
                 <button class="nav-item" id="nav-maintenance-btn" onclick="switchTab('maintenance')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -974,6 +981,146 @@
             </section>
 
             <!-- ============================================================== -->
+            <!-- TAB: IT Helpdesk & Support Tickets (Admin) -->
+            <!-- ============================================================== -->
+            <section class="tab-pane" id="pane-tickets" style="display: none;">
+                <div class="section-action-header">
+                    <div>
+                        <h2>IT Helpdesk &amp; Support Tickets</h2>
+                        <p class="text-muted">Manage employee hardware incidents, software bugs, access requests, and repair resolutions</p>
+                    </div>
+                    <div class="action-buttons-group">
+                        <button class="btn btn-secondary btn-sm" onclick="exportTicketsCsv()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Export CSV
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="loadTickets()" title="Refresh tickets">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="openAdminTicketModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            + New IT Ticket
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tickets Metrics KPI Strip -->
+                <div class="metrics-grid" style="margin-bottom: 20px;">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Total Support Tickets</span>
+                            <div class="metric-icon-wrap icon-purple">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 0 0-2 2v3a2 2 0 1 1 0 4v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 1 1 0-4V7a2 2 0 0 0-2-2H5z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-purple" id="val-tickets-total">0</div>
+                        <div class="metric-trend text-muted">All lifetime logged tickets</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Open / Unresolved</span>
+                            <div class="metric-icon-wrap icon-amber">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-amber" id="val-tickets-open">0</div>
+                        <div class="metric-trend text-muted">Awaiting triage &amp; review</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">In Progress &amp; Diagnostics</span>
+                            <div class="metric-icon-wrap icon-blue">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-blue" id="val-tickets-progress">0</div>
+                        <div class="metric-trend text-muted">Technician working on issue</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Critical Priority</span>
+                            <div class="metric-icon-wrap icon-rose">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-rose" id="val-tickets-critical">0</div>
+                        <div class="metric-trend text-muted">Urgent employee blockers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Resolved &amp; Closed</span>
+                            <div class="metric-icon-wrap icon-green">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-green" id="val-tickets-resolved">0</div>
+                        <div class="metric-trend text-muted">Successfully closed tickets</div>
+                    </div>
+                </div>
+
+                <!-- Tickets Toolbar & Filters -->
+                <div class="toolbar" style="margin-bottom: 16px;">
+                    <div class="search-input-wrap" style="flex: 1; max-width: 380px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="ticket-search-input" placeholder="Search ticket #, title, requester, asset tag..." oninput="filterTicketsList()">
+                    </div>
+                    <div class="filter-group">
+                        <select class="select-control" id="ticket-status-filter" onchange="filterTicketsList()">
+                            <option value="">All Statuses</option>
+                            <option value="OPEN">Open</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="PENDING_PARTS">Pending Parts</option>
+                            <option value="RESOLVED">Resolved</option>
+                            <option value="CLOSED">Closed</option>
+                        </select>
+                        <select class="select-control" id="ticket-priority-filter" onchange="filterTicketsList()">
+                            <option value="">All Priorities</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                        <select class="select-control" id="ticket-category-filter" onchange="filterTicketsList()">
+                            <option value="">All Categories</option>
+                            <option value="HARDWARE">Hardware</option>
+                            <option value="SOFTWARE">Software</option>
+                            <option value="NETWORK">Network</option>
+                            <option value="ACCESS_REQUEST">Access Request</option>
+                            <option value="EQUIPMENT_REQUEST">Equipment Request</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                        <button class="btn btn-secondary btn-icon" onclick="resetTicketFilters()" title="Reset Filters">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tickets Data Table -->
+                <div class="table-container">
+                    <table class="data-table" id="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Issue / Title</th>
+                                <th>Requester</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Linked Asset</th>
+                                <th>Assigned Tech</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
             <!-- TAB 5: Maintenance Logs (Admin) -->
             <!-- ============================================================== -->
             <section class="tab-pane" id="pane-maintenance" style="display: none;">
@@ -1105,23 +1252,30 @@
                     </div>
                 </div>
 
-                <!-- SECTION 3: SERVICE HISTORY -->
+                <!-- SECTION 3: IT SUPPORT TICKETS -->
                 <div class="emp-section" id="emp-tickets-section">
                     <div class="section-action-header">
                         <div>
-                            <h3>Equipment Service &amp; Support History</h3>
-                            <p class="text-muted">Status of repairs, diagnostic passes, and maintenance requests</p>
+                            <h3>My IT Support Tickets &amp; Service History</h3>
+                            <p class="text-muted">Status of reported hardware problems, software requests, and diagnostic triage</p>
                         </div>
+                        <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            + Raise IT Support Ticket
+                        </button>
                     </div>
                     <div class="table-container">
                         <table class="data-table" id="emp-tickets-table">
                             <thead>
                                 <tr>
+                                    <th>Ticket #</th>
                                     <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Issue / Title</th>
                                     <th>Equipment</th>
-                                    <th>Issue / Request</th>
-                                    <th>Provider</th>
+                                    <th>Priority</th>
                                     <th>Status</th>
+                                    <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="emp-tickets-tbody">
@@ -1370,6 +1524,261 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('emp-service-modal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Submit Service Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Create New IT Support Ticket (Admin) -->
+    <div class="modal-overlay" id="admin-ticket-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Create IT Support Ticket</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Log a hardware issue, service incident, or access request</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('admin-ticket-modal')">&times;</button>
+            </div>
+            <form id="admin-ticket-form" onsubmit="submitAdminTicket(event)">
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="adm-tk-user">Requester Employee *</label>
+                        <select id="adm-tk-user" required onchange="onAdminTicketUserChange()">
+                            <option value="">-- Select Employee --</option>
+                            <!-- Populated with users -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adm-tk-asset">Linked Hardware Asset (Optional)</label>
+                        <select id="adm-tk-asset">
+                            <option value="">-- No Specific Asset --</option>
+                            <!-- Populated with assets -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="adm-tk-category">Category *</label>
+                        <select id="adm-tk-category" required>
+                            <option value="HARDWARE">Hardware (Laptop/Screen/Peripheral)</option>
+                            <option value="SOFTWARE">Software &amp; OS Issues</option>
+                            <option value="NETWORK">Network, VPN &amp; Wi-Fi</option>
+                            <option value="ACCESS_REQUEST">Access &amp; Permissions</option>
+                            <option value="EQUIPMENT_REQUEST">New Equipment Request</option>
+                            <option value="OTHER">Other Issue</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adm-tk-priority">Priority *</label>
+                        <select id="adm-tk-priority" required>
+                            <option value="LOW">Low (Minor inconvenience)</option>
+                            <option value="MEDIUM" selected>Medium (Standard request)</option>
+                            <option value="HIGH">High (Work degraded)</option>
+                            <option value="CRITICAL">Critical (Total work blockage)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="adm-tk-title">Ticket Title / Summary *</label>
+                    <input type="text" id="adm-tk-title" required placeholder="e.g. Dell XPS battery swelling / Figma license access needed">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="adm-tk-desc">Detailed Description *</label>
+                    <textarea id="adm-tk-desc" rows="3" required placeholder="Provide full context, symptoms, error messages, or requested specs..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="adm-tk-assignee">Assigned Technician</label>
+                    <input type="text" id="adm-tk-assignee" value="Dhiraj Shinde" placeholder="Technician name">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('admin-ticket-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create &amp; Dispatch Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: IT Ticket Detail & Resolution -->
+    <div class="modal-overlay" id="ticket-detail-modal" style="display: none;">
+        <div class="modal-dialog modal-lg" style="max-width: 860px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span class="ticket-num-badge" id="td-num">TICK-1001</span>
+                    <h3 id="td-title" style="margin: 0; font-size: 1.2rem;">Ticket Title</h3>
+                    <span id="td-status-badge"></span>
+                    <span id="td-priority-badge"></span>
+                </div>
+                <button class="btn-close" onclick="closeModal('ticket-detail-modal')">&times;</button>
+            </div>
+
+            <div class="modal-body-content" style="padding: 18px 0; overflow-y: auto; max-height: 70vh;">
+                <div class="ticket-detail-grid">
+                    <!-- Left: Ticket Information -->
+                    <div>
+                        <div class="ticket-meta-box" style="margin-bottom: 16px;">
+                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 4px;">
+                                Problem Description
+                            </div>
+                            <div id="td-desc" style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">
+                                --
+                            </div>
+                        </div>
+
+                        <!-- Linked Asset Card -->
+                        <div class="ticket-meta-box" id="td-asset-box" style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Linked Hardware Asset</span>
+                                <span class="asset-tag-badge" id="td-asset-tag">AST-1001</span>
+                            </div>
+                            <div id="td-asset-info" style="font-size: 13px; color: #f1f5f9; margin-top: 4px;">--</div>
+                        </div>
+
+                        <!-- Requester Info Card -->
+                        <div class="ticket-meta-box">
+                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 4px;">
+                                Requester Details
+                            </div>
+                            <div class="ticket-meta-row">
+                                <span class="ticket-meta-label">Name</span>
+                                <span class="ticket-meta-val" id="td-req-name">--</span>
+                            </div>
+                            <div class="ticket-meta-row">
+                                <span class="ticket-meta-label">Email</span>
+                                <span class="ticket-meta-val" id="td-req-email">--</span>
+                            </div>
+                            <div class="ticket-meta-row">
+                                <span class="ticket-meta-label">Department</span>
+                                <span class="ticket-meta-val" id="td-req-dept">--</span>
+                            </div>
+                            <div class="ticket-meta-row">
+                                <span class="ticket-meta-label">Logged On</span>
+                                <span class="ticket-meta-val" id="td-created-at">--</span>
+                            </div>
+                            <div class="ticket-meta-row" id="td-resolved-row" style="display: none;">
+                                <span class="ticket-meta-label">Resolved On</span>
+                                <span class="ticket-meta-val text-green" id="td-resolved-at">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Resolution & Status Update Panel -->
+                    <div>
+                        <form id="ticket-update-form" onsubmit="submitTicketUpdate(event)">
+                            <input type="hidden" id="td-ticket-id">
+                            <div class="ticket-resolution-panel">
+                                <h4 style="margin: 0 0 14px 0; font-size: 14px; color: var(--status-blue); display: flex; align-items: center; gap: 6px;">
+                                    🛠️ Triage &amp; Resolution
+                                </h4>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label for="td-update-status">Ticket Status</label>
+                                    <select id="td-update-status" class="select-control" style="width: 100%;">
+                                        <option value="OPEN">Open (New)</option>
+                                        <option value="IN_PROGRESS">In Progress (Investigating)</option>
+                                        <option value="PENDING_PARTS">Pending Parts / RMA</option>
+                                        <option value="RESOLVED">Resolved (Fixed &amp; Verified)</option>
+                                        <option value="CLOSED">Closed (Archived)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label for="td-update-priority">Urgency Priority</label>
+                                    <select id="td-update-priority" class="select-control" style="width: 100%;">
+                                        <option value="LOW">Low</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="CRITICAL">Critical</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label for="td-update-assignee">Assigned Technician</label>
+                                    <input type="text" id="td-update-assignee" class="select-control" style="width: 100%;" placeholder="Technician name">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 14px;">
+                                    <label for="td-update-notes">Resolution / Technician Notes</label>
+                                    <textarea id="td-update-notes" rows="4" placeholder="Describe actions taken, replaced parts, RMA ticket #, or troubleshooting resolution..." style="font-size: 13px;"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                    Save &amp; Notify Requester
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-danger btn-sm" id="td-btn-delete" onclick="deleteCurrentTicket()">
+                    🗑️ Delete Ticket
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('ticket-detail-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Employee Raise IT Support Ticket -->
+    <div class="modal-overlay" id="emp-ticket-modal" style="display: none;">
+        <div class="modal-dialog modal-md">
+            <div class="modal-header">
+                <div>
+                    <h3>Raise IT Support Ticket</h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Submit hardware repair, software problem, or IT request</p>
+                </div>
+                <button class="btn-close" onclick="closeModal('emp-ticket-modal')">&times;</button>
+            </div>
+            <form id="emp-ticket-form" onsubmit="submitEmpTicket(event)">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="emp-tk-asset">Affected Equipment (Optional)</label>
+                    <select id="emp-tk-asset">
+                        <option value="">-- General Issue / No Specific Device --</option>
+                        <!-- Populated with employee's assigned equipment -->
+                    </select>
+                </div>
+
+                <div class="form-grid" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                        <label for="emp-tk-category">Category *</label>
+                        <select id="emp-tk-category" required>
+                            <option value="HARDWARE">Hardware (Battery/Screen/Keyboard/Dock)</option>
+                            <option value="SOFTWARE">Software &amp; Applications</option>
+                            <option value="NETWORK">Wi-Fi, VPN &amp; Network</option>
+                            <option value="ACCESS_REQUEST">Access &amp; Permissions</option>
+                            <option value="EQUIPMENT_REQUEST">New Equipment Request</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-tk-urgency">Urgency Priority *</label>
+                        <select id="emp-tk-urgency" required>
+                            <option value="MEDIUM" selected>Medium (Standard issue)</option>
+                            <option value="LOW">Low (Minor / Enhancement)</option>
+                            <option value="HIGH">High (Work impaired)</option>
+                            <option value="CRITICAL">Critical (Machine unusable / Blocked)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="emp-tk-title">Issue Summary / Title *</label>
+                    <input type="text" id="emp-tk-title" required placeholder="e.g. Laptop won't boot / External monitor flickering">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="emp-tk-desc">Detailed Description *</label>
+                    <textarea id="emp-tk-desc" rows="3" required placeholder="Describe what happened, error messages, and how to reach you..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('emp-ticket-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Ticket to IT Helpdesk</button>
                 </div>
             </form>
         </div>

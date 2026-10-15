@@ -12,6 +12,15 @@ public class EmployeeOverviewDto {
     private List<Asset> assignedAssets = new ArrayList<>();
     private List<SoftwareLicense> departmentLicenses = new ArrayList<>();
     private List<MaintenanceRecord> serviceHistory = new ArrayList<>();
+    private List<com.company.itam.model.Ticket> tickets = new ArrayList<>();
+
+    public List<com.company.itam.model.Ticket> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<com.company.itam.model.Ticket> tickets) {
+        this.tickets = tickets != null ? tickets : new ArrayList<>();
+    }
 
     public UserResponseDto getProfile() {
         return profile;

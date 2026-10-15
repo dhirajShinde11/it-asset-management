@@ -241,6 +241,7 @@ async function refreshAll() {
     if (App.session && App.session.role === 'ADMIN') {
         loadUsers();
         loadEmails();
+        loadTickets();
     }
 }
 
@@ -357,7 +358,7 @@ function switchTab(tabKey) {
         navWrap.classList.remove('open');
     }
 
-    const allTabs = ['assets', 'accessories', 'consumables', 'components', 'licenses', 'users', 'activity', 'emails', 'maintenance', 'analytics', 'employee-portal'];
+    const allTabs = ['assets', 'accessories', 'consumables', 'components', 'licenses', 'users', 'tickets', 'activity', 'emails', 'maintenance', 'analytics', 'employee-portal'];
     allTabs.forEach(key => {
         const btn = document.getElementById(`nav-${key}-btn`);
         const pane = document.getElementById(`pane-${key}`);
@@ -391,6 +392,7 @@ function switchTab(tabKey) {
         'components': ['Internal Components', 'Track RAM, NVMe SSDs, GPUs, and parts installed into hardware hosts'],
         'licenses': ['Software Licenses & Subscriptions', 'SaaS subscriptions, seat utilization, and renewal tracking'],
         'users': ['Users & Workforce Onboarding', 'Add employees, dispatch welcome emails, and manage access'],
+        'tickets': ['IT Helpdesk & Support Tickets', 'Manage workforce incident tickets, hardware repairs, and access provisioning'],
         'activity': ['Custody & Activity Audit Trail', 'Immutable audit log of all check-outs, returns, physical audits, and part installations'],
         'emails': ['Email Outbox & Notification Audit', 'Live audit log of all dispatched onboarding and assignment notifications'],
         'maintenance': ['Hardware Maintenance & Service Records', 'Repair audits, vendor RMAs, and diagnostic logs'],
@@ -408,10 +410,11 @@ function switchTab(tabKey) {
     if (tabKey === 'consumables') loadConsumables();
     if (tabKey === 'components') loadComponents();
     if (tabKey === 'licenses') loadLicenses();
+    if (tabKey === 'users') loadUsers();
+    if (tabKey === 'tickets') loadTickets();
     if (tabKey === 'activity') loadActivityLogs();
     if (tabKey === 'analytics') { loadDashboardSummary(); if (typeof renderAnalyticsBreakdowns === 'function') renderAnalyticsBreakdowns(); }
     if (tabKey === 'emails') loadEmails();
-    if (tabKey === 'users') loadUsers();
     if (tabKey === 'employee-portal' && typeof loadEmployeePortalOverview === 'function') loadEmployeePortalOverview();
 }
 
@@ -1753,7 +1756,8 @@ async function loadEmployeePortal(email) {
 function renderEmployeePortal(data, email) {
     const profile = data.profile || {};
     const assets = data.assignedAssets || [];
-    const tickets = data.serviceHistory || [];
+    const tickets = data.tickets || [];
+    window.currentEmpOverviewData = data;
 
     // Hero card
     const heroName = profile.fullName || 'Employee';
@@ -1770,6 +1774,8 @@ function renderEmployeePortal(data, email) {
     setEl('emp-val-status', assets.length > 0 ? 'Assigned & Active' : 'No Hardware Allocated');
     setEl('emp-val-tickets-count', tickets.length);
     setEl('nav-emp-count-assets', assets.length);
+    const navEmpTk = document.getElementById('nav-emp-count-tickets');
+    if (navEmpTk) navEmpTk.textContent = tickets.length;
 
     // Assigned Assets cards
     const assetsContainer = document.getElementById('emp-assets-container');
@@ -1796,7 +1802,7 @@ function renderEmployeePortal(data, email) {
                     ${a.specifications ? `<div class="emp-asset-spec">${escapeHtml(a.specifications.substring(0, 90))}${a.specifications.length > 90 ? '…' : ''}</div>` : ''}
                     <div class="emp-asset-footer">
                         <span class="text-muted" style="font-size:0.75rem">S/N: ${escapeHtml(a.serialNumber || 'N/A')}</span>
-                        <button class="btn-table-action" onclick="openEmpServiceModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}')" style="font-size:0.72rem">
+                        <button class="btn-table-action" onclick="openEmpTicketModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}')" style="font-size:0.72rem">
                             🔧 Report Issue
                         </button>
                     </div>
@@ -1805,20 +1811,28 @@ function renderEmployeePortal(data, email) {
         }
     }
 
-    // Service history tickets
+    // IT Support Tickets Table
     const ticketsTbody = document.getElementById('emp-tickets-tbody');
     if (ticketsTbody) {
         if (tickets.length === 0) {
-            ticketsTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No service history on your equipment.</td></tr>';
+            ticketsTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-muted)">No support tickets logged. Click "+ Raise IT Support Ticket" to report any hardware or software issue.</td></tr>';
         } else {
             ticketsTbody.innerHTML = tickets.map(t => {
-                const assetTag = t.asset?.assetTag || t.assetTag || '–';
+                const dateStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '–';
+                const assetStr = t.asset ? `${escapeHtml(t.asset.assetTag)} (${escapeHtml(t.asset.name)})` : '<span style="color:var(--text-muted)">General</span>';
+                const prioClass = `priority-${(t.priority || 'medium').toLowerCase()}`;
+                const statusClass = `pill-${(t.status || 'open').toLowerCase().replace(/_/g, '-')}`;
                 return `<tr>
-                    <td style="font-family:var(--font-mono);font-size:0.78rem">${t.serviceDate || '–'}</td>
-                    <td><span class="asset-tag-badge" style="font-size:0.7rem">${escapeHtml(assetTag)}</span></td>
-                    <td>${escapeHtml(t.title)}</td>
-                    <td>${escapeHtml(t.serviceProvider || 'Internal IT')}</td>
-                    <td><span class="pill pill-${(t.status || '').toLowerCase().replace(/_/g, '-')}"><span class="pill-dot"></span>${t.status}</span></td>
+                    <td><span class="ticket-num-badge">${escapeHtml(t.ticketNumber)}</span></td>
+                    <td style="font-size:0.8rem;color:var(--text-secondary)">${dateStr}</td>
+                    <td><span class="ticket-cat-tag">${escapeHtml(t.category || 'HARDWARE')}</span></td>
+                    <td><strong>${escapeHtml(t.title)}</strong></td>
+                    <td style="font-size:0.82rem">${assetStr}</td>
+                    <td><span class="priority-pill ${prioClass}">${t.priority}</span></td>
+                    <td><span class="pill ${statusClass}"><span class="pill-dot"></span>${t.status}</span></td>
+                    <td style="text-align: right;">
+                        <button class="btn-table-action" onclick="openTicketDetailModal(${t.id})" style="font-size:0.74rem">View Details</button>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -1826,10 +1840,7 @@ function renderEmployeePortal(data, email) {
 }
 
 function openEmpServiceModal(assetId, assetTag, assetName) {
-    document.getElementById('emp-service-form').reset();
-    document.getElementById('emp-srv-asset-id').value = assetId;
-    document.getElementById('emp-srv-asset-tag-display').textContent = `${assetTag} — ${assetName}`;
-    document.getElementById('emp-service-modal').style.display = 'flex';
+    openEmpTicketModal(assetId, assetTag, assetName);
 }
 
 async function submitEmpServiceRequest(event) {
@@ -2295,7 +2306,49 @@ function renderUserDetailsContent(data) {
                     </tbody>
                 </table>
             </div>
-        ` : `<div class="ud-empty-box">No maintenance, RMA, or repair records logged for this user's gear.</div>`}
+    <!-- IT Support Tickets -->
+    <div style="padding: 0 20px; margin-top: 14px;">
+        <div class="ud-section-header">
+            <span class="ud-section-title">
+                🎫 IT Support &amp; Helpdesk Tickets (${(data.tickets || []).length})
+            </span>
+            <button class="btn-table-action" onclick="openAdminTicketModalForUser('${escapeHtml(u.email)}', '${escapeHtml(u.fullName)}')" style="font-size:0.75rem;padding:3px 10px;color:var(--status-blue);border-color:rgba(56,189,248,0.3)">
+                + Log Ticket
+            </button>
+        </div>
+        ${(data.tickets && data.tickets.length > 0) ? `
+            <div class="table-container" style="max-height: 200px; overflow-y: auto; margin-bottom: 12px;">
+                <table class="data-table" style="font-size: 0.8rem;">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.tickets.map(t => {
+                            const dateStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '–';
+                            const prioClass = `priority-${(t.priority || 'medium').toLowerCase()}`;
+                            const statusClass = `pill-${(t.status || 'open').toLowerCase().replace(/_/g, '-')}`;
+                            return `<tr>
+                                <td><span class="ticket-num-badge">${escapeHtml(t.ticketNumber)}</span></td>
+                                <td>${dateStr}</td>
+                                <td><span class="ticket-cat-tag">${escapeHtml(t.category)}</span></td>
+                                <td><strong>${escapeHtml(t.title)}</strong></td>
+                                <td><span class="priority-pill ${prioClass}">${t.priority}</span></td>
+                                <td><span class="pill ${statusClass}"><span class="pill-dot"></span>${t.status}</span></td>
+                                <td><button class="btn-table-action" onclick="closeModal('user-details-modal');openTicketDetailModal(${t.id})">View / Resolve</button></td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `<div class="ud-empty-box">No IT support tickets logged for this user.</div>`}
     </div>
 
     <!-- Custody & Activity Timeline -->
@@ -4730,6 +4783,23 @@ function renderSpotlightResults(data, query) {
         });
     }
 
+    const tickets = data.tickets || [];
+    if (tickets.length > 0) {
+        html += `<div class="spotlight-section-title">IT Support Tickets (${tickets.length})</div>`;
+        tickets.forEach(t => {
+            const statusClass = `pill-${t.status.toLowerCase().replace(/_/g, '-')}`;
+            html += `
+                <div class="spotlight-item" onclick="jumpToTicketFromSpotlight(${t.id})">
+                    <div class="spotlight-item-icon">🎫</div>
+                    <div class="spotlight-item-body">
+                        <div class="spotlight-item-title">${escapeHtml(t.title)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">(${escapeHtml(t.ticketNumber)})</span></div>
+                        <div class="spotlight-item-sub">${escapeHtml(t.requesterName || t.requesterEmail)} &bull; ${escapeHtml(t.category)} &bull; ${escapeHtml(t.priority)}</div>
+                    </div>
+                    <span class="pill ${statusClass}" style="font-size:11px;"><span class="pill-dot"></span>${t.status}</span>
+                </div>`;
+        });
+    }
+
     results.innerHTML = html;
 }
 
@@ -4753,9 +4823,556 @@ function jumpToUserFromSpotlight(email) {
     }
 }
 
+function jumpToTicketFromSpotlight(ticketId) {
+    closeSpotlightSearch();
+    switchTab('tickets');
+    openTicketDetailModal(ticketId);
+}
+
 function jumpToTab(tabName) {
     closeSpotlightSearch();
     switchTab(tabName);
+}
+
+// ==========================================================================
+// IT HELPDESK & TICKETING SYSTEM MODULE
+// ==========================================================================
+
+App.tickets = [];
+let currentSelectedTicket = null;
+let ticketFilterTimer = null;
+
+async function loadTickets() {
+    try {
+        const query = (document.getElementById('ticket-search-input')?.value || '').trim();
+        const status = document.getElementById('ticket-status-filter')?.value || '';
+        const priority = document.getElementById('ticket-priority-filter')?.value || '';
+        const category = document.getElementById('ticket-category-filter')?.value || '';
+
+        const params = new URLSearchParams();
+        if (query) params.append('query', query);
+        if (status) params.append('status', status);
+        if (priority) params.append('priority', priority);
+        if (category) params.append('category', category);
+
+        const url = `/api/tickets?${params.toString()}`;
+        const [ticketsRes, statsRes] = await Promise.all([
+            fetch(url),
+            fetch('/api/tickets/stats')
+        ]);
+
+        if (ticketsRes.ok) {
+            App.tickets = await ticketsRes.json();
+            renderTicketsTable(App.tickets);
+        }
+
+        if (statsRes.ok) {
+            const stats = await statsRes.json();
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val !== undefined ? val : '0';
+            };
+            setVal('val-tickets-total', stats.total);
+            setVal('val-tickets-open', stats.open);
+            setVal('val-tickets-progress', stats.inProgress + stats.pendingParts);
+            setVal('val-tickets-critical', stats.critical);
+            setVal('val-tickets-resolved', stats.resolved + stats.closed);
+
+            const navBadge = document.getElementById('nav-count-tickets');
+            if (navBadge) {
+                navBadge.textContent = stats.open;
+                navBadge.className = stats.open > 0 ? 'nav-badge badge-warning' : 'nav-badge';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load IT tickets:', err);
+    }
+}
+
+function renderTicketsTable(tickets) {
+    const tbody = document.getElementById('tickets-table-body');
+    if (!tbody) return;
+
+    if (!tickets || tickets.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🎫</div>
+                    <div style="font-size: 15px; font-weight: 600; color: #f8fafc; margin-bottom: 4px;">No IT Support Tickets Found</div>
+                    <p style="font-size: 13px; max-width: 420px; margin: 0 auto 16px auto;">
+                        No tickets match the current filters. Create a new support ticket or adjust search parameters.
+                    </p>
+                    <button class="btn btn-primary btn-sm" onclick="openAdminTicketModal()">+ Create New IT Ticket</button>
+                </td>
+            </tr>`;
+        return;
+    }
+
+    tbody.innerHTML = tickets.map(t => {
+        const dateStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '–';
+        const assetStr = t.asset 
+            ? `<a href="javascript:void(0)" onclick="jumpToAssetFromSpotlight('${escapeHtml(t.asset.assetTag)}')" style="color:var(--status-blue);font-weight:600;text-decoration:none">${escapeHtml(t.asset.assetTag)}</a> <span style="font-size:11px;color:var(--text-muted)">(${escapeHtml(t.asset.name)})</span>` 
+            : '<span style="color:var(--text-muted);font-size:12px;">– None –</span>';
+        
+        const prioClass = `priority-${(t.priority || 'medium').toLowerCase()}`;
+        const prioPulse = t.priority === 'CRITICAL' ? '<span class="pulse-indicator"></span>' : '';
+        const statusClass = `pill-${(t.status || 'open').toLowerCase().replace(/_/g, '-')}`;
+
+        return `
+            <tr style="cursor: pointer;" onclick="openTicketDetailModal(${t.id})">
+                <td onclick="event.stopPropagation(); openTicketDetailModal(${t.id})">
+                    <span class="ticket-num-badge">${escapeHtml(t.ticketNumber)}</span>
+                </td>
+                <td style="max-width: 260px;">
+                    <div style="font-weight: 600; color: #f8fafc; font-size: 13.5px; margin-bottom: 2px;">
+                        ${escapeHtml(t.title)}
+                    </div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px;">
+                        ${escapeHtml(t.description || '')}
+                    </div>
+                </td>
+                <td>
+                    <div style="font-weight: 500; color: #e2e8f0; font-size: 13px;">${escapeHtml(t.requesterName || '–')}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(t.requesterEmail || '')}</div>
+                    ${t.requesterDepartment ? `<span style="font-size:10px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;color:#94a3b8;">${escapeHtml(t.requesterDepartment)}</span>` : ''}
+                </td>
+                <td>
+                    <span class="ticket-cat-tag">${escapeHtml(t.category || 'OTHER')}</span>
+                </td>
+                <td>
+                    <span class="priority-pill ${prioClass}">
+                        ${prioPulse}${t.priority}
+                    </span>
+                </td>
+                <td onclick="event.stopPropagation()">
+                    ${assetStr}
+                </td>
+                <td>
+                    <span style="font-size: 12.5px; color: #cbd5e1;">${escapeHtml(t.assignedTo || 'Unassigned')}</span>
+                </td>
+                <td>
+                    <span class="pill ${statusClass}">
+                        <span class="pill-dot"></span>${t.status.replace(/_/g, ' ')}
+                    </span>
+                </td>
+                <td style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">
+                    ${dateStr}
+                </td>
+                <td style="text-align: right;" onclick="event.stopPropagation()">
+                    <div style="display: inline-flex; gap: 6px;">
+                        <button class="btn-table-action" onclick="openTicketDetailModal(${t.id})" title="View and resolve ticket" style="color:var(--status-blue);border-color:rgba(56,189,248,0.3)">
+                            Resolve
+                        </button>
+                        <button class="btn-table-action" onclick="deleteTicketFromTable(${t.id}, '${escapeHtml(t.ticketNumber)}')" title="Delete ticket" style="color:#f43f5e;border-color:rgba(244,63,94,0.3)">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function filterTicketsList() {
+    clearTimeout(ticketFilterTimer);
+    ticketFilterTimer = setTimeout(() => {
+        loadTickets();
+    }, 250);
+}
+
+function resetTicketFilters() {
+    const sInput = document.getElementById('ticket-search-input');
+    const sStatus = document.getElementById('ticket-status-filter');
+    const sPrio = document.getElementById('ticket-priority-filter');
+    const sCat = document.getElementById('ticket-category-filter');
+    if (sInput) sInput.value = '';
+    if (sStatus) sStatus.value = '';
+    if (sPrio) sPrio.value = '';
+    if (sCat) sCat.value = '';
+    loadTickets();
+}
+
+function exportTicketsCsv() {
+    if (!App.tickets || App.tickets.length === 0) {
+        showToast('No tickets available to export', 'error');
+        return;
+    }
+
+    const headers = ['Ticket Number', 'Title', 'Category', 'Priority', 'Status', 'Requester Name', 'Requester Email', 'Department', 'Assigned To', 'Asset Tag', 'Asset Name', 'Created Date', 'Resolved Date'];
+    const rows = App.tickets.map(t => [
+        `"${t.ticketNumber || ''}"`,
+        `"${(t.title || '').replace(/"/g, '""')}"`,
+        `"${t.category || ''}"`,
+        `"${t.priority || ''}"`,
+        `"${t.status || ''}"`,
+        `"${(t.requesterName || '').replace(/"/g, '""')}"`,
+        `"${t.requesterEmail || ''}"`,
+        `"${(t.requesterDepartment || '').replace(/"/g, '""')}"`,
+        `"${(t.assignedTo || '').replace(/"/g, '""')}"`,
+        `"${t.asset?.assetTag || ''}"`,
+        `"${(t.asset?.name || '').replace(/"/g, '""')}"`,
+        `"${t.createdAt || ''}"`,
+        `"${t.resolvedAt || ''}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `IT-Tickets-Export-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Exported tickets to CSV ✓', 'success');
+}
+
+async function openAdminTicketModal(preselectedAssetId = null) {
+    const form = document.getElementById('admin-ticket-form');
+    if (form) form.reset();
+
+    const userSelect = document.getElementById('adm-tk-user');
+    const assetSelect = document.getElementById('adm-tk-asset');
+    const assigneeInput = document.getElementById('adm-tk-assignee');
+
+    if (assigneeInput) {
+        assigneeInput.value = App.session?.fullName || 'Dhiraj Shinde';
+    }
+
+    // Populate user dropdown if needed
+    if (userSelect) {
+        userSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+        if (!App.users || App.users.length === 0) {
+            try {
+                const res = await fetch('/api/users');
+                if (res.ok) App.users = await res.json();
+            } catch (ignored) {}
+        }
+        (App.users || []).forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.email;
+            opt.textContent = `${u.fullName} (${u.email}) - ${u.department || 'General'}`;
+            opt.dataset.name = u.fullName;
+            opt.dataset.dept = u.department || '';
+            userSelect.appendChild(opt);
+        });
+    }
+
+    // Populate asset dropdown if needed
+    if (assetSelect) {
+        assetSelect.innerHTML = '<option value="">-- No Specific Asset --</option>';
+        if (!App.assets || App.assets.length === 0) {
+            try {
+                const res = await fetch('/api/assets');
+                if (res.ok) App.assets = await res.json();
+            } catch (ignored) {}
+        }
+        (App.assets || []).forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `${a.assetTag} - ${a.name} (${a.category}) ${a.assignedEmployeeName ? '• ' + a.assignedEmployeeName : ''}`;
+            opt.dataset.assignedEmail = (a.assignedEmployeeEmail || '').toLowerCase();
+            if (preselectedAssetId && String(a.id) === String(preselectedAssetId)) {
+                opt.selected = true;
+            }
+            assetSelect.appendChild(opt);
+        });
+    }
+
+    if (preselectedAssetId && assetSelect && userSelect) {
+        const found = (App.assets || []).find(a => String(a.id) === String(preselectedAssetId));
+        if (found && found.assignedEmployeeEmail) {
+            userSelect.value = found.assignedEmployeeEmail.toLowerCase();
+        }
+    }
+
+    const modal = document.getElementById('admin-ticket-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function openAdminTicketModalForUser(userEmail, userName) {
+    openAdminTicketModal();
+    setTimeout(() => {
+        const userSelect = document.getElementById('adm-tk-user');
+        if (userSelect && userEmail) {
+            userSelect.value = userEmail.toLowerCase();
+            onAdminTicketUserChange();
+        }
+    }, 100);
+}
+
+function onAdminTicketUserChange() {
+    const userSelect = document.getElementById('adm-tk-user');
+    const assetSelect = document.getElementById('adm-tk-asset');
+    if (!userSelect || !assetSelect) return;
+
+    const email = userSelect.value.toLowerCase();
+    if (!email) return;
+
+    // Highlight user's hardware
+    for (let i = 0; i < assetSelect.options.length; i++) {
+        const opt = assetSelect.options[i];
+        if (opt.dataset.assignedEmail === email) {
+            opt.selected = true;
+            break;
+        }
+    }
+}
+
+async function submitAdminTicket(event) {
+    event.preventDefault();
+    const userSelect = document.getElementById('adm-tk-user');
+    const selectedOpt = userSelect.options[userSelect.selectedIndex];
+    const assetIdVal = document.getElementById('adm-tk-asset')?.value;
+
+    const payload = {
+        title: document.getElementById('adm-tk-title').value.trim(),
+        description: document.getElementById('adm-tk-desc').value.trim(),
+        category: document.getElementById('adm-tk-category').value,
+        priority: document.getElementById('adm-tk-priority').value,
+        requesterName: selectedOpt?.dataset?.name || userSelect.value,
+        requesterEmail: userSelect.value.trim(),
+        requesterDepartment: selectedOpt?.dataset?.dept || null,
+        assetId: assetIdVal ? parseInt(assetIdVal) : null,
+        assignedTo: document.getElementById('adm-tk-assignee')?.value.trim() || 'Dhiraj Shinde'
+    };
+
+    try {
+        const res = await fetch('/api/tickets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to create IT support ticket');
+        }
+
+        const created = await res.json();
+        closeModal('admin-ticket-modal');
+        showToast(`IT Support Ticket ${created.ticketNumber} created & notified ✓`, 'success');
+        await loadTickets();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function openTicketDetailModal(ticketId) {
+    const modal = document.getElementById('ticket-detail-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    try {
+        const res = await fetch(`/api/tickets/${ticketId}`);
+        if (!res.ok) throw new Error('Could not fetch ticket details');
+        const t = await res.json();
+        currentSelectedTicket = t;
+
+        document.getElementById('td-ticket-id').value = t.id;
+        document.getElementById('td-num').textContent = t.ticketNumber;
+        document.getElementById('td-title').textContent = t.title;
+        document.getElementById('td-desc').textContent = t.description || 'No description provided.';
+
+        const prioClass = `priority-${(t.priority || 'medium').toLowerCase()}`;
+        const statusClass = `pill-${(t.status || 'open').toLowerCase().replace(/_/g, '-')}`;
+        document.getElementById('td-priority-badge').className = `priority-pill ${prioClass}`;
+        document.getElementById('td-priority-badge').textContent = t.priority;
+        document.getElementById('td-status-badge').className = `pill ${statusClass}`;
+        document.getElementById('td-status-badge').innerHTML = `<span class="pill-dot"></span>${t.status.replace(/_/g, ' ')}`;
+
+        document.getElementById('td-req-name').textContent = t.requesterName || '–';
+        document.getElementById('td-req-email').textContent = t.requesterEmail || '–';
+        document.getElementById('td-req-dept').textContent = t.requesterDepartment || '–';
+        document.getElementById('td-created-at').textContent = t.createdAt ? new Date(t.createdAt).toLocaleString() : '–';
+
+        const resolvedRow = document.getElementById('td-resolved-row');
+        if (resolvedRow) {
+            if (t.resolvedAt) {
+                resolvedRow.style.display = 'flex';
+                document.getElementById('td-resolved-at').textContent = new Date(t.resolvedAt).toLocaleString();
+            } else {
+                resolvedRow.style.display = 'none';
+            }
+        }
+
+        // Asset info
+        const assetBox = document.getElementById('td-asset-box');
+        if (assetBox) {
+            if (t.asset) {
+                assetBox.style.display = 'block';
+                document.getElementById('td-asset-tag').textContent = t.asset.assetTag;
+                document.getElementById('td-asset-info').innerHTML = `
+                    <div style="font-weight:600;color:#f8fafc;margin-bottom:2px">${escapeHtml(t.asset.name)}</div>
+                    <div style="color:var(--text-muted);font-size:12px">${escapeHtml(t.asset.manufacturer || '')} ${escapeHtml(t.asset.model || '')} &bull; S/N: ${escapeHtml(t.asset.serialNumber || 'N/A')}</div>
+                `;
+            } else {
+                assetBox.style.display = 'none';
+            }
+        }
+
+        // Form fields
+        document.getElementById('td-update-status').value = t.status;
+        document.getElementById('td-update-priority').value = t.priority;
+        document.getElementById('td-update-assignee').value = t.assignedTo || '';
+        document.getElementById('td-update-notes').value = t.resolutionNotes || '';
+
+        // Only Admin can delete tickets or see update panel
+        const isAdmin = App.session?.role === 'ADMIN';
+        const deleteBtn = document.getElementById('td-btn-delete');
+        if (deleteBtn) deleteBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+        const updateForm = document.getElementById('ticket-update-form');
+        if (updateForm && !isAdmin) {
+            const inputs = updateForm.querySelectorAll('input, select, textarea, button[type="submit"]');
+            inputs.forEach(el => el.disabled = true);
+        } else if (updateForm) {
+            const inputs = updateForm.querySelectorAll('input, select, textarea, button[type="submit"]');
+            inputs.forEach(el => el.disabled = false);
+        }
+
+    } catch (err) {
+        showToast(err.message, 'error');
+        closeModal('ticket-detail-modal');
+    }
+}
+
+async function submitTicketUpdate(event) {
+    event.preventDefault();
+    const id = document.getElementById('td-ticket-id').value;
+    const payload = {
+        status: document.getElementById('td-update-status').value,
+        priority: document.getElementById('td-update-priority').value,
+        assignedTo: document.getElementById('td-update-assignee').value.trim() || null,
+        resolutionNotes: document.getElementById('td-update-notes').value.trim() || null
+    };
+
+    try {
+        const res = await fetch(`/api/tickets/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to update ticket');
+        }
+
+        const updated = await res.json();
+        closeModal('ticket-detail-modal');
+        showToast(`Ticket ${updated.ticketNumber} updated successfully ✓`, 'success');
+        
+        await loadTickets();
+        if (App.session && App.session.email) {
+            await loadEmployeePortal(App.session.email);
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteCurrentTicket() {
+    if (!currentSelectedTicket) return;
+    if (!confirm(`Are you sure you want to permanently delete ticket ${currentSelectedTicket.ticketNumber}?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/tickets/${currentSelectedTicket.id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Failed to delete ticket');
+
+        closeModal('ticket-detail-modal');
+        showToast(`Ticket ${currentSelectedTicket.ticketNumber} deleted ✓`, 'success');
+        await loadTickets();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteTicketFromTable(id, ticketNumber) {
+    if (!confirm(`Permanently delete support ticket ${ticketNumber}?`)) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/tickets/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Failed to delete ticket');
+        showToast(`Ticket ${ticketNumber} deleted ✓`, 'success');
+        await loadTickets();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// --------------------------------------------------------------------------
+// EMPLOYEE PORTAL TICKET SUBMISSION
+// --------------------------------------------------------------------------
+
+function openEmpTicketModal(assetId = null, assetTag = '', assetName = '') {
+    const form = document.getElementById('emp-ticket-form');
+    if (form) form.reset();
+
+    const assetSelect = document.getElementById('emp-tk-asset');
+    if (assetSelect) {
+        assetSelect.innerHTML = '<option value="">-- General Issue / No Specific Device --</option>';
+        const empAssets = window.currentEmpOverviewData?.assignedAssets || [];
+        empAssets.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `${a.assetTag} — ${a.name} (${a.category})`;
+            if (assetId && String(a.id) === String(assetId)) {
+                opt.selected = true;
+            }
+            assetSelect.appendChild(opt);
+        });
+    }
+
+    const modal = document.getElementById('emp-ticket-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+async function submitEmpTicket(event) {
+    event.preventDefault();
+    const email = App.session?.email;
+    if (!email) {
+        showToast('Please sign in to submit a ticket', 'error');
+        return;
+    }
+
+    const assetVal = document.getElementById('emp-tk-asset')?.value;
+    const payload = {
+        title: document.getElementById('emp-tk-title').value.trim(),
+        description: document.getElementById('emp-tk-desc').value.trim(),
+        category: document.getElementById('emp-tk-category').value,
+        priority: document.getElementById('emp-tk-urgency').value,
+        requesterName: App.session.fullName || email,
+        requesterEmail: email,
+        requesterDepartment: App.session.department || null,
+        assetId: assetVal ? parseInt(assetVal) : null,
+        assignedTo: 'Dhiraj Shinde'
+    };
+
+    try {
+        const res = await fetch(`/api/my/tickets?email=${encodeURIComponent(email)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to submit IT support ticket');
+        }
+
+        const created = await res.json();
+        closeModal('emp-ticket-modal');
+        showToast(`Ticket ${created.ticketNumber} submitted! IT Operations notified ✓`, 'success');
+        await loadEmployeePortal(email);
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
 }
 
 

@@ -2,15 +2,18 @@ package com.company.itam.controller;
 
 import com.company.itam.dto.EmployeeOverviewDto;
 import com.company.itam.dto.EmployeeServiceRequestDto;
+import com.company.itam.dto.TicketRequestDto;
 import com.company.itam.dto.UserResponseDto;
 import com.company.itam.exception.ResourceNotFoundException;
 import com.company.itam.model.Asset;
 import com.company.itam.model.AssetStatus;
 import com.company.itam.model.MaintenanceRecord;
 import com.company.itam.model.SoftwareLicense;
+import com.company.itam.model.Ticket;
 import com.company.itam.repository.AssetRepository;
 import com.company.itam.repository.MaintenanceRecordRepository;
 import com.company.itam.repository.SoftwareLicenseRepository;
+import com.company.itam.service.TicketService;
 import com.company.itam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +28,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/my")
-@Tag(name = "Employee Self-Service Portal", description = "Endpoints for logged-in employees to view assigned equipment, licenses, and request repairs")
+@Tag(name = "Employee Self-Service Portal", description = "Endpoints for logged-in employees to view assigned equipment, licenses, and raise IT tickets")
 @CrossOrigin(origins = "*")
 public class EmployeePortalController {
 
@@ -33,19 +36,22 @@ public class EmployeePortalController {
     private final AssetRepository assetRepository;
     private final SoftwareLicenseRepository licenseRepository;
     private final MaintenanceRecordRepository maintenanceRepository;
+    private final TicketService ticketService;
 
     public EmployeePortalController(UserService userService,
                                     AssetRepository assetRepository,
                                     SoftwareLicenseRepository licenseRepository,
-                                    MaintenanceRecordRepository maintenanceRepository) {
+                                    MaintenanceRecordRepository maintenanceRepository,
+                                    TicketService ticketService) {
         this.userService = userService;
         this.assetRepository = assetRepository;
         this.licenseRepository = licenseRepository;
         this.maintenanceRepository = maintenanceRepository;
+        this.ticketService = ticketService;
     }
 
     @GetMapping("/overview")
-    @Operation(summary = "Get employee dashboard overview including assigned equipment and team software")
+    @Operation(summary = "Get employee dashboard overview including assigned equipment, team software and tickets")
     public ResponseEntity<EmployeeOverviewDto> getOverview(@RequestParam String email) {
         UserResponseDto user = userService.getUserByEmail(email);
 
@@ -57,11 +63,14 @@ public class EmployeePortalController {
             serviceHistory.addAll(maintenanceRepository.findByAssetIdOrderByServiceDateDesc(asset.getId()));
         }
 
+        List<Ticket> tickets = ticketService.getMyTickets(email);
+
         EmployeeOverviewDto overview = new EmployeeOverviewDto();
         overview.setProfile(user);
         overview.setAssignedAssets(assignedAssets);
         overview.setDepartmentLicenses(new ArrayList<>());
         overview.setServiceHistory(serviceHistory);
+        overview.setTickets(tickets);
 
         return ResponseEntity.ok(overview);
     }
@@ -101,5 +110,22 @@ public class EmployeePortalController {
 
         MaintenanceRecord saved = maintenanceRepository.save(record);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/tickets")
+    @Operation(summary = "List all IT support tickets submitted by this employee")
+    public ResponseEntity<List<Ticket>> getMyTickets(@RequestParam String email) {
+        return ResponseEntity.ok(ticketService.getMyTickets(email));
+    }
+
+    @PostMapping("/tickets")
+    @Operation(summary = "Raise a new IT support ticket from employee portal")
+    public ResponseEntity<Ticket> raiseTicket(
+            @RequestParam String email,
+            @Valid @RequestBody TicketRequestDto request) {
+        if (request.getRequesterEmail() == null || request.getRequesterEmail().isBlank()) {
+            request.setRequesterEmail(email);
+        }
+        return new ResponseEntity<>(ticketService.createTicket(request), HttpStatus.CREATED);
     }
 }

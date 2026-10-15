@@ -16,6 +16,15 @@ public class UserDetailResponseDto {
     private List<MaintenanceRecord> serviceHistory = new ArrayList<>();
     private List<EmailNotification> emailHistory = new ArrayList<>();
     private List<ActivityLog> userActivityHistory = new ArrayList<>();
+    private List<Ticket> tickets = new ArrayList<>();
+
+    public List<Ticket> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets != null ? tickets : new ArrayList<>();
+    }
 
     public UserResponseDto getUser() {
         return user;

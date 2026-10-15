@@ -6,5 +6,6 @@ public enum ItemType {
     CONSUMABLE,
     COMPONENT,
     LICENSE,
-    USER
+    USER,
+    TICKET
 }

@@ -8,5 +8,7 @@ public enum ActivityAction {
     DELETED,
     MAINTENANCE,
     AUDIT,
-    LICENSE_ASSIGN
+    LICENSE_ASSIGN,
+    TICKET_UPDATE,
+    TICKET_RESOLVE
 }

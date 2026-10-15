@@ -43,6 +43,7 @@ public class UserService {
     private final com.company.itam.repository.ConsumableCheckoutRepository consumableCheckoutRepository;
     private final ActivityLogService activityLogService;
     private final com.company.itam.repository.ActivityLogRepository activityLogRepository;
+    private final com.company.itam.repository.TicketRepository ticketRepository;
     private final SecureRandom random = new SecureRandom();
 
     public UserService(UserRepository userRepository,
@@ -54,7 +55,8 @@ public class UserService {
                        com.company.itam.repository.AccessoryCheckoutRepository accessoryCheckoutRepository,
                        com.company.itam.repository.ConsumableCheckoutRepository consumableCheckoutRepository,
                        ActivityLogService activityLogService,
-                       com.company.itam.repository.ActivityLogRepository activityLogRepository) {
+                       com.company.itam.repository.ActivityLogRepository activityLogRepository,
+                       com.company.itam.repository.TicketRepository ticketRepository) {
         this.userRepository = userRepository;
         this.assetRepository = assetRepository;
         this.emailService = emailService;
@@ -65,6 +67,7 @@ public class UserService {
         this.consumableCheckoutRepository = consumableCheckoutRepository;
         this.activityLogService = activityLogService;
         this.activityLogRepository = activityLogRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -94,6 +97,7 @@ public class UserService {
         List<com.company.itam.model.AccessoryCheckout> accessories = accessoryCheckoutRepository.findByUserEmailIgnoreCase(user.getEmail());
         List<com.company.itam.model.ConsumableCheckout> consumables = consumableCheckoutRepository.findByUserEmailIgnoreCase(user.getEmail());
         List<com.company.itam.model.ActivityLog> userLogs = activityLogRepository.findByTargetUserEmailIgnoreCaseOrderByTimestampDesc(user.getEmail());
+        List<com.company.itam.model.Ticket> tickets = ticketRepository.findByRequesterEmailIgnoreCaseOrderByCreatedAtDesc(user.getEmail());
 
         UserDetailResponseDto detail = new UserDetailResponseDto();
         detail.setUser(userDto);
@@ -104,6 +108,7 @@ public class UserService {
         detail.setServiceHistory(serviceHistory);
         detail.setEmailHistory(emails);
         detail.setUserActivityHistory(userLogs);
+        detail.setTickets(tickets);
 
         return detail;
     }

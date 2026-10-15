@@ -31,19 +31,22 @@ public class SystemController {
     private final UserRepository userRepository;
     private final SoftwareLicenseRepository softwareLicenseRepository;
     private final AccessoryRepository accessoryRepository;
+    private final com.company.itam.repository.TicketRepository ticketRepository;
 
     public SystemController(AssetRepository assetRepository,
                             UserRepository userRepository,
                             SoftwareLicenseRepository softwareLicenseRepository,
-                            AccessoryRepository accessoryRepository) {
+                            AccessoryRepository accessoryRepository,
+                            com.company.itam.repository.TicketRepository ticketRepository) {
         this.assetRepository = assetRepository;
         this.userRepository = userRepository;
         this.softwareLicenseRepository = softwareLicenseRepository;
         this.accessoryRepository = accessoryRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Unified global search across assets, users, licenses, accessories")
+    @Operation(summary = "Unified global search across assets, users, licenses, accessories, tickets")
     public ResponseEntity<Map<String, Object>> globalSearch(@RequestParam(required = false, defaultValue = "") String q) {
         Map<String, Object> results = new HashMap<>();
         String query = (q != null) ? q.trim() : "";
@@ -52,6 +55,7 @@ public class SystemController {
             results.put("users", Collections.emptyList());
             results.put("licenses", Collections.emptyList());
             results.put("accessories", Collections.emptyList());
+            results.put("tickets", Collections.emptyList());
             return ResponseEntity.ok(results);
         }
 
@@ -59,6 +63,7 @@ public class SystemController {
         results.put("users", userRepository.searchUsers(query));
         results.put("licenses", softwareLicenseRepository.searchLicenses(query));
         results.put("accessories", accessoryRepository.findByNameContainingIgnoreCase(query));
+        results.put("tickets", ticketRepository.findTop10ByQuickSearch(query));
         return ResponseEntity.ok(results);
     }
 

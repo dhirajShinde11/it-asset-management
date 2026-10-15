@@ -410,6 +410,79 @@ public class EmailService {
                 + "</html>";
     }
 
+    public EmailNotification sendTicketCreatedNotification(com.company.itam.model.Ticket ticket) {
+        String portalUrl = "http://localhost:" + serverPort + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
+        String subject = "IT Support Ticket Created: [" + ticket.getTicketNumber() + "] " + ticket.getTitle();
+        String htmlContent = buildTicketEmailHtml(ticket, portalUrl, "Support Ticket Registered",
+                "Your IT support ticket has been received by the IT Helpdesk team. A technician will review and action this request.");
+
+        EmailNotification notification = new EmailNotification();
+        notification.setRecipientEmail(ticket.getRequesterEmail());
+        notification.setRecipientName(ticket.getRequesterName());
+        notification.setSubject(subject);
+        notification.setEmailType("TICKET_CREATED");
+        notification.setContent(htmlContent);
+        notification.setPortalUrl(portalUrl);
+        notification.setStatus("DELIVERED_TO_OUTBOX");
+        notification.setSentAt(LocalDateTime.now());
+
+        EmailNotification saved = emailRepository.save(notification);
+        dispatchViaSmtp(saved);
+        return saved;
+    }
+
+    public EmailNotification sendTicketUpdatedNotification(com.company.itam.model.Ticket ticket) {
+        String portalUrl = "http://localhost:" + serverPort + "/?email=" + java.net.URLEncoder.encode(ticket.getRequesterEmail(), java.nio.charset.StandardCharsets.UTF_8);
+        String subject = "IT Ticket Status Updated: [" + ticket.getTicketNumber() + "] " + ticket.getStatus();
+        String message = "Your IT support ticket has been updated to <strong>" + ticket.getStatus() + "</strong>."
+                + (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank() 
+                   ? "<br><br><strong>IT Resolution Notes:</strong> " + escapeHtml(ticket.getResolutionNotes()) : "");
+        String htmlContent = buildTicketEmailHtml(ticket, portalUrl, "Ticket Status: " + ticket.getStatus(), message);
+
+        EmailNotification notification = new EmailNotification();
+        notification.setRecipientEmail(ticket.getRequesterEmail());
+        notification.setRecipientName(ticket.getRequesterName());
+        notification.setSubject(subject);
+        notification.setEmailType("TICKET_UPDATED");
+        notification.setContent(htmlContent);
+        notification.setPortalUrl(portalUrl);
+        notification.setStatus("DELIVERED_TO_OUTBOX");
+        notification.setSentAt(LocalDateTime.now());
+
+        EmailNotification saved = emailRepository.save(notification);
+        dispatchViaSmtp(saved);
+        return saved;
+    }
+
+    private String buildTicketEmailHtml(com.company.itam.model.Ticket ticket, String portalUrl, String headerTitle, String bodyMessage) {
+        String assetInfo = ticket.getAsset() != null 
+                ? "<div class='item'><strong>Linked Device:</strong> " + escapeHtml(ticket.getAsset().getAssetTag()) + " - " + escapeHtml(ticket.getAsset().getName()) + "</div>"
+                : "";
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>"
+                + "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 24px; }"
+                + ".card { max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }"
+                + ".header { background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%); padding: 28px 24px; text-align: center; color: white; }"
+                + ".body { padding: 28px 24px; line-height: 1.6; color: #cbd5e1; font-size: 15px; }"
+                + ".box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 14px; }"
+                + ".item { margin-bottom: 8px; }"
+                + ".btn { display: inline-block; background: #6366f1; color: #ffffff !important; text-decoration: none; font-weight: 600; padding: 12px 28px; border-radius: 8px; font-size: 15px; margin-top: 14px; }"
+                + "</style></head><body><div class='card'>"
+                + "<div class='header'><h2 style='margin:0;'>" + escapeHtml(headerTitle) + "</h2></div>"
+                + "<div class='body'>"
+                + "<p>Hello " + escapeHtml(ticket.getRequesterName()) + ",</p>"
+                + "<p>" + bodyMessage + "</p>"
+                + "<div class='box'>"
+                + "<div class='item'><strong>Ticket ID:</strong> " + escapeHtml(ticket.getTicketNumber()) + "</div>"
+                + "<div class='item'><strong>Title:</strong> " + escapeHtml(ticket.getTitle()) + "</div>"
+                + "<div class='item'><strong>Category:</strong> " + ticket.getCategory() + "</div>"
+                + "<div class='item'><strong>Priority:</strong> " + ticket.getPriority() + "</div>"
+                + "<div class='item'><strong>Status:</strong> " + ticket.getStatus() + "</div>"
+                + assetInfo
+                + "</div>"
+                + "<p style='text-align:center;'><a href='" + escapeHtml(portalUrl) + "' class='btn'>View in IT Portal</a></p>"
+                + "</div></div></body></html>";
+    }
+
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
