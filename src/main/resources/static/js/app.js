@@ -2306,6 +2306,9 @@ function renderUserDetailsContent(data) {
                     </tbody>
                 </table>
             </div>
+        ` : `<div class="ud-empty-box">No maintenance, RMA, or repair records logged for this user's gear.</div>`}
+    </div>
+
     <!-- IT Support Tickets -->
     <div style="padding: 0 20px; margin-top: 14px;">
         <div class="ud-section-header">
