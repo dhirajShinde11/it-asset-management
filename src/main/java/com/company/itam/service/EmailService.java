@@ -6,6 +6,7 @@ import com.company.itam.model.EmailNotification;
 import com.company.itam.model.SmtpSetting;
 import com.company.itam.model.Ticket;
 import com.company.itam.model.TicketPriority;
+import com.company.itam.model.TicketStatus;
 import com.company.itam.repository.EmailNotificationRepository;
 import com.company.itam.repository.SmtpSettingRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -339,38 +340,65 @@ public class EmailService {
     private String buildWelcomeEmailHtml(AppUser user, String password, String portalUrl) {
         return "<!DOCTYPE html>"
                 + "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>"
-                + "<body style='margin: 0; padding: 24px 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
+                + "<body style='margin: 0; padding: 28px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
                 + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "    <tr><td align='center'>"
-                + "      <table width='600' border='0' cellspacing='0' cellpadding='0' style='max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>"
-                + "        <tr><td style='padding: 24px 32px 18px 32px; border-bottom: 2px solid #2563eb; background-color: #ffffff;'>"
-                + "          <div style='font-size: 17px; font-weight: 700; color: #0f172a;'>Aegis IT Asset Management</div>"
-                + "          <div style='font-size: 13px; color: #64748b; margin-top: 2px;'>Organization Account &bull; Access Provisioning</div>"
+                + "      <table width='750' border='0' cellspacing='0' cellpadding='0' style='max-width: 750px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);'>"
+                + "        <!-- Horizontal Header -->"
+                + "        <tr><td style='padding: 18px 28px; background-color: #0f172a; border-bottom: 2px solid #2563eb;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td align='left'>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; User Provisioning</span>"
+                + "              </td>"
+                + "              <td align='right'>"
+                + "                <span style='display: inline-block; font-size: 11px; font-weight: 700; color: #38bdf8; background-color: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.25); padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px;'>ACCOUNT ACTIVATED</span>"
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 28px 32px;'>"
-                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'><strong>Hello " + escapeHtml(user.getFullName()) + ",</strong></p>"
-                + "          <p style='margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.5;'>Your account has been registered in the IT Asset Management system for the <strong>" + escapeHtml(user.getDepartment() != null ? user.getDepartment() : "General") + "</strong> department. You can now access your self-service portal to view assigned hardware, licenses, and raise IT support requests.</p>"
-                + "          <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 16px 18px; margin: 20px 0;'>"
-                + "            <div style='font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px;'>Your Login Credentials</div>"
-                + "            <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
-                + "              <tr>"
-                + "                <td style='padding: 4px 0; color: #64748b; font-size: 13px; width: 140px;'>Username / Email:</td>"
-                + "                <td style='padding: 4px 0; color: #0f172a; font-size: 13px; font-family: monospace; font-weight: 600;'>" + escapeHtml(user.getEmail()) + "</td>"
-                + "              </tr>"
-                + "              <tr>"
-                + "                <td style='padding: 4px 0; color: #64748b; font-size: 13px;'>Temporary Password:</td>"
-                + "                <td style='padding: 4px 0; color: #2563eb; font-size: 13px; font-family: monospace; font-weight: 700;'>" + escapeHtml(password) + "</td>"
-                + "              </tr>"
-                + "            </table>"
-                + "          </div>"
-                + "          <div style='margin: 24px 0 16px 0;'>"
-                + "            <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 14px; font-weight: 600; border-radius: 4px;'>Log In to IT Portal</a>"
-                + "          </div>"
-                + "          <p style='font-size: 12px; color: #94a3b8; margin: 16px 0 0 0;'>Please change your password upon your first successful login.</p>"
+                + "        <!-- Horizontal Body -->"
+                + "        <tr><td style='padding: 24px 28px;'>"
+                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'>Hello <strong>" + escapeHtml(user.getFullName()) + "</strong>,</p>"
+                + "          <p style='margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.5;'>Your organizational account has been created. You now have access to the IT Asset Management self-service portal to view assigned hardware, review software licenses, and raise IT support requests.</p>"
+                + "          <!-- Horizontal 3-Column Credential Grid -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 22px; background-color: #f8fafc; border-collapse: collapse;'>"
+                + "            <tr>"
+                + "              <td width='38%' style='padding: 14px 18px; border-right: 1px solid #e2e8f0; vertical-align: top;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Username / Email</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px; font-family: monospace; word-break: break-all;'>" + escapeHtml(user.getEmail()) + "</div>"
+                + "              </td>"
+                + "              <td width='32%' style='padding: 14px 18px; border-right: 1px solid #e2e8f0; vertical-align: top;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Temporary Password</div>"
+                + "                <div style='font-size: 14px; font-weight: 700; color: #2563eb; margin-top: 4px; font-family: monospace; letter-spacing: 0.5px;'>" + escapeHtml(password) + "</div>"
+                + "              </td>"
+                + "              <td width='30%' style='padding: 14px 18px; vertical-align: top;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Department / Role</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(user.getDepartment() != null ? user.getDepartment() : "General") + " (" + (user.getRole() != null ? user.getRole().name() : "EMPLOYEE") + ")</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
+                + "          <!-- Horizontal Action Toolbar -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td align='left'>"
+                + "                <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 13px; font-weight: 600; border-radius: 5px;'>Log In to IT Portal &rarr;</a>"
+                + "              </td>"
+                + "              <td align='right' style='color: #64748b; font-size: 12px;'>"
+                + "                Please change your password upon your first successful login."
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 16px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;'>"
-                + "          <div style='font-weight: 500; color: #475569;'>Aegis IT Asset Management &bull; BM Consulting IT Operations</div>"
-                + "          <div style='margin-top: 3px;'>Need assistance? Contact your organization IT administrator.</div>"
+                + "        <!-- Horizontal Footer -->"
+                + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Operations</td>"
+                + "              <td align='right'>Internal Corporate Services</td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
                 + "      </table>"
                 + "    </td></tr>"
@@ -379,48 +407,82 @@ public class EmailService {
     }
 
     private String buildAssetAssignedEmailHtml(AppUser user, Asset asset, String portalUrl) {
+        String mfgModel = (asset.getManufacturer() != null ? asset.getManufacturer() : "")
+                + ((asset.getModel() != null && !asset.getModel().isBlank()) ? " " + asset.getModel() : "");
+        if (mfgModel.isBlank()) mfgModel = "Standard Configuration";
+
         return "<!DOCTYPE html>"
                 + "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>"
-                + "<body style='margin: 0; padding: 24px 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
+                + "<body style='margin: 0; padding: 28px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
                 + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "    <tr><td align='center'>"
-                + "      <table width='600' border='0' cellspacing='0' cellpadding='0' style='max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>"
-                + "        <tr><td style='padding: 24px 32px 18px 32px; border-bottom: 2px solid #2563eb; background-color: #ffffff;'>"
-                + "          <div style='font-size: 17px; font-weight: 700; color: #0f172a;'>Aegis IT Asset Management</div>"
-                + "          <div style='font-size: 13px; color: #64748b; margin-top: 2px;'>Equipment Custody &bull; New Assignment</div>"
-                + "        </td></tr>"
-                + "        <tr><td style='padding: 28px 32px;'>"
-                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'><strong>Hello " + escapeHtml(user.getFullName()) + ",</strong></p>"
-                + "          <p style='margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.5;'>A new hardware asset has been assigned to your custody in the IT Asset Management system:</p>"
-                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 4px; border-collapse: collapse; margin-bottom: 22px;'>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; width: 130px; border-bottom: 1px solid #f1f5f9;'>Asset Tag</td>"
-                + "              <td style='padding: 8px 12px; color: #2563eb; font-size: 13px; font-family: monospace; font-weight: 600; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(asset.getAssetTag()) + "</td>"
-                + "            </tr>"
+                + "      <table width='750' border='0' cellspacing='0' cellpadding='0' style='max-width: 750px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);'>"
+                + "        <!-- Horizontal Header -->"
+                + "        <tr><td style='padding: 18px 28px; background-color: #0f172a; border-bottom: 2px solid #2563eb;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Device Name</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 500; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(asset.getName()) + " (" + escapeHtml(asset.getManufacturer() != null ? asset.getManufacturer() : "") + " " + escapeHtml(asset.getModel() != null ? asset.getModel() : "") + ")</td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Serial Number</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(asset.getSerialNumber() != null ? asset.getSerialNumber() : "N/A") + "</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Condition</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + asset.getCondition() + "</td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px;'>Specifications</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px;'>" + escapeHtml(asset.getSpecifications() != null ? asset.getSpecifications() : "Standard") + "</td>"
+                + "              <td align='left'>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; Equipment Custody</span>"
+                + "              </td>"
+                + "              <td align='right'>"
+                + "                <span style='display: inline-block; font-size: 12px; font-family: monospace; font-weight: 700; color: #60a5fa; background-color: rgba(96, 165, 250, 0.12); border: 1px solid rgba(96, 165, 250, 0.3); padding: 3px 10px; border-radius: 4px;'>"
+                + "                  TAG: " + escapeHtml(asset.getAssetTag()) + "</span>"
+                + "              </td>"
                 + "            </tr>"
                 + "          </table>"
-                + "          <div style='margin-bottom: 16px;'>"
-                + "            <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 14px; font-weight: 600; border-radius: 4px;'>View Assigned Equipment</a>"
-                + "          </div>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 16px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;'>"
-                + "          <div style='font-weight: 500; color: #475569;'>Aegis IT Asset Management &bull; BM Consulting IT Operations</div>"
-                + "          <div style='margin-top: 3px;'>You can view full equipment details or report hardware issues via your employee portal.</div>"
+                + "        <!-- Horizontal Body -->"
+                + "        <tr><td style='padding: 24px 28px;'>"
+                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'>Hello <strong>" + escapeHtml(user.getFullName()) + "</strong>,</p>"
+                + "          <p style='margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.5;'>A hardware device has been checked out and registered under your custody. Review the hardware details assigned to your profile below:</p>"
+                + "          <!-- Horizontal 4-Column Asset Grid -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; background-color: #f8fafc; border-collapse: collapse;'>"
+                + "            <tr>"
+                + "              <td width='25%' style='padding: 12px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Asset Tag</div>"
+                + "                <div style='font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 4px; font-family: monospace;'>" + escapeHtml(asset.getAssetTag()) + "</div>"
+                + "              </td>"
+                + "              <td width='35%' style='padding: 12px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Device & Model</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(asset.getName()) + " (" + escapeHtml(mfgModel) + ")</div>"
+                + "              </td>"
+                + "              <td width='22%' style='padding: 12px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Serial Number</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px; font-family: monospace;'>" + escapeHtml(asset.getSerialNumber() != null ? asset.getSerialNumber() : "N/A") + "</div>"
+                + "              </td>"
+                + "              <td width='18%' style='padding: 12px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Condition</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + asset.getCondition() + "</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "            <tr>"
+                + "              <td colspan='4' style='padding: 11px 16px; background-color: #ffffff; border: 1px solid #e2e8f0;'>"
+                + "                <span style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Specifications: </span>"
+                + "                <span style='font-size: 13px; color: #334155; margin-left: 6px;'>" + escapeHtml(asset.getSpecifications() != null && !asset.getSpecifications().isBlank() ? asset.getSpecifications() : "Standard configuration") + "</span>"
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
+                + "          <!-- Horizontal Action & Info Bar -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td align='left'>"
+                + "                <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 13px; font-weight: 600; border-radius: 5px;'>View Equipment in Portal &rarr;</a>"
+                + "              </td>"
+                + "              <td align='right' style='color: #64748b; font-size: 12px;'>"
+                + "                Need hardware support? You can raise an IT ticket directly from your portal."
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
+                + "        </td></tr>"
+                + "        <!-- Horizontal Footer -->"
+                + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Operations</td>"
+                + "              <td align='right'>Hardware Custody Tracking</td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
                 + "      </table>"
                 + "    </td></tr>"
@@ -522,123 +584,200 @@ public class EmailService {
         return saved;
     }
 
+    private String getPriorityBadgeHtml(TicketPriority priority) {
+        String name = priority != null ? priority.name() : "MEDIUM";
+        String bg = "#e0f2fe";
+        String color = "#0369a1";
+        String border = "#bae6fd";
+        if (priority != null) {
+            switch (priority) {
+                case CRITICAL -> { bg = "#fee2e2"; color = "#991b1b"; border = "#fca5a5"; }
+                case HIGH -> { bg = "#fef3c7"; color = "#92400e"; border = "#fcd34d"; }
+                case LOW -> { bg = "#f1f5f9"; color = "#475569"; border = "#cbd5e1"; }
+                default -> { bg = "#e0f2fe"; color = "#0369a1"; border = "#bae6fd"; }
+            }
+        }
+        return "<span style='display: inline-block; font-size: 11px; font-weight: 700; background-color: " + bg
+                + "; color: " + color + "; border: 1px solid " + border + "; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;'>"
+                + name + "</span>";
+    }
+
+    private String getStatusBadgeHtml(TicketStatus status) {
+        String name = status != null ? status.name() : "OPEN";
+        String bg = "#dbeafe";
+        String color = "#1e40af";
+        String border = "#93c5fd";
+        if (status != null) {
+            switch (status) {
+                case IN_PROGRESS -> { bg = "#fef3c7"; color = "#92400e"; border = "#fcd34d"; }
+                case RESOLVED -> { bg = "#dcfce7"; color = "#166534"; border = "#86efac"; }
+                case CLOSED -> { bg = "#f1f5f9"; color = "#475569"; border = "#cbd5e1"; }
+                default -> { bg = "#dbeafe"; color = "#1e40af"; border = "#93c5fd"; }
+            }
+        }
+        return "<span style='display: inline-block; font-size: 11px; font-weight: 700; background-color: " + bg
+                + "; color: " + color + "; border: 1px solid " + border + "; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;'>"
+                + name.replace("_", " ") + "</span>";
+    }
+
     private String buildTechnicianTicketAlertHtml(Ticket ticket, String technicianName,
                                                   String dashboardUrl,
                                                   boolean isReassignment, String updatedBy) {
-        String actionTitle = isReassignment ? "Ticket Reassigned" : "New Ticket Assigned";
+        String actionTitle = isReassignment ? "TICKET REASSIGNED" : "NEW TICKET ASSIGNED";
         String actionSub = isReassignment
-                ? "This support ticket has been reassigned to you by " + escapeHtml(updatedBy != null ? updatedBy : "IT Admin") + "."
-                : "A new IT support ticket has been submitted and assigned to your queue.";
-
-        String prioText = ticket.getPriority() != null ? ticket.getPriority().name() : "MEDIUM";
-        String prioBadgeBg = "#e0f2fe";
-        String prioBadgeColor = "#0369a1";
-        if (ticket.getPriority() != null) {
-            switch (ticket.getPriority()) {
-                case CRITICAL -> {
-                    prioBadgeBg = "#fee2e2";
-                    prioBadgeColor = "#991b1b";
-                }
-                case HIGH -> {
-                    prioBadgeBg = "#fef3c7";
-                    prioBadgeColor = "#92400e";
-                }
-                case LOW -> {
-                    prioBadgeBg = "#f1f5f9";
-                    prioBadgeColor = "#475569";
-                }
-                default -> {
-                    prioBadgeBg = "#e0f2fe";
-                    prioBadgeColor = "#0369a1";
-                }
-            }
-        }
-
-        StringBuilder assetRow = new StringBuilder();
-        if (ticket.getAsset() != null) {
-            Asset a = ticket.getAsset();
-            assetRow.append("<tr>")
-                    .append("<td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Attached Device</td>")
-                    .append("<td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 500; border-bottom: 1px solid #f1f5f9;'>")
-                    .append(escapeHtml(a.getName()))
-                    .append(" (Tag: <span style='font-family: monospace; color: #2563eb;'>").append(escapeHtml(a.getAssetTag())).append("</span>")
-                    .append(a.getSerialNumber() != null && !a.getSerialNumber().isBlank() ? ", S/N: " + escapeHtml(a.getSerialNumber()) : "")
-                    .append(")</td></tr>");
-        }
+                ? "This support ticket has been reassigned to you by <strong>" + escapeHtml(updatedBy != null ? updatedBy : "IT Admin") + "</strong>."
+                : "A new IT support ticket has been registered and assigned directly to your queue.";
 
         String replyMailto = "mailto:" + escapeHtml(ticket.getRequesterEmail()) + "?subject="
                 + escapeHtml("Re: [" + ticket.getTicketNumber() + "] " + ticket.getTitle());
 
+        String createdTime = (ticket.getCreatedAt() != null)
+                ? ticket.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"))
+                : "Just now";
+
+        String dept = (ticket.getRequesterDepartment() != null && !ticket.getRequesterDepartment().isBlank())
+                ? ticket.getRequesterDepartment()
+                : "General";
+
+        String techDisplay = (technicianName != null && !technicianName.isBlank()) ? technicianName : "IT Technician";
+
+        StringBuilder assetSection = new StringBuilder();
+        if (ticket.getAsset() != null) {
+            Asset a = ticket.getAsset();
+            String mfgModel = (a.getManufacturer() != null ? a.getManufacturer() : "")
+                    + ((a.getModel() != null && !a.getModel().isBlank()) ? " " + a.getModel() : "");
+            if (mfgModel.isBlank()) mfgModel = "Standard Configuration";
+
+            assetSection.append("<!-- Horizontal Attached Device Strip -->")
+                    .append("<table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; background-color: #f8fafc; border-collapse: collapse;'>")
+                    .append("  <tr>")
+                    .append("    <td width='40%' style='padding: 10px 14px; border-right: 1px solid #e2e8f0; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Attached Hardware</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 3px;'>")
+                    .append(escapeHtml(a.getName())).append(" (").append(escapeHtml(mfgModel)).append(")</div>")
+                    .append("    </td>")
+                    .append("    <td width='30%' style='padding: 10px 14px; border-right: 1px solid #e2e8f0; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Asset Tag</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 3px; font-family: monospace;'>")
+                    .append(escapeHtml(a.getAssetTag())).append("</div>")
+                    .append("    </td>")
+                    .append("    <td width='30%' style='padding: 10px 14px; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Serial Number</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 3px; font-family: monospace;'>")
+                    .append(escapeHtml(a.getSerialNumber() != null ? a.getSerialNumber() : "N/A")).append("</div>")
+                    .append("    </td>")
+                    .append("  </tr>")
+                    .append("</table>");
+        }
+
         return "<!DOCTYPE html>"
                 + "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>"
-                + "<body style='margin: 0; padding: 24px 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
+                + "<body style='margin: 0; padding: 28px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
                 + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "    <tr><td align='center'>"
-                + "      <table width='600' border='0' cellspacing='0' cellpadding='0' style='max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>"
-                + "        <tr><td style='padding: 24px 32px 18px 32px; border-bottom: 2px solid #2563eb; background-color: #ffffff;'>"
+                + "      <table width='750' border='0' cellspacing='0' cellpadding='0' style='max-width: 750px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);'>"
+                + "        <!-- Horizontal Header Bar -->"
+                + "        <tr><td style='padding: 18px 28px; background-color: #0f172a; border-bottom: 2px solid #2563eb;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>"
-                + "                <div style='font-size: 17px; font-weight: 700; color: #0f172a;'>Aegis IT Asset Management</div>"
-                + "                <div style='font-size: 13px; color: #64748b; margin-top: 2px;'>IT Helpdesk &bull; " + escapeHtml(actionTitle) + "</div>"
+                + "              <td align='left'>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; Helpdesk Operations</span>"
                 + "              </td>"
                 + "              <td align='right'>"
-                + "                <span style='display: inline-block; font-family: monospace; font-size: 13px; font-weight: 600; color: #0f172a; background-color: #f1f5f9; padding: 4px 10px; border-radius: 4px; border: 1px solid #e2e8f0;'>" + escapeHtml(ticket.getTicketNumber()) + "</span>"
+                + "                <span style='display: inline-block; font-size: 12px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: #1e293b; border: 1px solid #334155; padding: 3px 10px; border-radius: 4px; margin-right: 8px;'>"
+                + "                  " + escapeHtml(ticket.getTicketNumber()) + "</span>"
+                + "                " + getPriorityBadgeHtml(ticket.getPriority())
                 + "              </td>"
                 + "            </tr>"
                 + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 28px 32px;'>"
-                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'><strong>Hello " + escapeHtml(technicianName != null && !technicianName.isBlank() ? technicianName : "Technician") + ",</strong></p>"
-                + "          <p style='margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.5;'>" + escapeHtml(actionSub) + "</p>"
-                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 4px; border-collapse: collapse; margin-bottom: 22px;'>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; width: 130px; border-bottom: 1px solid #f1f5f9;'>Ticket ID</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(ticket.getTicketNumber()) + "</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Priority</td>"
-                + "              <td style='padding: 8px 12px; border-bottom: 1px solid #f1f5f9;'>"
-                + "                <span style='display: inline-block; font-size: 12px; font-weight: 600; background-color: " + prioBadgeBg + "; color: " + prioBadgeColor + "; padding: 2px 8px; border-radius: 4px;'>" + prioText + "</span>"
-                + "              </td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Category</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + ticket.getCategory() + "</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Status</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + ticket.getStatus() + "</td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Requester</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(ticket.getRequesterName()) + " (" + escapeHtml(ticket.getRequesterEmail()) + ")</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Department</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(ticket.getRequesterDepartment() != null ? ticket.getRequesterDepartment() : "General") + "</td>"
-                + "            </tr>"
-                + assetRow.toString()
-                + "          </table>"
-                + "          <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px 16px; margin-bottom: 24px;'>"
-                + "            <div style='font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;'>Reported Issue</div>"
-                + "            <div style='font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 8px;'>" + escapeHtml(ticket.getTitle()) + "</div>"
-                + "            <div style='font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;'>" + escapeHtml(ticket.getDescription() != null ? ticket.getDescription() : "No details provided.") + "</div>"
+                + "        <!-- Horizontal Body -->"
+                + "        <tr><td style='padding: 24px 28px;'>"
+                + "          <!-- Notification Callout Banner -->"
+                + "          <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 4px; padding: 12px 18px; margin-bottom: 20px;'>"
+                + "            <span style='font-size: 11px; font-weight: 700; color: #2563eb; letter-spacing: 0.5px; text-transform: uppercase;'>" + actionTitle + "</span>"
+                + "            <div style='font-size: 13px; color: #334155; margin-top: 3px; line-height: 1.4;'>" + actionSub + "</div>"
                 + "          </div>"
-                + "          <table border='0' cellspacing='0' cellpadding='0' style='margin-bottom: 16px;'>"
+                + "          <!-- Horizontal 4-Column Metadata Matrix (2 Rows) -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; border-collapse: collapse;'>"
                 + "            <tr>"
-                + "              <td>"
-                + "                <a href='" + escapeHtml(dashboardUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 14px; font-weight: 600; border-radius: 4px;'>View in Helpdesk</a>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Ticket ID</div>"
+                + "                <div style='font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 4px; font-family: monospace;'>" + escapeHtml(ticket.getTicketNumber()) + "</div>"
                 + "              </td>"
-                + "              <td style='padding-left: 10px;'>"
-                + "                <a href='" + replyMailto + "' style='display: inline-block; background-color: #ffffff; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; padding: 9px 18px; font-size: 14px; font-weight: 500; border-radius: 4px;'>Reply to Requester</a>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Priority</div>"
+                + "                <div style='margin-top: 4px;'>" + getPriorityBadgeHtml(ticket.getPriority()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Category</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + ticket.getCategory() + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Status</div>"
+                + "                <div style='margin-top: 4px;'>" + getStatusBadgeHtml(ticket.getStatus()) + "</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "            <tr>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Requester</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(ticket.getRequesterName()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Requester Email</div>"
+                + "                <div style='font-size: 12px; font-weight: 500; color: #2563eb; margin-top: 4px; word-break: break-all;'>" + escapeHtml(ticket.getRequesterEmail()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Department</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(dept) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Assigned Tech</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(techDisplay) + "</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
+                + assetSection.toString()
+                + "          <!-- Horizontal Issue Container -->"
+                + "          <div style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 22px;'>"
+                + "            <div style='padding: 10px 16px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;'>"
+                + "              <span style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Reported Issue: </span>"
+                + "              <span style='font-size: 14px; font-weight: 700; color: #0f172a; margin-left: 6px;'>" + escapeHtml(ticket.getTitle()) + "</span>"
+                + "            </div>"
+                + "            <div style='padding: 14px 16px; background-color: #ffffff; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;'>"
+                + escapeHtml(ticket.getDescription() != null ? ticket.getDescription() : "No details provided.")
+                + "            </div>"
+                + "          </div>"
+                + "          <!-- Horizontal Action Toolbar -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td align='left'>"
+                + "                <table border='0' cellspacing='0' cellpadding='0'>"
+                + "                  <tr>"
+                + "                    <td>"
+                + "                      <a href='" + escapeHtml(dashboardUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 13px; font-weight: 600; border-radius: 5px;'>Open Ticket in Helpdesk &rarr;</a>"
+                + "                    </td>"
+                + "                    <td style='padding-left: 10px;'>"
+                + "                      <a href='" + replyMailto + "' style='display: inline-block; background-color: #ffffff; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; padding: 9px 18px; font-size: 13px; font-weight: 600; border-radius: 5px;'>Reply to Requester</a>"
+                + "                    </td>"
+                + "                  </tr>"
+                + "                </table>"
+                + "              </td>"
+                + "              <td align='right' style='color: #64748b; font-size: 12px;'>"
+                + "                Logged: " + createdTime
                 + "              </td>"
                 + "            </tr>"
                 + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 16px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;'>"
-                + "          <div style='font-weight: 500; color: #475569;'>Aegis IT Asset Management &bull; BM Consulting IT Support</div>"
-                + "          <div style='margin-top: 3px;'>This is an automated operational notification. Please triage via the helpdesk dashboard.</div>"
+                + "        <!-- Horizontal Footer -->"
+                + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Support</td>"
+                + "              <td align='right'>Operational Dispatch Notification</td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
                 + "      </table>"
                 + "    </td></tr>"
@@ -647,69 +786,146 @@ public class EmailService {
     }
 
     private String buildTicketEmailHtml(Ticket ticket, String portalUrl, String headerTitle, String bodyMessage) {
-        StringBuilder assetRow = new StringBuilder();
+        String dept = (ticket.getRequesterDepartment() != null && !ticket.getRequesterDepartment().isBlank())
+                ? ticket.getRequesterDepartment()
+                : "General";
+
+        String techDisplay = (ticket.getAssignedTo() != null && !ticket.getAssignedTo().isBlank())
+                ? ticket.getAssignedTo()
+                : "IT Support Queue";
+
+        String createdTime = (ticket.getCreatedAt() != null)
+                ? ticket.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"))
+                : "Recent";
+
+        StringBuilder assetSection = new StringBuilder();
         if (ticket.getAsset() != null) {
             Asset a = ticket.getAsset();
-            assetRow.append("<tr>")
-                    .append("<td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Attached Device</td>")
-                    .append("<td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 500; border-bottom: 1px solid #f1f5f9;'>")
-                    .append(escapeHtml(a.getName()))
-                    .append(" (Tag: <span style='font-family: monospace; color: #2563eb;'>").append(escapeHtml(a.getAssetTag())).append("</span>)")
-                    .append("</td></tr>");
+            String mfgModel = (a.getManufacturer() != null ? a.getManufacturer() : "")
+                    + ((a.getModel() != null && !a.getModel().isBlank()) ? " " + a.getModel() : "");
+            if (mfgModel.isBlank()) mfgModel = "Standard Configuration";
+
+            assetSection.append("<!-- Horizontal Attached Device Strip -->")
+                    .append("<table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; background-color: #f8fafc; border-collapse: collapse;'>")
+                    .append("  <tr>")
+                    .append("    <td width='40%' style='padding: 10px 14px; border-right: 1px solid #e2e8f0; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Attached Hardware</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 3px;'>")
+                    .append(escapeHtml(a.getName())).append(" (").append(escapeHtml(mfgModel)).append(")</div>")
+                    .append("    </td>")
+                    .append("    <td width='30%' style='padding: 10px 14px; border-right: 1px solid #e2e8f0; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Asset Tag</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 3px; font-family: monospace;'>")
+                    .append(escapeHtml(a.getAssetTag())).append("</div>")
+                    .append("    </td>")
+                    .append("    <td width='30%' style='padding: 10px 14px; vertical-align: top;'>")
+                    .append("      <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Serial Number</div>")
+                    .append("      <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 3px; font-family: monospace;'>")
+                    .append(escapeHtml(a.getSerialNumber() != null ? a.getSerialNumber() : "N/A")).append("</div>")
+                    .append("    </td>")
+                    .append("  </tr>")
+                    .append("</table>");
         }
 
         return "<!DOCTYPE html>"
                 + "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>"
-                + "<body style='margin: 0; padding: 24px 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
+                + "<body style='margin: 0; padding: 28px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;'>"
                 + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "    <tr><td align='center'>"
-                + "      <table width='600' border='0' cellspacing='0' cellpadding='0' style='max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>"
-                + "        <tr><td style='padding: 24px 32px 18px 32px; border-bottom: 2px solid #2563eb; background-color: #ffffff;'>"
+                + "      <table width='750' border='0' cellspacing='0' cellpadding='0' style='max-width: 750px; width: 100%; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);'>"
+                + "        <!-- Horizontal Header Bar -->"
+                + "        <tr><td style='padding: 18px 28px; background-color: #0f172a; border-bottom: 2px solid #2563eb;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>"
-                + "                <div style='font-size: 17px; font-weight: 700; color: #0f172a;'>Aegis IT Asset Management</div>"
-                + "                <div style='font-size: 13px; color: #64748b; margin-top: 2px;'>IT Helpdesk &bull; " + escapeHtml(headerTitle) + "</div>"
+                + "              <td align='left'>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; " + escapeHtml(headerTitle) + "</span>"
                 + "              </td>"
                 + "              <td align='right'>"
-                + "                <span style='display: inline-block; font-family: monospace; font-size: 13px; font-weight: 600; color: #0f172a; background-color: #f1f5f9; padding: 4px 10px; border-radius: 4px; border: 1px solid #e2e8f0;'>" + escapeHtml(ticket.getTicketNumber()) + "</span>"
+                + "                <span style='display: inline-block; font-size: 12px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: #1e293b; border: 1px solid #334155; padding: 3px 10px; border-radius: 4px; margin-right: 8px;'>"
+                + "                  " + escapeHtml(ticket.getTicketNumber()) + "</span>"
+                + "                " + getStatusBadgeHtml(ticket.getStatus())
                 + "              </td>"
                 + "            </tr>"
                 + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 28px 32px;'>"
-                + "          <p style='margin: 0 0 12px 0; font-size: 15px; color: #0f172a;'><strong>Hello " + escapeHtml(ticket.getRequesterName()) + ",</strong></p>"
-                + "          <p style='margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.5;'>" + bodyMessage + "</p>"
-                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 4px; border-collapse: collapse; margin-bottom: 22px;'>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; width: 130px; border-bottom: 1px solid #f1f5f9;'>Ticket ID</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(ticket.getTicketNumber()) + "</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Subject</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 500; border-bottom: 1px solid #f1f5f9;'>" + escapeHtml(ticket.getTitle()) + "</td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Category</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + ticket.getCategory() + "</td>"
-                + "            </tr>"
-                + "            <tr>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Priority</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>" + ticket.getPriority() + "</td>"
-                + "            </tr>"
-                + "            <tr style='background-color: #f8fafc;'>"
-                + "              <td style='padding: 8px 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #f1f5f9;'>Status</td>"
-                + "              <td style='padding: 8px 12px; color: #0f172a; font-size: 13px; font-weight: 600; border-bottom: 1px solid #f1f5f9;'>" + ticket.getStatus() + "</td>"
-                + "            </tr>"
-                + assetRow.toString()
-                + "          </table>"
-                + "          <div style='margin-bottom: 16px;'>"
-                + "            <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 14px; font-weight: 600; border-radius: 4px;'>View in Employee Portal</a>"
+                + "        <!-- Horizontal Body -->"
+                + "        <tr><td style='padding: 24px 28px;'>"
+                + "          <!-- Notification Callout Banner -->"
+                + "          <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 4px; padding: 12px 18px; margin-bottom: 20px;'>"
+                + "            <div style='font-size: 14px; color: #0f172a; font-weight: 600;'>Hello " + escapeHtml(ticket.getRequesterName()) + ",</div>"
+                + "            <div style='font-size: 13px; color: #334155; margin-top: 4px; line-height: 1.5;'>" + bodyMessage + "</div>"
                 + "          </div>"
+                + "          <!-- Horizontal 4-Column Metadata Matrix (2 Rows) -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0' style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; border-collapse: collapse;'>"
+                + "            <tr>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Ticket ID</div>"
+                + "                <div style='font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 4px; font-family: monospace;'>" + escapeHtml(ticket.getTicketNumber()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Status</div>"
+                + "                <div style='margin-top: 4px;'>" + getStatusBadgeHtml(ticket.getStatus()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Priority</div>"
+                + "                <div style='margin-top: 4px;'>" + getPriorityBadgeHtml(ticket.getPriority()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #f8fafc;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Category</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + ticket.getCategory() + "</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "            <tr>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Requester</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(ticket.getRequesterName()) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Department</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(dept) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Assigned Tech</div>"
+                + "                <div style='font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + escapeHtml(techDisplay) + "</div>"
+                + "              </td>"
+                + "              <td width='25%' style='padding: 11px 14px; border: 1px solid #e2e8f0; vertical-align: top; background-color: #ffffff;'>"
+                + "                <div style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Logged At</div>"
+                + "                <div style='font-size: 12px; font-weight: 600; color: #0f172a; margin-top: 4px;'>" + createdTime + "</div>"
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
+                + assetSection.toString()
+                + "          <!-- Horizontal Issue Container -->"
+                + "          <div style='border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 22px;'>"
+                + "            <div style='padding: 10px 16px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;'>"
+                + "              <span style='font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;'>Subject: </span>"
+                + "              <span style='font-size: 14px; font-weight: 700; color: #0f172a; margin-left: 6px;'>" + escapeHtml(ticket.getTitle()) + "</span>"
+                + "            </div>"
+                + "            <div style='padding: 14px 16px; background-color: #ffffff; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;'>"
+                + escapeHtml(ticket.getDescription() != null ? ticket.getDescription() : "No details provided.")
+                + "            </div>"
+                + "          </div>"
+                + "          <!-- Horizontal Action Toolbar -->"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td align='left'>"
+                + "                <a href='" + escapeHtml(portalUrl) + "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 22px; font-size: 13px; font-weight: 600; border-radius: 5px;'>View in Employee Portal &rarr;</a>"
+                + "              </td>"
+                + "              <td align='right' style='color: #64748b; font-size: 12px;'>"
+                + "                Real-time updates and ticket comments are available in your portal."
+                + "              </td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
-                + "        <tr><td style='padding: 16px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;'>"
-                + "          <div style='font-weight: 500; color: #475569;'>Aegis IT Asset Management &bull; BM Consulting IT Support</div>"
-                + "          <div style='margin-top: 3px;'>You received this email because a ticket was submitted with your organization account.</div>"
+                + "        <!-- Horizontal Footer -->"
+                + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
+                + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
+                + "            <tr>"
+                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Support</td>"
+                + "              <td align='right'>Automated Service Desk Notification</td>"
+                + "            </tr>"
+                + "          </table>"
                 + "        </td></tr>"
                 + "      </table>"
                 + "    </td></tr>"
