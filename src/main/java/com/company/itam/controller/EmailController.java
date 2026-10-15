@@ -36,4 +36,21 @@ public class EmailController {
         }
         return ResponseEntity.ok(notification);
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete an email notification from the outbox")
+    public ResponseEntity<Void> deleteEmail(@PathVariable Long id) {
+        boolean deleted = emailService.deleteNotification(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping
+    @Operation(summary = "Clear all email notifications from the outbox")
+    public ResponseEntity<Void> clearAllEmails() {
+        emailService.clearAllNotifications();
+        return ResponseEntity.noContent().build();
+    }
 }

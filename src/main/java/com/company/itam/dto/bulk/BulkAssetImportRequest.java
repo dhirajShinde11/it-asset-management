@@ -7,7 +7,7 @@ public class BulkAssetImportRequest {
     private List<BulkAssetRowDto> assets = new ArrayList<>();
     private boolean updateExisting = false;
     private boolean autoCreateUsers = true;
-    private boolean sendWelcomeEmail = true;
+    private boolean sendWelcomeEmail = false;
 
     public BulkAssetImportRequest() {}
 

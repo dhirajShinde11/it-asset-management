@@ -1592,9 +1592,44 @@ function renderEmailsTable(emails) {
             <td>${statusBadge}</td>
             <td style="text-align:right">
                 <button class="btn-table-action" onclick="previewEmail(${e.id})">Preview HTML</button>
+                <button class="btn-table-action" onclick="deleteEmail(${e.id})" style="color:#ef4444;border-color:rgba(239,68,68,0.25);margin-left:6px;" title="Delete this email">Delete</button>
             </td>
         </tr>`;
     }).join('');
+}
+
+async function deleteEmail(id) {
+    if (!confirm('Are you sure you want to delete this email record from the outbox?')) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/emails/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('Email record deleted', 'success');
+            loadEmails();
+        } else {
+            showToast('Failed to delete email record', 'error');
+        }
+    } catch (err) {
+        showToast('Network error while deleting email', 'error');
+    }
+}
+
+async function clearAllOutboxEmails() {
+    if (!confirm('Are you sure you want to clear all email notifications from the outbox? This will permanently delete all outbox records.')) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/emails', { method: 'DELETE' });
+        if (res.ok) {
+            showToast('All outbox emails cleared successfully', 'success');
+            loadEmails();
+        } else {
+            showToast('Failed to clear outbox emails', 'error');
+        }
+    } catch (err) {
+        showToast('Network error while clearing outbox', 'error');
+    }
 }
 
 async function previewEmail(id) {
@@ -4564,7 +4599,7 @@ async function executeBulkImport() {
     const type = App.bulkState.type;
     const updateExisting = document.getElementById('bulk-opt-update')?.checked || false;
     const autoCreateUsers = document.getElementById('bulk-opt-autouser')?.checked || false;
-    const sendWelcomeEmail = document.getElementById('bulk-opt-sendemail')?.checked !== false;
+    const sendWelcomeEmail = Boolean(document.getElementById('bulk-opt-sendemail')?.checked);
     const execBtn = document.getElementById('btn-execute-bulk');
     const resultBanner = document.getElementById('bulk-result-banner');
 

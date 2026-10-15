@@ -6,7 +6,7 @@ import java.util.List;
 public class BulkUserImportRequest {
     private List<BulkUserRowDto> users = new ArrayList<>();
     private boolean updateExisting = false;
-    private boolean sendWelcomeEmail = true;
+    private boolean sendWelcomeEmail = false;
 
     public BulkUserImportRequest() {}
 

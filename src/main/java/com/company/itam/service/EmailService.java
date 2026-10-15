@@ -145,6 +145,18 @@ public class EmailService {
     }
 
     public boolean dispatchViaSmtp(EmailNotification notification) {
+        if (notification == null || notification.getRecipientEmail() == null) {
+            return false;
+        }
+
+        // Safety Guard: Never dispatch real SMTP traffic to dummy, demo, or placeholder addresses
+        if (isDemoOrPlaceholderEmail(notification.getRecipientEmail())) {
+            log.info("Skipping real SMTP dispatch for demo/placeholder address: {}", notification.getRecipientEmail());
+            notification.setStatus("DEMO_SKIPPED");
+            emailRepository.save(notification);
+            return false;
+        }
+
         // 1. Direct project configuration from application.properties takes precedence
         if (propMailEnabled && propUsername != null && !propUsername.isBlank() && !propUsername.contains("YOUR_EMAIL_HERE")) {
             log.info("Using project application.properties SMTP config (Host: {}:{})", propHost, propPort);
@@ -160,6 +172,19 @@ public class EmailService {
 
         log.info("Physical SMTP credentials not yet provided in application.properties. Email logged to Outbox.");
         return false;
+    }
+
+    private boolean isDemoOrPlaceholderEmail(String email) {
+        if (email == null || email.isBlank()) return true;
+        String clean = email.toLowerCase().trim();
+        return clean.endsWith("@example.com")
+                || clean.endsWith("@test.com")
+                || clean.endsWith("@company.com")
+                || clean.endsWith("@dummy.com")
+                || clean.endsWith("@sample.com")
+                || clean.endsWith("@placeholder.com")
+                || clean.startsWith("test@")
+                || clean.startsWith("demo@");
     }
 
     private boolean dispatchUsingConfig(EmailNotification notification, String host, int port, String username, String password, String fromEmail, String fromName) {
@@ -310,6 +335,21 @@ public class EmailService {
 
     public EmailNotification getNotificationById(Long id) {
         return emailRepository.findById(id).orElse(null);
+    }
+
+    public boolean deleteNotification(Long id) {
+        if (emailRepository.existsById(id)) {
+            emailRepository.deleteById(id);
+            log.info("Deleted email notification #{} from outbox", id);
+            return true;
+        }
+        return false;
+    }
+
+    public void clearAllNotifications() {
+        long count = emailRepository.count();
+        emailRepository.deleteAll();
+        log.info("Cleared all {} email notification record(s) from outbox", count);
     }
 
     public SmtpSetting getSmtpSetting() {

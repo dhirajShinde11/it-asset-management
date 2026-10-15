@@ -23,7 +23,7 @@ public class UserRequestDto {
 
     private String initialPassword;
 
-    private boolean sendWelcomeEmail = true;
+    private boolean sendWelcomeEmail = false;
 
     public String getFullName() {
         return fullName;

@@ -927,6 +927,10 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Configure Live SMTP
                         </button>
+                        <button class="btn btn-secondary" onclick="clearAllOutboxEmails()" style="display: inline-flex; align-items: center; gap: 6px; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Clear Outbox
+                        </button>
                         <button class="btn btn-secondary" onclick="loadEmails()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                             Refresh
@@ -1303,21 +1307,7 @@
                 <button class="btn-close" onclick="closeModal('login-modal')">&times;</button>
             </div>
             
-            <!-- Fast 1-Click Demo Profiles -->
-            <div class="demo-profiles-strip">
-                <span class="demo-profiles-title">Quick Demo Sign-In:</span>
-                <div class="demo-chips">
-                    <button type="button" class="demo-chip chip-admin" onclick="fillLoginForm('admin@company.com', 'admin123')">
-                        🛡️ Admin (admin@company.com)
-                    </button>
-                    <button type="button" class="demo-chip chip-emp" onclick="fillLoginForm('sarah.jenkins@company.com', 'Welcome#2026')">
-                        💻 Sarah Jenkins (Engineer)
-                    </button>
-                    <button type="button" class="demo-chip chip-emp" onclick="fillLoginForm('david.chen@company.com', 'Welcome#2026')">
-                        ⚙️ David Chen (DevOps)
-                    </button>
-                </div>
-            </div>
+
 
             <form id="login-form" onsubmit="submitLogin(event)">
                 <div class="form-group" style="margin-bottom: 16px;">
@@ -1398,8 +1388,8 @@
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label class="checkbox-label">
-                            <input type="checkbox" id="user-send-email" checked>
-                            <span>Send welcome onboarding email to employee immediately</span>
+                            <input type="checkbox" id="user-send-email">
+                            <span>Send welcome onboarding email to employee</span>
                         </label>
                     </div>
                 </div>
@@ -3190,7 +3180,7 @@
                         <span><strong>Auto-create employee profiles</strong> if assigned employee email does not exist yet</span>
                     </label>
                     <label id="bulk-opt-email-wrap" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; cursor: pointer; margin: 0;">
-                        <input type="checkbox" id="bulk-opt-sendemail" checked>
+                        <input type="checkbox" id="bulk-opt-sendemail">
                         <span><strong>Send welcome &amp; login credentials email</strong> to newly registered users</span>
                     </label>
                 </div>
