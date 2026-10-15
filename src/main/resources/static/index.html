@@ -411,8 +411,8 @@
             <section class="tab-pane active" id="pane-assets">
                 <div class="toolbar">
                     <div class="search-input-wrap">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="asset-search-input" placeholder="Search by Tag, Name, Serial, or Employee..." oninput="debounceSearch()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor: pointer;" onclick="clearTimeout(App.searchTimer); loadAssets();" title="Click to search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="asset-search-input" placeholder="Search by Tag, Name, Serial, or Employee..." oninput="debounceSearch()" onkeydown="if(event.key==='Enter'){clearTimeout(App.searchTimer);loadAssets();}">
                     </div>
 
                     <div class="filter-group">
@@ -1066,8 +1066,8 @@
                 <!-- Tickets Toolbar & Filters -->
                 <div class="toolbar" style="margin-bottom: 16px;">
                     <div class="search-input-wrap" style="flex: 1; max-width: 380px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="ticket-search-input" placeholder="Search ticket #, title, requester, asset tag..." oninput="filterTicketsList()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor: pointer;" onclick="filterTicketsList()" title="Click to search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="ticket-search-input" placeholder="Search ticket #, title, requester, asset tag..." oninput="filterTicketsList()" onkeydown="if(event.key==='Enter'){filterTicketsList();}">
                     </div>
                     <div class="filter-group">
                         <select class="select-control" id="ticket-status-filter" onchange="filterTicketsList()">
@@ -3230,7 +3230,7 @@
                 <input type="text" id="spotlight-input" placeholder="Type to search assets, serials, employees, licenses, or actions... (ESC to close)" autocomplete="off" oninput="handleSpotlightInput(this.value)">
                 <span class="shortcut-badge">ESC</span>
             </div>
-            <div class="spotlight-results" id="spotlight-results-container">
+            <div class="spotlight-results" id="spotlight-results">
                 <!-- Dynamically populated -->
             </div>
             <div class="spotlight-footer">

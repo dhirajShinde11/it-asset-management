@@ -4715,7 +4715,7 @@ async function executeBulkImport() {
 function openSpotlightSearch() {
     const modal = document.getElementById('spotlight-search-modal');
     const input = document.getElementById('spotlight-input');
-    const results = document.getElementById('spotlight-results');
+    const results = document.getElementById('spotlight-results') || document.getElementById('spotlight-results-container');
     if (!modal) return;
     modal.style.display = 'flex';
     if (input) {
@@ -4746,7 +4746,7 @@ let spotlightTimer = null;
 function handleSpotlightInput(val) {
     clearTimeout(spotlightTimer);
     const query = (val || '').trim();
-    const results = document.getElementById('spotlight-results');
+    const results = document.getElementById('spotlight-results') || document.getElementById('spotlight-results-container');
     if (!results) return;
 
     if (!query) {
@@ -4772,7 +4772,7 @@ function handleSpotlightInput(val) {
 }
 
 function renderSpotlightResults(data, query) {
-    const results = document.getElementById('spotlight-results');
+    const results = document.getElementById('spotlight-results') || document.getElementById('spotlight-results-container');
     if (!results) return;
 
     const assets = data.assets || [];
