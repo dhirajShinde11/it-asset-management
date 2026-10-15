@@ -5156,6 +5156,12 @@ function onAdminTicketUserChange() {
 
 async function submitAdminTicket(event) {
     event.preventDefault();
+    const submitBtn = event?.target?.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating & dispatching...';
+    }
+
     const userSelect = document.getElementById('adm-tk-user');
     const selectedOpt = userSelect.options[userSelect.selectedIndex];
     const assetIdVal = document.getElementById('adm-tk-asset')?.value;
@@ -5190,6 +5196,11 @@ async function submitAdminTicket(event) {
         await loadTickets();
     } catch (err) {
         showToast(err.message, 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create & Dispatch Ticket';
+        }
     }
 }
 
@@ -5405,6 +5416,12 @@ async function submitEmpTicket(event) {
         assignedTo: 'Dhiraj Shinde'
     };
 
+    const submitBtn = event?.target?.querySelector('button[type="submit"]') || document.getElementById('emp-tk-submit-btn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting & notifying IT...';
+    }
+
     try {
         const res = await fetch(`/api/my/tickets?email=${encodeURIComponent(email)}`, {
             method: 'POST',
@@ -5423,6 +5440,11 @@ async function submitEmpTicket(event) {
         await loadEmployeePortal(email);
     } catch (err) {
         showToast(err.message, 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit IT Support Ticket';
+        }
     }
 }
 
