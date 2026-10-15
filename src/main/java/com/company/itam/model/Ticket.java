@@ -7,7 +7,12 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tickets")
+@Table(name = "tickets", indexes = {
+    @Index(name = "idx_ticket_number", columnList = "ticket_number", unique = true),
+    @Index(name = "idx_ticket_status", columnList = "status"),
+    @Index(name = "idx_ticket_requester_email", columnList = "requester_email"),
+    @Index(name = "idx_ticket_assigned_to", columnList = "assigned_to")
+})
 public class Ticket {
 
     @Id

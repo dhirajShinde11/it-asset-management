@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "email_notifications")
+@Table(name = "email_notifications", indexes = {
+    @Index(name = "idx_email_recipient", columnList = "recipientEmail"),
+    @Index(name = "idx_email_status", columnList = "status"),
+    @Index(name = "idx_email_sent_at", columnList = "sentAt")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class EmailNotification {
 

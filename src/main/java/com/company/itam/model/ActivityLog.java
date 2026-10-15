@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "activity_logs")
+@Table(name = "activity_logs", indexes = {
+    @Index(name = "idx_act_timestamp", columnList = "timestamp"),
+    @Index(name = "idx_act_action", columnList = "action"),
+    @Index(name = "idx_act_user_email", columnList = "targetUserEmail")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ActivityLog {
 

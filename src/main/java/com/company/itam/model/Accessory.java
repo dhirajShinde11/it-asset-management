@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "accessories")
+@Table(name = "accessories", indexes = {
+    @Index(name = "idx_acc_name", columnList = "name")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Accessory {
 

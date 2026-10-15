@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "components")
+@Table(name = "components", indexes = {
+    @Index(name = "idx_comp_name", columnList = "name")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Component {
 

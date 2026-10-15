@@ -11,7 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "assets")
+@Table(name = "assets", indexes = {
+    @Index(name = "idx_asset_tag", columnList = "assetTag", unique = true),
+    @Index(name = "idx_asset_status", columnList = "status"),
+    @Index(name = "idx_asset_category", columnList = "category"),
+    @Index(name = "idx_asset_serial", columnList = "serialNumber"),
+    @Index(name = "idx_asset_assigned_email", columnList = "assignedEmployeeEmail")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Asset {
 

@@ -8,7 +8,11 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_user_email", columnList = "email", unique = true),
+    @Index(name = "idx_user_department", columnList = "department"),
+    @Index(name = "idx_user_role", columnList = "role")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AppUser {
 
