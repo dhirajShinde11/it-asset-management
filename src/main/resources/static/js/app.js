@@ -407,7 +407,7 @@ function switchTab(tabKey) {
     if (btnUser) btnUser.style.display = (isAdmin && tabKey === 'users') ? '' : 'none';
 
     const headings = {
-        'assets': ['IT Asset Portfolio', 'Track, audit, provision, and maintain organization hardware'],
+        'assets': ['IT Asset Inventory', 'Track, audit, provision, and maintain organization hardware'],
         'accessories': ['Accessories Inventory', 'Track keyboards, chargers, docking stations, and active employee checkouts'],
         'consumables': ['Consumables Dispensing', 'Track and dispense printer toner, thermal paste, cables, and safety supplies'],
         'components': ['Internal Components', 'Track RAM, NVMe SSDs, GPUs, and parts installed into hardware hosts'],
@@ -417,7 +417,7 @@ function switchTab(tabKey) {
         'activity': ['Custody & Activity Audit Trail', 'Immutable audit log of all check-outs, returns, physical audits, and part installations'],
         'emails': ['Email Outbox & Notification Audit', 'Live audit log of all dispatched onboarding and assignment notifications'],
         'maintenance': ['Hardware Maintenance & Service Records', 'Repair audits, vendor RMAs, and diagnostic logs'],
-        'analytics': ['Asset Analytics & Department Allocation', 'Portfolio distribution by category and department'],
+        'analytics': ['Asset Analytics & Department Allocation', 'Asset distribution by category and department'],
         'employee-portal': ['My IT Equipment Hub', 'Your assigned organization hardware & equipment details']
     };
 
@@ -2300,8 +2300,8 @@ function renderUserDetailsContent(data) {
             <span class="ud-stat-val text-purple">${accessories.length + accCheckouts.length} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted)">items</span></span>
         </div>
         <div class="ud-stat-card">
-            <span class="ud-stat-label">Custody Asset Value</span>
-            <span class="ud-stat-val text-emerald">$${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="ud-stat-label">Assigned Assets</span>
+            <span class="ud-stat-val text-emerald">${assets.length} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted)">units</span></span>
         </div>
         <div class="ud-stat-card">
             <span class="ud-stat-label">Activity & Service</span>
