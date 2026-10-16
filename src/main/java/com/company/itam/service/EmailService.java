@@ -149,7 +149,7 @@ public class EmailService {
             return false;
         }
 
-        // Safety Guard: Never dispatch real SMTP traffic to dummy, demo, or placeholder addresses
+        // Safety Guard 1: Never dispatch real SMTP traffic to dummy, demo, or placeholder addresses
         if (isDemoOrPlaceholderEmail(notification.getRecipientEmail())) {
             log.info("Skipping real SMTP dispatch for demo/placeholder address: {}", notification.getRecipientEmail());
             notification.setStatus("DEMO_SKIPPED");
@@ -157,21 +157,42 @@ public class EmailService {
             return false;
         }
 
-        // 1. Direct project configuration from application.properties takes precedence
-        if (propMailEnabled && propUsername != null && !propUsername.isBlank() && !propUsername.contains("YOUR_EMAIL_HERE")) {
-            log.info("Using project application.properties SMTP config (Host: {}:{})", propHost, propPort);
-            return dispatchUsingConfig(notification, propHost, propPort, propUsername, propPassword, propFromEmail, propFromName);
+        // Safety Guard 2: Main email sending system ON/OFF master toggle
+        if (!isMailSendingEnabled()) {
+            log.info("Main email sending system is OFF (Paused). Notification {} retained in Outbox without SMTP transmission.", notification.getId());
+            notification.setStatus("OUTBOX_PAUSED");
+            emailRepository.save(notification);
+            return false;
         }
 
-        // 2. Fallback to dynamic database settings if configured
-        Optional<SmtpSetting> settingOpt = smtpSettingRepository.findFirstByOrderByIdAsc();
-        if (settingOpt.isPresent() && settingOpt.get().isEnabled()) {
-            SmtpSetting s = settingOpt.get();
-            return dispatchUsingConfig(notification, s.getHost(), s.getPort(), s.getUsername(), s.getPassword(), s.getFromEmail(), s.getFromName());
+        // Configuration Resolution: Check dynamic database settings first, then application.properties
+        SmtpSetting setting = getSmtpSetting();
+        String host = setting.getHost();
+        int port = setting.getPort() != null ? setting.getPort() : 587;
+        String username = setting.getUsername();
+        String password = setting.getPassword();
+        String fromEmail = setting.getFromEmail();
+        String fromName = setting.getFromName();
+
+        // Fallback to application.properties if database username is blank
+        if ((username == null || username.isBlank()) && (propUsername != null && !propUsername.isBlank() && !propUsername.contains("YOUR_EMAIL_HERE"))) {
+            host = propHost;
+            port = propPort;
+            username = propUsername;
+            password = propPassword;
+            if (fromEmail == null || fromEmail.isBlank()) fromEmail = propFromEmail;
+            if (fromName == null || fromName.isBlank()) fromName = propFromName;
         }
 
-        log.info("Physical SMTP credentials not yet provided in application.properties. Email logged to Outbox.");
-        return false;
+        // If credentials are not yet configured
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            log.info("Main email sending is ON, but SMTP credentials are incomplete. Email {} kept in Outbox.", notification.getId());
+            notification.setStatus("CONFIG_REQUIRED");
+            emailRepository.save(notification);
+            return false;
+        }
+
+        return dispatchUsingConfig(notification, host, port, username, password, fromEmail, fromName);
     }
 
     private boolean isDemoOrPlaceholderEmail(String email) {
@@ -375,6 +396,24 @@ public class EmailService {
         existing.setEnabled(updated.isEnabled());
         existing.setUpdatedAt(LocalDateTime.now());
         return smtpSettingRepository.save(existing);
+    }
+
+    public boolean isMailSendingEnabled() {
+        try {
+            return getSmtpSetting().isEnabled();
+        } catch (Exception e) {
+            log.warn("Could not retrieve SMTP enabled state, defaulting to false: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean setMailSendingEnabled(boolean enabled) {
+        SmtpSetting existing = getSmtpSetting();
+        existing.setEnabled(enabled);
+        existing.setUpdatedAt(LocalDateTime.now());
+        SmtpSetting saved = smtpSettingRepository.save(existing);
+        log.info("Main email sending system switched to: {}", saved.isEnabled() ? "ON (ACTIVE)" : "OFF (PAUSED)");
+        return saved.isEnabled();
     }
 
     private String buildWelcomeEmailHtml(AppUser user, String password, String portalUrl) {

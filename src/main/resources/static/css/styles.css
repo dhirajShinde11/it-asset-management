@@ -1734,6 +1734,13 @@ body {
     transition: .3s;
     border-radius: 50%;
 }
+.switch-toggle.switch-success input:checked + .slider {
+    background-color: #10b981 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.switch-toggle.switch-success input:not(:checked) + .slider {
+    background-color: #334155 !important;
+}
 
 /* User 360 Details Drawer & Modal Styles */
 .clickable-user-row {

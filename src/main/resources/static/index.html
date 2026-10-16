@@ -922,10 +922,14 @@
                         <h2>Email Outbox &amp; Physical SMTP Dispatch</h2>
                         <p class="text-muted">Live audit trail of onboarding emails, user login credentials, and physical inbox deliveries</p>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <button class="btn btn-primary" onclick="openSmtpModal()" id="btn-smtp-settings" style="display: inline-flex; align-items: center; gap: 8px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                            Configure Live SMTP
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button id="btn-quick-mail-toggle" class="btn btn-secondary" onclick="quickToggleMailSending()" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600;">
+                            <span id="btn-quick-mail-icon" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                            <span id="btn-quick-mail-text">Sending System</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="openSmtpModal()" id="btn-smtp-settings" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Configure SMTP
                         </button>
                         <button class="btn btn-secondary" onclick="clearAllOutboxEmails()" style="display: inline-flex; align-items: center; gap: 6px; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -938,13 +942,40 @@
                     </div>
                 </div>
 
-                <!-- SMTP Status Alert Banner -->
-                <div id="smtp-status-banner" style="margin-bottom: 16px; padding: 14px 18px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155;">
-                    <div style="display: flex; align-items: center; gap: 12px;" id="smtp-banner-text">
-                        <span id="smtp-status-indicator" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #94a3b8;"></span>
-                        <span>Loading SMTP configuration...</span>
+                <!-- Main Outgoing Mail Sending System Master Control Banner -->
+                <div id="smtp-status-banner" style="margin-bottom: 18px; padding: 16px 20px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(51, 65, 85, 0.8); backdrop-filter: blur(8px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 280px;">
+                        <div id="smtp-icon-box" style="width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(51, 65, 85, 0.4); border: 1px solid rgba(148, 163, 184, 0.2); flex-shrink: 0; transition: all 0.3s ease;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" id="smtp-status-svg"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 3px; flex-wrap: wrap;">
+                                <span style="font-size: 14px; font-weight: 700; color: #f8fafc; letter-spacing: 0.2px;">Main Outgoing Mail Sending System</span>
+                                <span id="smtp-status-pill" class="pill pill-maintenance" style="font-size: 11px; padding: 2px 10px; font-weight: 700;">
+                                    <span class="pill-dot"></span> CHECKING...
+                                </span>
+                            </div>
+                            <div id="smtp-banner-description" style="font-size: 12.5px; color: #94a3b8; line-height: 1.4;">
+                                Loading outgoing mail delivery configuration...
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-secondary btn-sm" onclick="openSmtpModal()" style="font-size: 12px; padding: 4px 12px;">Settings &amp; Test</button>
+
+                    <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
+                        <!-- Master ON/OFF Switch -->
+                        <div style="display: flex; align-items: center; gap: 10px; background: rgba(30, 41, 59, 0.7); padding: 6px 14px; border-radius: 24px; border: 1px solid rgba(71, 85, 105, 0.6); box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
+                            <span id="master-toggle-status-text" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #94a3b8; min-width: 80px; text-align: right;">PAUSED (OFF)</span>
+                            <label class="switch-toggle switch-success" style="position: relative; display: inline-block; width: 48px; height: 26px; margin: 0; cursor: pointer;" title="Toggle Main Email Sending System ON or OFF">
+                                <input type="checkbox" id="master-smtp-toggle" onchange="toggleMailSendingSystem(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 26px;"></span>
+                            </label>
+                        </div>
+
+                        <button class="btn btn-secondary btn-sm" onclick="openSmtpModal()" style="font-size: 12px; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Configure
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Email Outbox Search & Filter Toolbar -->
@@ -956,8 +987,10 @@
                     <div class="filter-group">
                         <select id="filter-email-status" onchange="filterEmailsList()" class="select-control">
                             <option value="">All Statuses</option>
-                            <option value="DELIVERED_TO_OUTBOX">Delivered / Sent</option>
-                            <option value="FAILED">Failed</option>
+                            <option value="DELIVERED_TO_INBOX">Inbox Delivered (Live SMTP)</option>
+                            <option value="OUTBOX_PAUSED">Outbox Paused (OFF)</option>
+                            <option value="DELIVERED_TO_OUTBOX">Outbox Captured</option>
+                            <option value="FAILED">Failed / Error</option>
                         </select>
                         <button class="btn btn-icon" title="Reset Filters" onclick="resetEmailFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>

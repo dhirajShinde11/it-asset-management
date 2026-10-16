@@ -1502,12 +1502,14 @@ function filterEmailsList() {
         );
     }
     if (statusFilter) {
-        if (statusFilter === 'DELIVERED_TO_OUTBOX') {
-            filtered = filtered.filter(e => e.status === 'DELIVERED_TO_OUTBOX' || e.status === 'DELIVERED_TO_INBOX');
-        } else if (statusFilter === 'SMTP_SENT') {
-            filtered = filtered.filter(e => e.status && e.status.includes('SMTP'));
-        } else if (statusFilter === 'PENDING') {
-            filtered = filtered.filter(e => e.status === 'PENDING');
+        if (statusFilter === 'DELIVERED_TO_INBOX') {
+            filtered = filtered.filter(e => e.status === 'DELIVERED_TO_INBOX');
+        } else if (statusFilter === 'OUTBOX_PAUSED') {
+            filtered = filtered.filter(e => e.status === 'OUTBOX_PAUSED');
+        } else if (statusFilter === 'DELIVERED_TO_OUTBOX') {
+            filtered = filtered.filter(e => e.status === 'DELIVERED_TO_OUTBOX' || e.status === 'OUTBOX_PAUSED');
+        } else if (statusFilter === 'FAILED') {
+            filtered = filtered.filter(e => e.status && (e.status.includes('SMTP') || e.status.includes('FAIL') || e.status.includes('ERROR')));
         }
     }
     renderEmailsTable(filtered);
@@ -1520,28 +1522,124 @@ function resetEmailFilters() {
 }
 
 async function checkSmtpStatus() {
-    const bannerText = document.getElementById('smtp-banner-text');
-    if (!bannerText) return;
+    const banner = document.getElementById('smtp-status-banner');
+    if (!banner) return;
     try {
-        const res = await fetch('/api/smtp/settings');
+        const res = await fetch('/api/smtp/status');
         if (!res.ok) return;
         const s = await res.json();
-        if (s.enabled) {
-            bannerText.innerHTML = `
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span>
-                <span style="color:#f8fafc;font-weight:500;">
-                    Live SMTP Delivery Active &bull; <strong style="color:#38bdf8">${escapeHtml(s.host)}:${s.port}</strong> &bull; From: <code>${escapeHtml(s.fromEmail || s.username)}</code>
-                </span>`;
-        } else {
-            bannerText.innerHTML = `
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;"></span>
-                <span style="color:#cbd5e1;">
-                    Live SMTP Delivery is currently <strong>Inactive</strong> (Emails are stored locally in this Outbox). Click <em>Configure Live SMTP</em> to connect Gmail, Outlook, or corporate mail servers.
-                </span>`;
+        const isEnabled = !!s.enabled;
+
+        // 1. Update Master Toggle Checkbox
+        const toggleInput = document.getElementById('master-smtp-toggle');
+        if (toggleInput) {
+            toggleInput.checked = isEnabled;
+        }
+
+        // 2. Update Modal Toggle Checkbox if open/rendered
+        const modalToggle = document.getElementById('smtp-enabled');
+        if (modalToggle) {
+            modalToggle.checked = isEnabled;
+        }
+
+        // 3. Update Toggle Status Text
+        const toggleText = document.getElementById('master-toggle-status-text');
+        if (toggleText) {
+            toggleText.textContent = isEnabled ? 'ACTIVE (ON)' : 'PAUSED (OFF)';
+            toggleText.style.color = isEnabled ? '#10b981' : '#f87171';
+        }
+
+        // 4. Update Status Pill
+        const pill = document.getElementById('smtp-status-pill');
+        if (pill) {
+            if (isEnabled) {
+                pill.className = 'pill pill-available';
+                pill.innerHTML = '<span class="pill-dot"></span> LIVE SENDING ON';
+            } else {
+                pill.className = 'pill pill-maintenance';
+                pill.innerHTML = '<span class="pill-dot"></span> SENDING PAUSED (OFF)';
+            }
+        }
+
+        // 5. Update Status Icon Box
+        const iconBox = document.getElementById('smtp-icon-box');
+        const iconSvg = document.getElementById('smtp-status-svg');
+        if (iconBox && iconSvg) {
+            if (isEnabled) {
+                iconBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                iconBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                iconSvg.setAttribute('stroke', '#10b981');
+            } else {
+                iconBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                iconBox.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                iconSvg.setAttribute('stroke', '#f87171');
+            }
+        }
+
+        // 6. Update Description
+        const desc = document.getElementById('smtp-banner-description');
+        if (desc) {
+            if (isEnabled) {
+                desc.innerHTML = `Live transmission is <strong>ACTIVE</strong> &bull; Emails are physically dispatched via <code style="color:#38bdf8">${escapeHtml(s.host || 'smtp.gmail.com')}:${s.port || 587}</code> to recipient inboxes.`;
+            } else {
+                desc.innerHTML = `Mail sending is currently <strong>PAUSED (OFF)</strong> &bull; Outgoing emails are safely preserved in this Outbox without external network traffic or timeout alerts.`;
+            }
+        }
+
+        // 7. Update Quick Header Toggle Button
+        const quickBtn = document.getElementById('btn-quick-mail-toggle');
+        const quickIcon = document.getElementById('btn-quick-mail-icon');
+        const quickText = document.getElementById('btn-quick-mail-text');
+        if (quickBtn && quickIcon && quickText) {
+            if (isEnabled) {
+                quickIcon.style.background = '#10b981';
+                quickIcon.style.boxShadow = '0 0 6px #10b981';
+                quickText.textContent = 'Sending: ON';
+                quickBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                quickBtn.style.color = '#10b981';
+                quickBtn.title = 'Click to Pause outgoing mail sending (Turn OFF)';
+            } else {
+                quickIcon.style.background = '#ef4444';
+                quickIcon.style.boxShadow = 'none';
+                quickText.textContent = 'Sending: OFF';
+                quickBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                quickBtn.style.color = '#f87171';
+                quickBtn.title = 'Click to Enable outgoing mail sending (Turn ON)';
+            }
         }
     } catch (e) {
         console.warn('Could not check SMTP status:', e);
     }
+}
+
+async function toggleMailSendingSystem(desiredState) {
+    try {
+        const res = await fetch('/api/smtp/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: !!desiredState })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            if (data.enabled) {
+                showToast('Mail Sending System: ACTIVE (ON) - Live SMTP Enabled', 'success');
+            } else {
+                showToast('Mail Sending System: PAUSED (OFF) - Emails saved locally to Outbox', 'info');
+            }
+        } else {
+            showToast(data.message || 'Failed to toggle sending system', 'error');
+        }
+        await checkSmtpStatus();
+    } catch (err) {
+        showToast('Network error toggling sending system: ' + err.message, 'error');
+        await checkSmtpStatus();
+    }
+}
+
+async function quickToggleMailSending() {
+    const toggleInput = document.getElementById('master-smtp-toggle');
+    const currentState = toggleInput ? toggleInput.checked : false;
+    await toggleMailSendingSystem(!currentState);
 }
 
 function renderEmailsTable(emails) {
@@ -1575,7 +1673,13 @@ function renderEmailsTable(emails) {
         let statusBadge = '';
         if (e.status === 'DELIVERED_TO_INBOX') {
             statusBadge = '<span class="pill pill-available"><span class="pill-dot"></span>INBOX DELIVERED</span>';
-        } else if (e.status && e.status.includes('SMTP')) {
+        } else if (e.status === 'OUTBOX_PAUSED') {
+            statusBadge = '<span class="pill pill-maintenance" title="Email captured in Outbox (Sending System is Paused / OFF)"><span class="pill-dot"></span>SENDING PAUSED</span>';
+        } else if (e.status === 'DEMO_SKIPPED') {
+            statusBadge = '<span class="pill pill-maintenance" title="Placeholder/demo address skipped"><span class="pill-dot"></span>DEMO SKIPPED</span>';
+        } else if (e.status === 'CONFIG_REQUIRED') {
+            statusBadge = '<span class="pill pill-reserved" title="SMTP credentials needed"><span class="pill-dot"></span>CONFIG NEEDED</span>';
+        } else if (e.status && (e.status.includes('SMTP') || e.status.includes('ERROR') || e.status.includes('Failed'))) {
             statusBadge = `<span class="pill pill-damaged" title="${escapeHtml(e.status)}"><span class="pill-dot"></span>SMTP ERROR</span>`;
         } else {
             statusBadge = '<span class="pill pill-reserved"><span class="pill-dot"></span>OUTBOX CAPTURED</span>';
