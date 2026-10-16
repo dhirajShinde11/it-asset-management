@@ -13,5 +13,8 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
     @Query("SELECT m FROM MaintenanceRecord m WHERE m.asset.id = :assetId ORDER BY m.serviceDate DESC")
     List<MaintenanceRecord> findByAssetIdOrderByServiceDateDesc(@Param("assetId") Long assetId);
 
+    @Query("SELECT m FROM MaintenanceRecord m WHERE m.asset.id IN :assetIds ORDER BY m.serviceDate DESC")
+    List<MaintenanceRecord> findByAssetIdInOrderByServiceDateDesc(@Param("assetIds") List<Long> assetIds);
+
     List<MaintenanceRecord> findAllByOrderByServiceDateDesc();
 }

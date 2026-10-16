@@ -59,8 +59,11 @@ public class EmployeePortalController {
 
         // Fetch maintenance tickets associated with their assigned assets
         List<MaintenanceRecord> serviceHistory = new ArrayList<>();
-        for (Asset asset : assignedAssets) {
-            serviceHistory.addAll(maintenanceRepository.findByAssetIdOrderByServiceDateDesc(asset.getId()));
+        if (!assignedAssets.isEmpty()) {
+            List<Long> assetIds = assignedAssets.stream().map(Asset::getId).filter(java.util.Objects::nonNull).toList();
+            if (!assetIds.isEmpty()) {
+                serviceHistory = maintenanceRepository.findByAssetIdInOrderByServiceDateDesc(assetIds);
+            }
         }
 
         List<Ticket> tickets = ticketService.getMyTickets(email);

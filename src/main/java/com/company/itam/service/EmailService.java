@@ -192,7 +192,21 @@ public class EmailService {
             return false;
         }
 
-        return dispatchUsingConfig(notification, host, port, username, password, fromEmail, fromName);
+        final String fHost = host;
+        final int fPort = port;
+        final String fUsername = username;
+        final String fPassword = password;
+        final String fFromEmail = fromEmail;
+        final String fFromName = fromName;
+
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                dispatchUsingConfig(notification, fHost, fPort, fUsername, fPassword, fFromEmail, fFromName);
+            } catch (Exception e) {
+                log.error("Asynchronous SMTP delivery failure for {}: {}", notification.getRecipientEmail(), e.getMessage());
+            }
+        });
+        return true;
     }
 
     private boolean isDemoOrPlaceholderEmail(String email) {

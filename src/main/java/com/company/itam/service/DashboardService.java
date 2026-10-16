@@ -40,57 +40,47 @@ public class DashboardService {
     }
 
     public DashboardSummaryDto getSummary() {
-        List<Asset> allAssets = assetRepository.findAll();
         DashboardSummaryDto summary = new DashboardSummaryDto();
 
-        summary.setTotalAssets(allAssets.size());
-        summary.setAvailableAssets(allAssets.stream().filter(a -> a.getStatus() == AssetStatus.AVAILABLE).count());
-        summary.setAssignedAssets(allAssets.stream().filter(a -> a.getStatus() == AssetStatus.ASSIGNED).count());
-        summary.setMaintenanceAssets(allAssets.stream().filter(a -> a.getStatus() == AssetStatus.UNDER_MAINTENANCE).count());
-        summary.setRetiredAssets(allAssets.stream().filter(a -> a.getStatus() == AssetStatus.RETIRED).count());
+        summary.setTotalAssets(assetRepository.count());
+        summary.setAvailableAssets(assetRepository.countByStatus(AssetStatus.AVAILABLE));
+        summary.setAssignedAssets(assetRepository.countByStatus(AssetStatus.ASSIGNED));
+        summary.setMaintenanceAssets(assetRepository.countByStatus(AssetStatus.UNDER_MAINTENANCE));
+        summary.setRetiredAssets(assetRepository.countByStatus(AssetStatus.RETIRED));
 
-        BigDecimal totalVal = allAssets.stream()
-                .map(Asset::getPurchaseCost)
-                .filter(cost -> cost != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        summary.setTotalAssetValue(totalVal);
+        BigDecimal totalVal = assetRepository.sumTotalAssetValue();
+        summary.setTotalAssetValue(totalVal != null ? totalVal : BigDecimal.ZERO);
 
         LocalDate today = LocalDate.now();
         LocalDate in60Days = today.plusDays(60);
-        long expiringCount = allAssets.stream()
-                .filter(a -> a.getWarrantyExpiryDate() != null)
-                .filter(a -> !a.getWarrantyExpiryDate().isBefore(today) && !a.getWarrantyExpiryDate().isAfter(in60Days))
-                .count();
-        summary.setExpiringWarrantiesCount(expiringCount);
+        summary.setExpiringWarrantiesCount(assetRepository.countByWarrantyExpiryDateBetween(today, in60Days));
 
-        // Assets by Category
+        // Assets by Category - database group-by
         Map<String, Long> byCategory = new HashMap<>();
-        for (AssetCategory cat : AssetCategory.values()) {
-            long count = allAssets.stream().filter(a -> a.getCategory() == cat).count();
-            if (count > 0) {
-                byCategory.put(cat.name(), count);
+        List<Object[]> catRows = assetRepository.countGroupByCategory();
+        for (Object[] row : catRows) {
+            if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                byCategory.put(row[0].toString(), ((Number) row[1]).longValue());
             }
         }
         summary.setAssetsByCategory(byCategory);
 
-        // Assets by Department
-        Map<String, Long> byDept = allAssets.stream()
-                .filter(a -> a.getAssignedDepartment() != null && !a.getAssignedDepartment().trim().isEmpty())
-                .collect(Collectors.groupingBy(Asset::getAssignedDepartment, Collectors.counting()));
+        // Assets by Department - database group-by
+        Map<String, Long> byDept = new HashMap<>();
+        List<Object[]> deptRows = assetRepository.countGroupByDepartment();
+        for (Object[] row : deptRows) {
+            if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                byDept.put(row[0].toString(), ((Number) row[1]).longValue());
+            }
+        }
         summary.setAssetsByDepartment(byDept);
 
-        // Extended Inventory Metrics
-        List<Accessory> accessories = accessoryRepository.findAll();
-        summary.setTotalAccessories(accessories.size());
-        summary.setLowStockAccessoriesCount(accessories.stream()
-                .filter(a -> a.getRemainingQuantity() <= (a.getMinQuantity() != null ? a.getMinQuantity() : 5))
-                .count());
+        // Extended Inventory Metrics - direct database counts
+        summary.setTotalAccessories(accessoryRepository.count());
+        summary.setLowStockAccessoriesCount(accessoryRepository.countLowStock());
 
-        List<Consumable> consumables = consumableRepository.findAll();
-        summary.setTotalConsumables(consumables.size());
-        summary.setLowStockConsumablesCount(consumables.stream()
-                .filter(c -> c.getRemainingQuantity() <= (c.getMinQuantity() != null ? c.getMinQuantity() : 5))
-                .count());
+        summary.setTotalConsumables(consumableRepository.count());
+        summary.setLowStockConsumablesCount(consumableRepository.countLowStock());
 
         summary.setTotalComponents(componentRepository.count());
         try {

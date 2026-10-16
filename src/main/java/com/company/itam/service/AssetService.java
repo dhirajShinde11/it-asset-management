@@ -39,19 +39,11 @@ public class AssetService {
         return getAllAssets(query, category, status, null);
     }
 
+    @Transactional(readOnly = true)
     public List<Asset> getAllAssets(String query, AssetCategory category, AssetStatus status, String department) {
-        List<Asset> assets;
-        if (query != null && !query.trim().isEmpty()) {
-            assets = assetRepository.searchAssets(query.trim());
-        } else {
-            assets = assetRepository.findAll();
-        }
-
-        return assets.stream()
-                .filter(a -> category == null || a.getCategory() == category)
-                .filter(a -> status == null || a.getStatus() == status)
-                .filter(a -> department == null || department.isBlank() || (a.getAssignedDepartment() != null && a.getAssignedDepartment().equalsIgnoreCase(department.trim())))
-                .collect(Collectors.toList());
+        String cleanQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
+        String cleanDept = (department != null && !department.trim().isEmpty()) ? department.trim() : null;
+        return assetRepository.filterAssets(cleanQuery, category, status, cleanDept);
     }
 
     @Transactional(readOnly = true)

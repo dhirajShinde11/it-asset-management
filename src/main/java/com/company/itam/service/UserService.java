@@ -71,8 +71,23 @@ public class UserService {
     }
 
     public List<UserResponseDto> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::mapToDto)
+        List<AppUser> users = userRepository.findAll();
+        List<Asset> allAssigned = assetRepository.findAllAssignedAssets();
+
+        java.util.Map<String, List<Asset>> assetsByEmail = new java.util.HashMap<>();
+        java.util.Map<String, List<Asset>> assetsByName = new java.util.HashMap<>();
+
+        for (Asset a : allAssigned) {
+            if (a.getAssignedEmployeeEmail() != null && !a.getAssignedEmployeeEmail().isBlank()) {
+                assetsByEmail.computeIfAbsent(a.getAssignedEmployeeEmail().trim().toLowerCase(), k -> new ArrayList<>()).add(a);
+            }
+            if (a.getAssignedEmployeeName() != null && !a.getAssignedEmployeeName().isBlank()) {
+                assetsByName.computeIfAbsent(a.getAssignedEmployeeName().trim().toLowerCase(), k -> new ArrayList<>()).add(a);
+            }
+        }
+
+        return users.stream()
+                .map(u -> mapToDtoOptimized(u, assetsByEmail, assetsByName))
                 .collect(Collectors.toList());
     }
 
@@ -89,8 +104,11 @@ public class UserService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<MaintenanceRecord> serviceHistory = new ArrayList<>();
-        for (Asset a : assignedAssets) {
-            serviceHistory.addAll(maintenanceRepository.findByAssetIdOrderByServiceDateDesc(a.getId()));
+        if (!assignedAssets.isEmpty()) {
+            List<Long> assetIds = assignedAssets.stream().map(Asset::getId).filter(Objects::nonNull).collect(Collectors.toList());
+            if (!assetIds.isEmpty()) {
+                serviceHistory.addAll(maintenanceRepository.findByAssetIdInOrderByServiceDateDesc(assetIds));
+            }
         }
 
         List<EmailNotification> emails = emailRepository.findByRecipientEmailIgnoreCaseOrderBySentAtDesc(user.getEmail());
@@ -233,6 +251,46 @@ public class UserService {
 
         emailService.sendWelcomeEmail(user, newPassword, null);
         return mapToDto(user);
+    }
+
+    private UserResponseDto mapToDtoOptimized(AppUser user, java.util.Map<String, List<Asset>> byEmail, java.util.Map<String, List<Asset>> byName) {
+        UserResponseDto dto = new UserResponseDto();
+        dto.setId(user.getId());
+        dto.setFullName(user.getFullName());
+        dto.setEmail(user.getEmail());
+        dto.setDepartment(user.getDepartment());
+        dto.setJobTitle(user.getJobTitle());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setRole(user.getRole());
+        dto.setStatus(user.getStatus());
+        dto.setTemporaryPassword(user.getTemporaryPassword());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setLastLoginAt(user.getLastLoginAt());
+
+        java.util.LinkedHashMap<Long, Asset> matchedAssets = new java.util.LinkedHashMap<>();
+        if (user.getEmail() != null) {
+            List<Asset> forEmail = byEmail.get(user.getEmail().trim().toLowerCase());
+            if (forEmail != null) {
+                for (Asset a : forEmail) {
+                    matchedAssets.put(a.getId(), a);
+                }
+            }
+        }
+        if (user.getFullName() != null) {
+            List<Asset> forName = byName.get(user.getFullName().trim().toLowerCase());
+            if (forName != null) {
+                for (Asset a : forName) {
+                    matchedAssets.put(a.getId(), a);
+                }
+            }
+        }
+
+        dto.setAssignedAssetsCount(matchedAssets.size());
+        dto.setAssignedAssetTags(matchedAssets.values().stream()
+                .map(a -> a.getAssetTag() + " (" + a.getName() + ")")
+                .collect(Collectors.toList()));
+
+        return dto;
     }
 
     private UserResponseDto mapToDto(AppUser user) {
