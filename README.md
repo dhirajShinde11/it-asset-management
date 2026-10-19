@@ -86,6 +86,17 @@ The application will launch on **`http://localhost:8085`**.
 
 ---
 
+## ⚡ Windows Auto-Start & Background Management (Laptop Boot)
+
+Aegis ITAM includes a complete Windows background service suite that automatically boots MySQL, launches the backend silently without terminal popups, and provisions an encrypted Cloudflare Tunnel on laptop startup:
+
+* **Auto-Start Installer**: Double-click `Install-Windows-Startup.bat` to register the silent launcher in `shell:startup` and create a Desktop status shortcut.
+* **Remove Auto-Start**: Run `Uninstall-Windows-Startup.bat` anytime to disable boot startup.
+* **Control Center**: Double-click `status-itam.bat` (or Desktop shortcut `Aegis ITAM Status`) to view active PIDs, local LAN address, and live Cloudflare public URL.
+* **Manual Service Controls**: Use `start-itam.bat` and `stop-itam.bat` to start or gracefully shut down background services.
+
+---
+
 ## 🌐 Endpoints & URLs
 
 | Service | URL | Default Credentials / Notes |

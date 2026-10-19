@@ -1,8 +1,10 @@
 # Compiled class file
 *.class
 
-# Log file
+# Log and temporary runtime files
 *.log
+logs/
+*.pid
 
 # Package Files
 *.jar
