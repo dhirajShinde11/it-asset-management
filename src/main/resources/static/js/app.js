@@ -4,6 +4,48 @@
 // =====================================================================
 
 // -------------------------------------------------------
+// GLOBAL AUTHENTICATED FETCH INTERCEPTOR
+// -------------------------------------------------------
+const _nativeFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+    try {
+        if (typeof url === 'string' && url.startsWith('/api/') && !url.startsWith('/api/auth/login') && !url.startsWith('/api/system/network-info')) {
+            const saved = (typeof App !== 'undefined' && App.session) || (localStorage.getItem('itam_session') ? JSON.parse(localStorage.getItem('itam_session')) : null);
+            if (saved && saved.token) {
+                options = options || {};
+                options.headers = options.headers || {};
+                if (options.headers instanceof Headers) {
+                    options.headers.set('Authorization', 'Bearer ' + saved.token);
+                    options.headers.set('X-Auth-Token', saved.token);
+                } else if (Array.isArray(options.headers)) {
+                    options.headers.push(['Authorization', 'Bearer ' + saved.token]);
+                    options.headers.push(['X-Auth-Token', saved.token]);
+                } else {
+                    options.headers['Authorization'] = 'Bearer ' + saved.token;
+                    options.headers['X-Auth-Token'] = saved.token;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Fetch interceptor error:', e);
+    }
+
+    return _nativeFetch.call(this, url, options).then(res => {
+        if (res.status === 401 && typeof url === 'string' && !url.includes('/api/auth/login')) {
+            localStorage.removeItem('itam_session');
+            if (typeof App !== 'undefined') App.session = null;
+            if (typeof showAuthPage === 'function') {
+                showAuthPage(null);
+            }
+            if (typeof showToast === 'function') {
+                showToast('Session expired. Please log in again.', 'warning');
+            }
+        }
+        return res;
+    });
+};
+
+// -------------------------------------------------------
 // APP STATE
 // -------------------------------------------------------
 const App = {
@@ -170,7 +212,8 @@ async function submitAuthPageLogin(event) {
             fullName: data.fullName,
             role: data.role,
             department: data.department,
-            jobTitle: data.jobTitle
+            jobTitle: data.jobTitle,
+            token: data.token
         };
         localStorage.setItem('itam_session', JSON.stringify(App.session));
 
@@ -315,6 +358,9 @@ function showAdminLayout() {
 }
 
 function logoutUser() {
+    try {
+        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    } catch (e) {}
     localStorage.removeItem('itam_session');
     App.session = null;
     const dd = document.getElementById('user-dropdown-menu');

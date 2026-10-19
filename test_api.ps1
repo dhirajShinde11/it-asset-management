@@ -1,18 +1,28 @@
-$headers = @{ "Content-Type" = "application/json" }
+# 0. Authenticate as Admin
+$loginBody = @{
+    email = "dhiraj@bmconsulting.co"
+    password = "12345"
+} | ConvertTo-Json
+$loginRes = Invoke-RestMethod -Uri "http://localhost:8085/api/auth/login" -Method Post -Body $loginBody -ContentType "application/json"
+$headers = @{ 
+    "Content-Type" = "application/json"
+    "Authorization" = "Bearer $($loginRes.token)"
+}
 
 # 1. Dashboard summary
-$summary = Invoke-RestMethod -Uri "http://localhost:8085/api/dashboard/summary" -Method Get
+$summary = Invoke-RestMethod -Uri "http://localhost:8085/api/dashboard/summary" -Method Get -Headers $headers
 Write-Host "Initial Total Assets: $($summary.totalAssets)"
 Write-Host "Total Portfolio Value: `$$($summary.totalAssetValue)"
 
 # 2. Register New Asset
+$randomId = Get-Random -Minimum 1000 -Maximum 9999
 $assetBody = @{
-    assetTag = "AST-2026-TEST"
+    assetTag = "AST-TEST-$randomId"
     name = "MacBook Pro 16 M3 Max"
     category = "LAPTOP"
     manufacturer = "Apple"
     model = "MacBook Pro 16"
-    serialNumber = "C02XYZ12345"
+    serialNumber = "C02XYZ$randomId"
     purchaseCost = 3499.00
     status = "AVAILABLE"
     condition = "NEW"
@@ -25,7 +35,7 @@ Write-Host "Created Asset ID: $($created.id), Tag: $($created.assetTag), Status:
 
 # 3. Assign Asset
 $assignBody = @{
-    employeeName = ""
+    employeeName = "Alex Mercer"
     employeeEmail = "alex.mercer@company.com"
     department = "Engineering"
     assignedDate = "2026-10-06"
@@ -49,9 +59,9 @@ $maint = Invoke-RestMethod -Uri "http://localhost:8085/api/assets/$($created.id)
 Write-Host "Maintenance Logged ID: $($maint.id), Type=$($maint.maintenanceType), Cost=`$$($maint.cost)"
 
 # 5. Unassign Asset
-$unassigned = Invoke-RestMethod -Uri "http://localhost:8085/api/assets/$($created.id)/unassign" -Method Patch
+$unassigned = Invoke-RestMethod -Uri "http://localhost:8085/api/assets/$($created.id)/unassign" -Method Patch -Headers $headers
 Write-Host "Unassigned Asset: Status=$($unassigned.status)"
 
 # 6. Delete Test Asset
-Invoke-RestMethod -Uri "http://localhost:8085/api/assets/$($created.id)" -Method Delete
+Invoke-RestMethod -Uri "http://localhost:8085/api/assets/$($created.id)" -Method Delete -Headers $headers
 Write-Host "Cleaned up test asset $($created.id)"

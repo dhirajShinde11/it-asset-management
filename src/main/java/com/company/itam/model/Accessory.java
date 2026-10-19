@@ -1,5 +1,6 @@
 package com.company.itam.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -54,6 +55,7 @@ public class Accessory {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "accessory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<AccessoryCheckout> checkouts = new ArrayList<>();
 
     public Accessory() {

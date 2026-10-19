@@ -5,9 +5,11 @@ import com.company.itam.dto.ChangePasswordDto;
 import com.company.itam.dto.LoginRequestDto;
 import com.company.itam.dto.UserResponseDto;
 import com.company.itam.service.AuthService;
+import com.company.itam.service.TokenService;
 import com.company.itam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,9 +41,28 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/logout")
+    @Operation(summary = "Invalidate active session token")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token == null || token.isBlank()) {
+            token = request.getHeader("X-Auth-Token");
+        }
+        if (token != null) {
+            authService.logout(token);
+        }
+        return ResponseEntity.ok(Map.of("success", true, "message", "Logged out successfully"));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get user profile by email")
-    public ResponseEntity<UserResponseDto> getProfile(@RequestParam String email) {
+    public ResponseEntity<?> getProfile(@RequestParam String email, HttpServletRequest request) {
+        Object userObj = request.getAttribute("currentUser");
+        if (userObj instanceof TokenService.UserSession session) {
+            if (!session.isAdmin() && !session.email().equalsIgnoreCase(email.trim())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: Cannot access other profiles.");
+            }
+        }
         UserResponseDto user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }

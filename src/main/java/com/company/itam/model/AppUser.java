@@ -48,6 +48,7 @@ public class AppUser {
     private UserStatus status = UserStatus.ACTIVE;
 
     // Temporary password retained for admin assistance/onboarding outbox preview
+    @JsonIgnore
     private String temporaryPassword;
 
     private LocalDateTime createdAt;

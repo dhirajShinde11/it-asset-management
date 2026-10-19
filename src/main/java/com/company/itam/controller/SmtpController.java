@@ -85,15 +85,35 @@ public class SmtpController {
         return ResponseEntity.ok(resp);
     }
 
+    private final java.util.concurrent.atomic.AtomicInteger testEmailCount = new java.util.concurrent.atomic.AtomicInteger(0);
+    private volatile long lastResetTime = System.currentTimeMillis();
+
     @PostMapping("/test")
     public ResponseEntity<?> sendTestEmail(@RequestBody Map<String, String> request) {
+        // Rate limit: max 3 test emails per 60 seconds
+        long now = System.currentTimeMillis();
+        if (now - lastResetTime > 60000) {
+            testEmailCount.set(0);
+            lastResetTime = now;
+        }
+        if (testEmailCount.incrementAndGet() > 3) {
+            return ResponseEntity.status(429).body(Map.of(
+                    "success", false,
+                    "message", "Rate limit exceeded: Please wait 60 seconds before sending another test email."
+            ));
+        }
+
         String recipient = request.get("recipientEmail");
         if (recipient == null || recipient.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Recipient email is required"));
         }
+        recipient = recipient.trim();
+        if (!recipient.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Invalid recipient email address format"));
+        }
 
         try {
-            emailService.sendTestEmail(recipient.trim());
+            emailService.sendTestEmail(recipient);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Test email successfully delivered to " + recipient

@@ -1,5 +1,6 @@
 package com.company.itam.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -51,6 +52,7 @@ public class Component {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "component", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<ComponentAssignment> assignments = new ArrayList<>();
 
     public Component() {

@@ -95,7 +95,8 @@ public class ConsumableService {
 
     @Transactional
     public ConsumableCheckout giveOutConsumable(Long consumableId, ConsumableCheckoutDto dto) {
-        Consumable c = getConsumableById(consumableId);
+        Consumable c = consumableRepository.findByIdForUpdate(consumableId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consumable not found with id: " + consumableId));
         int qty = dto.getQuantity() != null && dto.getQuantity() > 0 ? dto.getQuantity() : 1;
 
         if (c.getRemainingQuantity() < qty) {

@@ -285,20 +285,21 @@ public class TicketService {
     }
 
     private synchronized String generateNextTicketNumber() {
-        List<Ticket> all = ticketRepository.findAll();
-        long maxNum = 1000;
-        for (Ticket t : all) {
-            String numStr = t.getTicketNumber();
+        Optional<Ticket> lastOpt = ticketRepository.findTopByOrderByIdDesc();
+        long nextVal = 1001;
+        if (lastOpt.isPresent()) {
+            Ticket last = lastOpt.get();
+            String numStr = last.getTicketNumber();
             if (numStr != null && numStr.startsWith("TICK-")) {
                 try {
-                    long val = Long.parseLong(numStr.substring(5).trim());
-                    if (val > maxNum) {
-                        maxNum = val;
-                    }
-                } catch (NumberFormatException ignored) {}
+                    nextVal = Long.parseLong(numStr.substring(5).trim()) + 1;
+                } catch (NumberFormatException ignored) {
+                    nextVal = (last.getId() != null ? last.getId() : 0) + 1001;
+                }
+            } else if (last.getId() != null) {
+                nextVal = last.getId() + 1001;
             }
         }
-        long nextVal = maxNum + 1;
         String candidate = "TICK-" + nextVal;
         while (ticketRepository.existsByTicketNumber(candidate)) {
             nextVal++;

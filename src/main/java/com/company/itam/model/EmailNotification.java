@@ -32,6 +32,7 @@ public class EmailNotification {
     @Column(columnDefinition = "LONGTEXT")
     private String content;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String temporaryPassword;
 
     private String portalUrl;

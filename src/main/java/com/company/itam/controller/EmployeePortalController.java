@@ -14,9 +14,11 @@ import com.company.itam.repository.AssetRepository;
 import com.company.itam.repository.MaintenanceRecordRepository;
 import com.company.itam.repository.SoftwareLicenseRepository;
 import com.company.itam.service.TicketService;
+import com.company.itam.service.TokenService;
 import com.company.itam.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,9 +52,25 @@ public class EmployeePortalController {
         this.ticketService = ticketService;
     }
 
+    private boolean isAuthorizedForEmail(HttpServletRequest request, String requestedEmail) {
+        if (requestedEmail == null) return false;
+        Object userObj = request.getAttribute("currentUser");
+        if (userObj instanceof TokenService.UserSession session) {
+            if (session.isAdmin()) {
+                return true;
+            }
+            return session.email().equalsIgnoreCase(requestedEmail.trim());
+        }
+        return false;
+    }
+
     @GetMapping("/overview")
     @Operation(summary = "Get employee dashboard overview including assigned equipment, team software and tickets")
-    public ResponseEntity<EmployeeOverviewDto> getOverview(@RequestParam String email) {
+    public ResponseEntity<?> getOverview(@RequestParam String email, HttpServletRequest request) {
+        if (!isAuthorizedForEmail(request, email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: You cannot access another employee's equipment profile.");
+        }
+
         UserResponseDto user = userService.getUserByEmail(email);
 
         List<Asset> assignedAssets = assetRepository.findByAssignedEmployeeEmailOrName(email, user != null ? user.getFullName() : null);
@@ -80,7 +98,11 @@ public class EmployeePortalController {
 
     @GetMapping("/assets")
     @Operation(summary = "List all hardware assets currently assigned to employee")
-    public ResponseEntity<List<Asset>> getMyAssets(@RequestParam String email) {
+    public ResponseEntity<?> getMyAssets(@RequestParam String email, HttpServletRequest request) {
+        if (!isAuthorizedForEmail(request, email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: You cannot access another employee's assets.");
+        }
+
         UserResponseDto user = null;
         try {
             user = userService.getUserByEmail(email);
@@ -90,19 +112,24 @@ public class EmployeePortalController {
 
     @PostMapping("/service-request")
     @Operation(summary = "Submit an equipment service or repair request")
-    public ResponseEntity<MaintenanceRecord> submitServiceRequest(
+    public ResponseEntity<?> submitServiceRequest(
             @RequestParam String email,
-            @Valid @RequestBody EmployeeServiceRequestDto request) {
+            @Valid @RequestBody EmployeeServiceRequestDto serviceRequest,
+            HttpServletRequest request) {
 
-        Asset asset = assetRepository.findById(request.getAssetId())
-                .orElseThrow(() -> new ResourceNotFoundException("Asset not found with id: " + request.getAssetId()));
+        if (!isAuthorizedForEmail(request, email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: You cannot submit requests on behalf of other employees.");
+        }
+
+        Asset asset = assetRepository.findById(serviceRequest.getAssetId())
+                .orElseThrow(() -> new ResourceNotFoundException("Asset not found with id: " + serviceRequest.getAssetId()));
 
         MaintenanceRecord record = new MaintenanceRecord();
         record.setAsset(asset);
-        record.setTitle(request.getTitle());
-        record.setDescription((request.getIssueDescription() != null ? request.getIssueDescription() : "")
-                + " [Submitted by: " + email + (request.getContactPhone() != null ? ", Phone: " + request.getContactPhone() : "")
-                + ", Urgency: " + request.getUrgency() + "]");
+        record.setTitle(serviceRequest.getTitle());
+        record.setDescription((serviceRequest.getIssueDescription() != null ? serviceRequest.getIssueDescription() : "")
+                + " [Submitted by: " + email + (serviceRequest.getContactPhone() != null ? ", Phone: " + serviceRequest.getContactPhone() : "")
+                + ", Urgency: " + serviceRequest.getUrgency() + "]");
         record.setServiceDate(LocalDate.now());
         record.setServiceProvider("Internal IT Helpdesk");
         record.setStatus("IN_PROGRESS");
@@ -117,18 +144,27 @@ public class EmployeePortalController {
 
     @GetMapping("/tickets")
     @Operation(summary = "List all IT support tickets submitted by this employee")
-    public ResponseEntity<List<Ticket>> getMyTickets(@RequestParam String email) {
+    public ResponseEntity<?> getMyTickets(@RequestParam String email, HttpServletRequest request) {
+        if (!isAuthorizedForEmail(request, email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: You cannot access another employee's tickets.");
+        }
         return ResponseEntity.ok(ticketService.getMyTickets(email));
     }
 
     @PostMapping("/tickets")
     @Operation(summary = "Raise a new IT support ticket from employee portal")
-    public ResponseEntity<Ticket> raiseTicket(
+    public ResponseEntity<?> raiseTicket(
             @RequestParam String email,
-            @Valid @RequestBody TicketRequestDto request) {
-        if (request.getRequesterEmail() == null || request.getRequesterEmail().isBlank()) {
-            request.setRequesterEmail(email);
+            @Valid @RequestBody TicketRequestDto ticketRequest,
+            HttpServletRequest request) {
+
+        if (!isAuthorizedForEmail(request, email)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: You cannot raise tickets for another employee.");
         }
-        return new ResponseEntity<>(ticketService.createTicket(request), HttpStatus.CREATED);
+
+        if (ticketRequest.getRequesterEmail() == null || ticketRequest.getRequesterEmail().isBlank()) {
+            ticketRequest.setRequesterEmail(email);
+        }
+        return new ResponseEntity<>(ticketService.createTicket(ticketRequest), HttpStatus.CREATED);
     }
 }

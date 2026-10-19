@@ -14,4 +14,8 @@ public interface ConsumableRepository extends JpaRepository<Consumable, Long> {
 
     @Query("SELECT COUNT(c) FROM Consumable c WHERE c.remainingQuantity <= COALESCE(c.minQuantity, 5)")
     long countLowStock();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Consumable c WHERE c.id = :id")
+    java.util.Optional<Consumable> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

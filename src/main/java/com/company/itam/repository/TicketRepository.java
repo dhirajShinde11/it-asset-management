@@ -17,6 +17,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Optional<Ticket> findByTicketNumber(String ticketNumber);
 
+    Optional<Ticket> findTopByOrderByIdDesc();
+
     boolean existsByTicketNumber(String ticketNumber);
 
     List<Ticket> findByRequesterEmailIgnoreCaseOrderByCreatedAtDesc(String email);

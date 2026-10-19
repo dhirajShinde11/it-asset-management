@@ -183,7 +183,9 @@ public class UserService {
             emailService.sendWelcomeEmail(savedUser, rawPassword, null);
         }
 
-        return mapToDto(savedUser);
+        UserResponseDto resp = mapToDto(savedUser);
+        resp.setTemporaryPassword(rawPassword);
+        return resp;
     }
 
     @Transactional
@@ -250,7 +252,9 @@ public class UserService {
         userRepository.save(user);
 
         emailService.sendWelcomeEmail(user, newPassword, null);
-        return mapToDto(user);
+        UserResponseDto resp = mapToDto(user);
+        resp.setTemporaryPassword(newPassword);
+        return resp;
     }
 
     private UserResponseDto mapToDtoOptimized(AppUser user, java.util.Map<String, List<Asset>> byEmail, java.util.Map<String, List<Asset>> byName) {
@@ -263,7 +267,7 @@ public class UserService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setRole(user.getRole());
         dto.setStatus(user.getStatus());
-        dto.setTemporaryPassword(user.getTemporaryPassword());
+        dto.setTemporaryPassword(null);
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLastLoginAt(user.getLastLoginAt());
 
@@ -303,7 +307,7 @@ public class UserService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setRole(user.getRole());
         dto.setStatus(user.getStatus());
-        dto.setTemporaryPassword(user.getTemporaryPassword());
+        dto.setTemporaryPassword(null); // Never leak stored temporary password in standard user queries
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLastLoginAt(user.getLastLoginAt());
 

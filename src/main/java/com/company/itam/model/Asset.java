@@ -1,5 +1,6 @@
 package com.company.itam.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -92,6 +93,7 @@ public class Asset {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<MaintenanceRecord> maintenanceRecords = new ArrayList<>();
 
     public Asset() {

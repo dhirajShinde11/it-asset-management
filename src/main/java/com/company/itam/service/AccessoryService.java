@@ -95,7 +95,8 @@ public class AccessoryService {
 
     @Transactional
     public AccessoryCheckout checkoutAccessory(Long accessoryId, AccessoryCheckoutDto dto) {
-        Accessory a = getAccessoryById(accessoryId);
+        Accessory a = accessoryRepository.findByIdForUpdate(accessoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Accessory not found with id: " + accessoryId));
         int qty = dto.getQuantity() != null && dto.getQuantity() > 0 ? dto.getQuantity() : 1;
 
         if (a.getRemainingQuantity() < qty) {

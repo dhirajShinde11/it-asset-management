@@ -15,4 +15,8 @@ public interface AccessoryRepository extends JpaRepository<Accessory, Long> {
 
     @Query("SELECT COUNT(a) FROM Accessory a WHERE a.remainingQuantity <= COALESCE(a.minQuantity, 5)")
     long countLowStock();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Accessory a WHERE a.id = :id")
+    java.util.Optional<Accessory> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }
