@@ -23,7 +23,7 @@ public class SmtpSetting {
 
     private String fromEmail = "notifications@company.com";
 
-    private String fromName = "Aegis IT Asset Management";
+    private String fromName = "BMC AssetHub";
 
     private boolean auth = true;
 

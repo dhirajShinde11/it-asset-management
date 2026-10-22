@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 $baseUrl = "http://localhost:8085"
 
 Write-Host "================================================="
-Write-Host "  AEGIS ITAM - FULL SYSTEM VERIFICATION SUITE    "
+Write-Host "  BMC ASSETHUB - FULL SYSTEM VERIFICATION SUITE  "
 Write-Host "================================================="
 
 # Helper function for API calls

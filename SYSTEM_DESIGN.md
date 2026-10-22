@@ -1,4 +1,4 @@
-# Aegis IT Asset Management (ITAM) - Complete System Design Document
+# BMC AssetHub (ITAM) - Complete System Design Document
 
 **Document Version:** 1.0.0  
 **Target System:** Enterprise IT Asset Lifecycle, Support Ticketing & Automated Notification Platform  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & System Objectives
 
-Aegis IT Asset Management (ITAM) is a centralized, enterprise-grade hardware and software governance platform designed for modern organizations. It unifies physical asset tracking, employee hardware provisioning, IT support helpdesk ticketing, and automated email communications into a single interface.
+BMC AssetHub (ITAM) is a centralized, enterprise-grade hardware and software governance platform designed for modern organizations. It unifies physical asset tracking, employee hardware provisioning, IT support helpdesk ticketing, and automated email communications into a single interface.
 
 ### Core Problems Solved
 1. **Hardware Loss & Ghost Assets:** Eliminates untracked hardware purchases, lost laptops, and missing equipment through serial-number and asset-tag tracking.
@@ -22,7 +22,7 @@ Aegis IT Asset Management (ITAM) is a centralized, enterprise-grade hardware and
 
 ## 2. High-Level System Architecture
 
-Aegis ITAM follows a **Modular Monolith** architecture pattern. The application is packaged as a single deployable unit backed by a relational database, with clearly separated presentation, business service, and data access boundaries.
+BMC AssetHub follows a **Modular Monolith** architecture pattern. The application is packaged as a single deployable unit backed by a relational database, with clearly separated presentation, business service, and data access boundaries.
 
 ```mermaid
 graph TD
@@ -36,7 +36,7 @@ graph TD
         LocalProxy["Reverse Proxy / Port Forwarder (:3000)"]
     end
 
-    subgraph Application_Core ["Aegis ITAM Application Core (:8085)"]
+    subgraph Application_Core ["BMC AssetHub Application Core (:8085)"]
         StaticFrontend["Vanilla SPA Web Engine (HTML5 / CSS3 / ES6+)"]
         RESTControllers["Spring Boot REST API Controllers (16 Controllers)"]
         BusinessServices["Service Layer & Business Rules (11 Services)"]
@@ -294,7 +294,7 @@ sequenceDiagram
 
 ## 6. Security, Authentication & Role-Based Access Control (RBAC)
 
-Aegis ITAM implements a defense-in-depth security model:
+BMC AssetHub implements a defense-in-depth security model:
 
 ```mermaid
 flowchart TD
@@ -337,7 +337,7 @@ graph LR
     end
 
     subgraph Cloud_Hosting ["Managed Cloud Platform (Render / Railway)"]
-        AppInstance["Aegis ITAM Service Instance (Port 8085)"]
+        AppInstance["BMC AssetHub Service Instance (Port 8085)"]
         ManagedDB[("Managed Cloud MySQL / MariaDB Database")]
     end
 

@@ -1,6 +1,6 @@
 // =====================================================================
-// Aegis IT Asset Management — Full Frontend Logic
-// v2.1 — Dedicated Full-Screen Login, Direct Mail Routing, Employee Hub
+// BMC AssetHub — Enterprise IT Asset Management
+// v2.2 — Dedicated Full-Screen Login, Direct Mail Routing, Employee Hub
 // =====================================================================
 
 // -------------------------------------------------------
@@ -1426,7 +1426,7 @@ function generateRandomPassField() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
     let code = '';
     for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    document.getElementById('user-init-password').value = `Aegis#${code}`;
+    document.getElementById('user-init-password').value = `Bmc#${code}`;
 }
 
 async function submitAddUser(event) {
@@ -1828,7 +1828,7 @@ async function openSmtpModal() {
             document.getElementById('smtp-username').value = s.username || '';
             document.getElementById('smtp-password').value = s.password || '';
             document.getElementById('smtp-from-email').value = s.fromEmail || '';
-            document.getElementById('smtp-from-name').value = s.fromName || 'Aegis IT Asset Management';
+            document.getElementById('smtp-from-name').value = s.fromName || 'BMC AssetHub';
             document.getElementById('smtp-starttls').checked = s.startTls !== false;
             document.getElementById('smtp-ssl').checked = !!s.ssl;
         }

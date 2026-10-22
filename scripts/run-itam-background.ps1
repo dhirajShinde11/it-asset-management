@@ -1,5 +1,5 @@
 # ==============================================================================
-# Aegis IT Asset Management - Automated Background Launcher
+# BMC AssetHub - Automated Background Launcher
 # ==============================================================================
 
 [CmdletBinding()]
@@ -143,7 +143,7 @@ try {
     Add-Type -AssemblyName System.Windows.Forms
     $notify = New-Object System.Windows.Forms.NotifyIcon
     $notify.Icon = [System.Drawing.SystemIcons]::Information
-    $notify.BalloonTipTitle = "Aegis ITAM is Live!"
+    $notify.BalloonTipTitle = "BMC AssetHub is Live!"
     
     $tipMsg = "Local: http://localhost:8085"
     if ($foundUrl) {

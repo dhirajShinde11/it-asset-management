@@ -1,5 +1,5 @@
 # ==============================================================================
-# Aegis IT Asset Management - Setup Startup and Shortcuts
+# BMC AssetHub - Setup Startup and Shortcuts
 # ==============================================================================
 
 $ProjectDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -21,16 +21,16 @@ Write-Host "[OK] Windows Startup VBS registered at: $StartupVbs"
 
 # 2. Create Desktop Shortcut
 $ws = New-Object -ComObject WScript.Shell
-$desktopLnk = Join-Path $DesktopDir "Aegis ITAM Status.lnk"
+$desktopLnk = Join-Path $DesktopDir "BMC AssetHub Status.lnk"
 $shortcut = $ws.CreateShortcut($desktopLnk)
 $shortcut.TargetPath = $StatusBat
 $shortcut.WorkingDirectory = $ProjectDir
 $shortcut.IconLocation = "shell32.dll,14"
-$shortcut.Description = "Aegis ITAM Status and Control Console"
+$shortcut.Description = "BMC AssetHub Status and Control Console"
 $shortcut.Save()
 Write-Host "[OK] Desktop shortcut created at: $desktopLnk"
 
 # 3. Trigger Launch-ITAM-Silently.vbs
-Write-Host "[...] Launching Aegis ITAM and Cloudflare Tunnel in background..."
+Write-Host "[...] Launching BMC AssetHub and Cloudflare Tunnel in background..."
 & wscript.exe "$ProjectDir\scripts\Launch-ITAM-Silently.vbs"
 Write-Host "[OK] Background services triggered."

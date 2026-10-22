@@ -1,10 +1,10 @@
-# Aegis ITAM — Enterprise IT Asset Management & Workforce Logistics Platform
+# BMC AssetHub — Enterprise IT Asset Management & Workforce Logistics Platform
 
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Aegis ITAM** is a fast, full-featured **IT Asset Management (ITAM)** and workforce logistics platform engineered for enterprise infrastructure teams. Built with **Java 21**, **Spring Boot 3.3.4**, **Spring Data JPA**, **H2 In-Memory Database** (production-ready for PostgreSQL/MySQL), and a responsive **Glassmorphic Dashboard UI**.
+**BMC AssetHub** is a fast, full-featured **IT Asset Management (ITAM)** and workforce logistics platform engineered for enterprise infrastructure teams. Built with **Java 21**, **Spring Boot 3.3.4**, **Spring Data JPA**, **H2 In-Memory Database** (production-ready for PostgreSQL/MySQL), and a responsive **Glassmorphic Dashboard UI**.
 
 ---
 
@@ -88,11 +88,11 @@ The application will launch on **`http://localhost:8085`**.
 
 ## ⚡ Windows Auto-Start & Background Management (Laptop Boot)
 
-Aegis ITAM includes a complete Windows background service suite that automatically boots MySQL, launches the backend silently without terminal popups, and provisions an encrypted Cloudflare Tunnel on laptop startup:
+BMC AssetHub includes a complete Windows background service suite that automatically boots MySQL, launches the backend silently without terminal popups, and provisions an encrypted Cloudflare Tunnel on laptop startup:
 
 * **Auto-Start Installer**: Double-click `Install-Windows-Startup.bat` to register the silent launcher in `shell:startup` and create a Desktop status shortcut.
 * **Remove Auto-Start**: Run `Uninstall-Windows-Startup.bat` anytime to disable boot startup.
-* **Control Center**: Double-click `status-itam.bat` (or Desktop shortcut `Aegis ITAM Status`) to view active PIDs, local LAN address, and live Cloudflare public URL.
+* **Control Center**: Double-click `status-itam.bat` (or Desktop shortcut `BMC AssetHub Status`) to view active PIDs, local LAN address, and live Cloudflare public URL.
 * **Manual Service Controls**: Use `start-itam.bat` and `stop-itam.bat` to start or gracefully shut down background services.
 
 ---
@@ -101,7 +101,7 @@ Aegis ITAM includes a complete Windows background service suite that automatical
 
 | Service | URL | Default Credentials / Notes |
 | :--- | :--- | :--- |
-| **Aegis ITAM Web Application** | `http://localhost:8085/` | Admin: `dhiraj@bmconsulting.co` / `12345` |
+| **BMC AssetHub Web Application** | `http://localhost:8085/` | Admin: `dhiraj@bmconsulting.co` / `Aegis#5196` |
 | **Interactive Swagger API Docs** | `http://localhost:8085/swagger-ui.html` | Interactive REST explorer |
 | **MySQL Database (phpMyAdmin)** | `http://localhost/phpmyadmin` | Database: `itam_db` (Port: 3306) |
 

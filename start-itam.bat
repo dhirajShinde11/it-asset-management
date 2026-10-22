@@ -1,12 +1,12 @@
 @echo off
 setlocal
-title Aegis ITAM - Start Services
+title BMC AssetHub - Start Services
 
 echo ==============================================================================
-echo              AEGIS IT ASSET MANAGEMENT - STARTING SERVICES
+echo              BMC ASSETHUB - STARTING SERVICES
 echo ==============================================================================
 echo.
-echo  Launching Aegis ITAM and Cloudflare Tunnel silently in the background...
+echo  Launching BMC AssetHub and Cloudflare Tunnel silently in the background...
 
 wscript.exe "scripts\Launch-ITAM-Silently.vbs"
 

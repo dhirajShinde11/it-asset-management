@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise IT Asset Management (ITAM)</title>
-    <meta name="description" content="Next-generation Enterprise IT Asset Management System - Role-based access, employee self-service portal, user onboarding with automated email dispatches, and hardware lifecycle tracking.">
+    <title>BMC AssetHub - Enterprise IT Asset Management</title>
+    <meta name="description" content="BMC AssetHub - Next-generation Enterprise IT Asset Management System: Role-based access, employee self-service portal, user onboarding with automated email dispatches, and hardware lifecycle tracking.">
     <!-- Google Fonts: Inter, Outfit & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
                         <line x1="12" y1="17" x2="12" y2="21"></line>
                     </svg>
                 </div>
-                <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #f8fafc; letter-spacing: -0.5px;">Aegis ITAM Portal</h2>
+                <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #f8fafc; letter-spacing: -0.5px;">BMC AssetHub</h2>
                 <p style="margin: 6px 0 0 0; font-size: 13px; color: #94a3b8;" id="auth-welcome-sub">Sign in to view your assigned hardware &amp; equipment</p>
             </div>
 
@@ -69,7 +69,7 @@
                         </svg>
                     </div>
                     <div class="brand-text">
-                        <span class="brand-title">Aegis ITAM</span>
+                        <span class="brand-title">BMC AssetHub</span>
                         <span class="brand-subtitle" id="sidebar-role-indicator">Admin Command Hub</span>
                     </div>
                 </div>
@@ -1314,7 +1314,7 @@
         <div class="modal-dialog modal-md">
             <div class="modal-header">
                 <div>
-                    <h3>Sign In to Aegis ITAM</h3>
+                    <h3>Sign In to BMC AssetHub</h3>
                     <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">Enter your organization email and password</p>
                 </div>
                 <button class="btn-close" onclick="closeModal('login-modal')">&times;</button>
@@ -1393,7 +1393,7 @@
                     <div class="form-group" style="grid-column: span 2;">
                         <label for="user-init-password">Temporary Password</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="user-init-password" placeholder="Leave blank to auto-generate (e.g. Aegis#7294)">
+                            <input type="text" id="user-init-password" placeholder="Leave blank to auto-generate (e.g. Bmc#7294)">
                             <button type="button" class="btn btn-secondary" onclick="generateRandomPassField()">Generate</button>
                         </div>
                         <span class="form-hint">The employee will receive this password along with login instructions in their welcome email.</span>
@@ -1442,7 +1442,7 @@
                     <div class="cred-item">
                         <span class="cred-label">Temporary Password:</span>
                         <div class="cred-val-wrap">
-                            <code id="succ-password">Aegis#1234</code>
+                            <code id="succ-password">Bmc#1234</code>
                             <button class="btn-copy" onclick="copyText('succ-password')">Copy</button>
                         </div>
                     </div>
@@ -1471,7 +1471,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-header">
                 <div>
-                    <h3 id="view-email-subject">Welcome to Aegis ITAM</h3>
+                    <h3 id="view-email-subject">Welcome to BMC AssetHub</h3>
                     <p class="text-muted" id="view-email-meta" style="margin: 4px 0 0 0; font-size: 13px;">To: user@company.com • Sent: 2026-10-06</p>
                 </div>
                 <button class="btn-close" onclick="closeModal('view-email-modal')">&times;</button>
@@ -2183,7 +2183,7 @@
                     </div>
                     <div class="form-group">
                         <label for="smtp-from-name">Sender Display Name</label>
-                        <input type="text" id="smtp-from-name" placeholder="Aegis IT Asset Management">
+                        <input type="text" id="smtp-from-name" placeholder="BMC AssetHub">
                     </div>
                 </div>
 
@@ -2222,7 +2222,7 @@
             <div class="modal-body-content" style="padding: 24px; text-align: center; background: rgba(15, 23, 42, 0.4);">
                 <div id="printable-asset-label" class="printable-label-card">
                     <div class="label-company-header">
-                        <span class="label-org-badge">AEGIS IT ENTERPRISE</span>
+                        <span class="label-org-badge">BMC ASSETHUB ENTERPRISE</span>
                         <span class="label-category-badge" id="lbl-category">LAPTOP</span>
                     </div>
                     <div class="label-qr-wrap">
@@ -2328,7 +2328,7 @@
                     <div style="flex: 1;">
                         <h4 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">📱 Scan with Phone Camera</h4>
                         <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--text-muted); line-height: 1.4;">
-                            Any mobile device (iPhone/Android) connected to this Wi-Fi can scan this QR code to immediately open Aegis ITAM without typing anything.
+                            Any mobile device (iPhone/Android) connected to this Wi-Fi can scan this QR code to immediately open BMC AssetHub without typing anything.
                         </p>
                         <div style="display: flex; gap: 8px;">
                             <button type="button" class="btn btn-sm btn-secondary" onclick="copyLanUrl()" style="font-size: 12px; padding: 6px 12px;">
@@ -3247,7 +3247,7 @@
             </div>
             <div class="spotlight-footer">
                 <div><span>Tip: Press <strong>Ctrl + K</strong> or <strong>/</strong> anywhere to search</span></div>
-                <div><span style="font-family: monospace;">Aegis Enterprise ITAM Spotlight</span></div>
+                <div><span style="font-family: monospace;">BMC AssetHub Spotlight</span></div>
             </div>
         </div>
     </div>

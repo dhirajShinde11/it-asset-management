@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title Aegis IT Asset Management - Network Sharing Setup
+title BMC AssetHub - Network Sharing Setup
 
 :: Check for Administrator privileges
 net session >nul 2>&1
@@ -17,7 +17,7 @@ if %errorlevel% neq 0 (
 
 cls
 echo ========================================================
-echo   AEGIS IT ASSET MANAGEMENT - ZERO-CONFIG NETWORK SETUP
+echo   BMC ASSETHUB - ZERO-CONFIG NETWORK SETUP
 echo ========================================================
 echo.
 echo  Configuring Windows Defender Firewall for Port 8085...

@@ -48,7 +48,7 @@ public class EmailService {
     @Value("${itam.mail.from-email:}")
     private String propFromEmail;
 
-    @Value("${itam.mail.from-name:Aegis IT Asset Management}")
+    @Value("${itam.mail.from-name:BMC AssetHub}")
     private String propFromName;
 
     @Value("${itam.mail.enabled:true}")
@@ -75,7 +75,7 @@ public class EmailService {
                 : "http://localhost:" + serverPort;
 
         String loginUrl = basePortalUrl + "/?email=" + java.net.URLEncoder.encode(user.getEmail(), java.nio.charset.StandardCharsets.UTF_8);
-        String subject = "Welcome to Aegis ITAM - Your Organization Account & Equipment Access";
+        String subject = "Welcome to BMC AssetHub - Your Organization Account & Equipment Access";
         String htmlContent = buildWelcomeEmailHtml(user, rawPassword, loginUrl);
 
         EmailNotification notification = new EmailNotification();
@@ -100,7 +100,7 @@ public class EmailService {
 
     public EmailNotification seedWelcomeEmail(AppUser user, String rawPassword) {
         String loginUrl = "http://localhost:" + serverPort + "/?email=" + java.net.URLEncoder.encode(user.getEmail(), java.nio.charset.StandardCharsets.UTF_8);
-        String subject = "Welcome to Aegis ITAM - Your Organization Account & Equipment Access";
+        String subject = "Welcome to BMC AssetHub - Your Organization Account & Equipment Access";
         String htmlContent = buildWelcomeEmailHtml(user, rawPassword, loginUrl);
 
         EmailNotification notification = new EmailNotification();
@@ -246,7 +246,7 @@ public class EmailService {
             String fromAddr = (fromEmail != null && !fromEmail.isBlank() && !fromEmail.contains("YOUR_EMAIL_HERE"))
                     ? fromEmail
                     : (username != null && !username.isBlank() ? username : "no-reply@company.com");
-            String personal = (fromName != null && !fromName.isBlank()) ? fromName : "Aegis IT Asset Management";
+            String personal = (fromName != null && !fromName.isBlank()) ? fromName : "BMC AssetHub";
 
             helper.setFrom(fromAddr, personal);
             helper.setTo(notification.getRecipientEmail());
@@ -317,15 +317,15 @@ public class EmailService {
         String fromAddr = (fromEmail != null && !fromEmail.isBlank() && !fromEmail.contains("YOUR_EMAIL_HERE"))
                 ? fromEmail
                 : username;
-        String personal = (fromName != null && !fromName.isBlank()) ? fromName : "Aegis IT Asset Management";
+        String personal = (fromName != null && !fromName.isBlank()) ? fromName : "BMC AssetHub";
 
         helper.setFrom(fromAddr, personal);
         helper.setTo(recipientEmail);
-        helper.setSubject("Test Email: Aegis ITAM SMTP Connectivity Verified");
+        helper.setSubject("Test Email: BMC AssetHub SMTP Connectivity Verified");
 
         String testHtml = "<div style='font-family:sans-serif; background:#0f172a; color:#e2e8f0; padding:24px; border-radius:8px;'>"
                 + "<h2 style='color:#38bdf8;'>SMTP Connectivity Verified!</h2>"
-                + "<p>This is a test notification from your <strong>Aegis IT Asset Management</strong> system.</p>"
+                + "<p>This is a test notification from your <strong>BMC AssetHub</strong> system.</p>"
                 + "<p>Your hardcoded project SMTP server (<code>" + escapeHtml(host) + ":" + port + "</code>) is connected and operating properly.</p>"
                 + "<p style='color:#94a3b8; font-size:12px;'>Timestamp: " + LocalDateTime.now() + "</p>"
                 + "</div>";
@@ -442,7 +442,7 @@ public class EmailService {
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
                 + "              <td align='left'>"
-                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>BMC AssetHub</span>"
                 + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; User Provisioning</span>"
                 + "              </td>"
                 + "              <td align='right'>"
@@ -488,7 +488,7 @@ public class EmailService {
                 + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Operations</td>"
+                + "              <td>BMC AssetHub &bull; BM Consulting IT Operations</td>"
                 + "              <td align='right'>Internal Corporate Services</td>"
                 + "            </tr>"
                 + "          </table>"
@@ -515,7 +515,7 @@ public class EmailService {
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
                 + "              <td align='left'>"
-                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>BMC AssetHub</span>"
                 + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; Equipment Custody</span>"
                 + "              </td>"
                 + "              <td align='right'>"
@@ -572,7 +572,7 @@ public class EmailService {
                 + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Operations</td>"
+                + "              <td>BMC AssetHub &bull; BM Consulting IT Operations</td>"
                 + "              <td align='right'>Hardware Custody Tracking</td>"
                 + "            </tr>"
                 + "          </table>"
@@ -774,7 +774,7 @@ public class EmailService {
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
                 + "              <td align='left'>"
-                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>BMC AssetHub</span>"
                 + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; Helpdesk Operations</span>"
                 + "              </td>"
                 + "              <td align='right'>"
@@ -867,7 +867,7 @@ public class EmailService {
                 + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Support</td>"
+                + "              <td>BMC AssetHub &bull; BM Consulting IT Support</td>"
                 + "              <td align='right'>Operational Dispatch Notification</td>"
                 + "            </tr>"
                 + "          </table>"
@@ -931,7 +931,7 @@ public class EmailService {
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
                 + "              <td align='left'>"
-                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>Aegis IT Asset Management</span>"
+                + "                <span style='font-size: 16px; font-weight: 700; color: #ffffff;'>BMC AssetHub</span>"
                 + "                <span style='font-size: 13px; color: #94a3b8; margin-left: 10px;'>| &nbsp; " + escapeHtml(headerTitle) + "</span>"
                 + "              </td>"
                 + "              <td align='right'>"
@@ -1015,7 +1015,7 @@ public class EmailService {
                 + "        <tr><td style='padding: 14px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
                 + "          <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
                 + "            <tr>"
-                + "              <td>Aegis IT Asset Management &bull; BM Consulting IT Support</td>"
+                + "              <td>BMC AssetHub &bull; BM Consulting IT Support</td>"
                 + "              <td align='right'>Automated Service Desk Notification</td>"
                 + "            </tr>"
                 + "          </table>"

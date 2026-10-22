@@ -1,5 +1,5 @@
 ' ==============================================================================
-' Aegis IT Asset Management - Silent VBScript Wrapper
+' BMC AssetHub - Silent VBScript Wrapper
 ' Launches the PowerShell background runner with ZERO console popups or flashes
 ' ==============================================================================
 

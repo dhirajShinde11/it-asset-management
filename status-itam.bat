@@ -1,11 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
-title Aegis ITAM - System and Live URL Status
+title BMC AssetHub - System and Live URL Status
 
 :STATUS_LOOP
 cls
 echo ==============================================================================
-echo              AEGIS IT ASSET MANAGEMENT - LIVE SERVER STATUS
+echo              BMC ASSETHUB - LIVE SERVER STATUS
 echo ==============================================================================
 echo.
 
@@ -112,7 +112,7 @@ if "%CHOICE%"=="4" (
 )
 if "%CHOICE%"=="5" (
     echo.
-    echo  Restarting Aegis ITAM services in background...
+    echo  Restarting BMC AssetHub services in background...
     wscript.exe "scripts\Launch-ITAM-Silently.vbs"
     timeout /t 3 >nul
     goto :STATUS_LOOP

@@ -322,6 +322,6 @@ public class UserService {
 
     private String generateSecurePassword() {
         int code = 1000 + random.nextInt(9000);
-        return "Aegis#" + code;
+        return "Bmc#" + code;
     }
 }

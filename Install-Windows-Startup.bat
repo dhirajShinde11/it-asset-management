@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title Aegis ITAM - Windows Auto-Start Installer
+title BMC AssetHub - Windows Auto-Start Installer
 
 cls
 echo ==============================================================================
-echo        AEGIS IT ASSET MANAGEMENT - WINDOWS AUTO-START INSTALLER
+echo        BMC ASSETHUB - WINDOWS AUTO-START INSTALLER
 echo ==============================================================================
 echo.
-echo  This installer will configure Aegis ITAM to start automatically in the
+echo  This installer will configure BMC AssetHub to start automatically in the
 echo  background whenever you turn on or log in to this laptop.
 echo.
 
@@ -56,9 +56,9 @@ if exist "%STARTUP_VBS%" (
 :: 3. Create Desktop Status Shortcut
 echo.
 echo  [3/5] Creating Desktop shortcut for 1-click status & URLs...
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%DESKTOP_DIR%\Aegis ITAM Status.lnk'); $s.TargetPath = '%STATUS_BAT%'; $s.WorkingDirectory = '%PROJECT_DIR%'; $s.IconLocation = 'shell32.dll,14'; $s.Description = 'Aegis ITAM Status and Control Console'; $s.Save()" >nul 2>&1
-if exist "%DESKTOP_DIR%\Aegis ITAM Status.lnk" (
-    echo   [OK] Desktop Shortcut created: Aegis ITAM Status.lnk
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%DESKTOP_DIR%\BMC AssetHub Status.lnk'); $s.TargetPath = '%STATUS_BAT%'; $s.WorkingDirectory = '%PROJECT_DIR%'; $s.IconLocation = 'shell32.dll,14'; $s.Description = 'BMC AssetHub Status and Control Console'; $s.Save()" >nul 2>&1
+if exist "%DESKTOP_DIR%\BMC AssetHub Status.lnk" (
+    echo   [OK] Desktop Shortcut created: BMC AssetHub Status.lnk
 )
 
 :: 4. Verify Windows Defender Firewall Rule for Port 8085
@@ -82,10 +82,10 @@ echo ===========================================================================
 echo                     INSTALLATION COMPLETE & ACTIVE!
 echo ==============================================================================
 echo.
-echo   * Whenever you start this laptop, Aegis ITAM and Cloudflare Tunnel
+echo   * Whenever you start this laptop, BMC AssetHub and Cloudflare Tunnel
 echo     will now automatically launch in the background.
 echo.
-echo   * Double-click the "Aegis ITAM Status" shortcut on your Desktop anytime
+echo   * Double-click the "BMC AssetHub Status" shortcut on your Desktop anytime
 echo     to view live URLs, logs, or open the dashboard.
 echo.
 echo   * Opening live status console in 4 seconds...
