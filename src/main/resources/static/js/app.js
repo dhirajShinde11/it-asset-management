@@ -253,7 +253,6 @@ async function activateAppLayout(overrideTab, overrideTicket) {
     const roleIndicator = document.getElementById('sidebar-role-indicator');
     const lanPill = document.getElementById('lan-share-pill');
     const searchPill = document.getElementById('topbar-search-pill');
-    const empQuickTicket = document.getElementById('btn-emp-quick-ticket');
     const empBrand = document.getElementById('emp-topbar-brand');
     const adminTitleGroup = document.getElementById('admin-topbar-title-group');
 
@@ -277,7 +276,6 @@ async function activateAppLayout(overrideTab, overrideTicket) {
 
         if (lanPill) lanPill.style.display = 'none';
         if (searchPill) searchPill.style.display = 'none';
-        if (empQuickTicket) empQuickTicket.style.display = 'none'; // Clean: hero banner and quick cards have primary actions
 
         switchTab('employee-portal');
         await loadEmployeePortal(App.session.email);
@@ -379,7 +377,6 @@ function showAdminLayout() {
     const btnCsv = document.getElementById('btn-export-csv');
     const btnImport = document.getElementById('btn-bulk-import');
     const btnUser = document.getElementById('btn-add-user-top');
-    const btnEmpTicket = document.getElementById('btn-emp-quick-ticket');
     const lanPill = document.getElementById('lan-share-pill');
     const searchPill = document.getElementById('topbar-search-pill');
 
@@ -387,7 +384,6 @@ function showAdminLayout() {
     if (btnCsv) btnCsv.style.display = '';
     if (btnImport) btnImport.style.display = '';
     if (btnUser) btnUser.style.display = 'none';
-    if (btnEmpTicket) btnEmpTicket.style.display = 'none';
     if (lanPill) lanPill.style.display = 'inline-flex';
     if (searchPill) searchPill.style.display = 'inline-flex';
 }
@@ -504,7 +500,6 @@ function switchTab(tabKey) {
     const btnCsv = document.getElementById('btn-export-csv');
     const btnImport = document.getElementById('btn-bulk-import');
     const btnUser = document.getElementById('btn-add-user-top');
-    const btnEmpTicket = document.getElementById('btn-emp-quick-ticket');
     const lanPill = document.getElementById('lan-share-pill');
     const searchPill = document.getElementById('topbar-search-pill');
 
@@ -517,7 +512,6 @@ function switchTab(tabKey) {
         if (btnUser) btnUser.style.display = 'none';
         if (lanPill) lanPill.style.display = 'none';
         if (searchPill) searchPill.style.display = 'none';
-        if (btnEmpTicket) btnEmpTicket.style.display = 'inline-flex';
 
         const firstName = (App.session?.fullName || 'Team Member').split(' ')[0];
         if (heading) heading.innerText = 'My IT Equipment';
@@ -2234,8 +2228,7 @@ function renderEmployeePortal(data, email) {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <div style="font-size: 1rem; font-weight: 600; color: #f8fafc; margin-bottom: 4px;">No Active Support Tickets</div>
-                    <div style="font-size: 0.84rem; color: #94a3b8; max-width: 400px; margin: 0 auto 16px;">All your systems and hardware devices are running smoothly without any open incidents.</div>
-                    <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">+ Raise IT Support Ticket</button>
+                    <div style="font-size: 0.84rem; color: #94a3b8; max-width: 400px; margin: 0 auto;">All your systems and hardware devices are running smoothly without any open incidents.</div>
                 </td>
             </tr>`;
         } else {
