@@ -101,7 +101,7 @@ BMC AssetHub includes a complete Windows background service suite that automatic
 
 | Service | URL | Default Credentials / Notes |
 | :--- | :--- | :--- |
-| **BMC AssetHub Web Application** | `http://localhost:8085/` | Admin: `dhiraj@bmconsulting.co` / `Aegis#5196` |
+| **BMC AssetHub Web Application** | `http://localhost:8085/` | Admin: `dhiraj@bmconsulting.co` / `12345` |
 | **Interactive Swagger API Docs** | `http://localhost:8085/swagger-ui.html` | Interactive REST explorer |
 | **MySQL Database (phpMyAdmin)** | `http://localhost/phpmyadmin` | Database: `itam_db` (Port: 3306) |
 
