@@ -2453,6 +2453,15 @@ function closeModal(id) {
     const el = document.getElementById(id);
     if (el) {
         el.style.display = 'none';
+        const dialog = el.querySelector('.modal-dialog');
+        if (dialog) {
+            dialog.classList.remove('modal-expanded');
+            const expandBtn = dialog.querySelector('.btn-modal-expand');
+            if (expandBtn) {
+                expandBtn.setAttribute('title', 'Expand / Maximize Window');
+                expandBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6m0-6L14 10M9 21H3v-6m0 6l7-7M3 9V3h6M21 15v6h-6"></path></svg>`;
+            }
+        }
         const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex');
         if (!anyModalOpen) {
             document.body.classList.remove('modal-open');
