@@ -213,9 +213,24 @@
         <main class="main-wrapper">
             <!-- Top Bar -->
             <header class="topbar">
-                <div class="topbar-title-group">
+                <div class="topbar-title-group" id="admin-topbar-title-group">
                     <h1 id="page-main-heading">IT Asset Inventory</h1>
                     <p class="page-subtitle" id="page-sub-heading">Track, audit, provision, and maintain organization hardware and license lifecycle</p>
+                </div>
+
+                <!-- Employee Portal Topbar Brand (Cleanly replaces title group in Employee Mode) -->
+                <div class="emp-topbar-brand" id="emp-topbar-brand" style="display: none;">
+                    <div class="emp-brand-logo">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <div class="emp-brand-meta">
+                        <span class="emp-brand-name">BMC AssetHub</span>
+                        <span class="emp-brand-badge">Employee Hub</span>
+                    </div>
                 </div>
                 
                 <div class="topbar-actions">
@@ -1183,114 +1198,110 @@
             <!-- TAB 7: Employee Self-Service Portal (NEW) -->
             <!-- ============================================================== -->
             <section class="tab-pane" id="pane-employee-portal" style="display: none;">
-                <!-- Employee Welcome Hero Card -->
-                <div class="emp-hero-card">
-                    <div class="emp-hero-main">
-                        <div class="emp-avatar-large" id="emp-hero-avatar">--</div>
-                        <div class="emp-hero-info">
-                            <div class="emp-hero-welcome">My Workstation &amp; Equipment</div>
-                            <h2 class="emp-hero-name" id="emp-hero-name">Loading Profile...</h2>
-                            <p class="emp-hero-title" id="emp-hero-title">Organization Team Member</p>
-                            <div class="emp-hero-tags">
-                                <span class="tag-pill" id="emp-hero-email">...</span>
-                                <span class="tag-pill" id="emp-hero-dept">Department: ...</span>
-                                <span class="tag-pill tag-pill-active" id="emp-hero-status">Active Account</span>
+                <!-- Modern Executive Greeting Banner -->
+                <div class="emp-overview-hero">
+                    <div class="emp-hero-left">
+                        <div class="emp-hero-avatar" id="emp-hero-avatar">--</div>
+                        <div class="emp-hero-details">
+                            <div class="emp-greeting-title" id="emp-greeting-title">Welcome to BMC AssetHub</div>
+                            <div class="emp-greeting-sub" id="emp-greeting-sub">Organization Team Member · Loading Profile...</div>
+                            <div class="emp-greeting-badges">
+                                <span class="emp-status-pill">
+                                    <span class="emp-status-dot"></span>
+                                    <span id="emp-hero-account-status">Active Account</span>
+                                </span>
+                                <span class="emp-dept-pill" id="emp-hero-dept-badge">Engineering</span>
                             </div>
                         </div>
                     </div>
-                    <div class="emp-hero-actions">
-                        <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            + Raise Ticket
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="openProfileModal()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Profile
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            Password
+                    
+                    <div class="emp-hero-right">
+                        <div class="emp-micro-stats">
+                            <div class="emp-micro-stat" onclick="switchEmpSubTab('assets')">
+                                <span class="stat-number" id="emp-val-assets-count">0</span>
+                                <span class="stat-label">Assigned Devices</span>
+                            </div>
+                            <div class="emp-micro-stat" onclick="switchEmpSubTab('tickets')">
+                                <span class="stat-number" id="emp-val-tickets-count">0</span>
+                                <span class="stat-label">Support Tickets</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary emp-hero-cta" onclick="openEmpTicketModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>+ Request IT Support</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Employee KPI Strip -->
-                <div class="metrics-grid" style="margin-top: 24px;">
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-label">My Assigned Hardware</span>
-                            <div class="metric-icon-wrap icon-purple">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            </div>
-                        </div>
-                        <div class="metric-value text-purple" id="emp-val-assets-count">0</div>
-                        <div class="metric-trend text-muted">Active workstation &amp; devices</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-label">Operational Status</span>
-                            <div class="metric-icon-wrap icon-green">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                        </div>
-                        <div class="metric-value text-green" id="emp-val-status">Operational</div>
-                        <div class="metric-trend text-muted">Hardware health &amp; readiness</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-label">Service Tickets</span>
-                            <div class="metric-icon-wrap icon-amber">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                            </div>
-                        </div>
-                        <div class="metric-value text-amber" id="emp-val-tickets-count">0</div>
-                        <div class="metric-trend text-muted">IT repair &amp; diagnostic logs</div>
+                <!-- Sleek Segmented Control Navigation -->
+                <div class="emp-nav-bar">
+                    <div class="emp-segmented-nav">
+                        <button class="emp-seg-btn active" id="emp-tab-btn-assets" onclick="switchEmpSubTab('assets')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            <span>Assigned Equipment</span>
+                            <span class="emp-pill-badge" id="emp-sub-badge-assets">0</span>
+                        </button>
+                        <button class="emp-seg-btn" id="emp-tab-btn-tickets" onclick="switchEmpSubTab('tickets')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>IT Requests &amp; Tickets</span>
+                            <span class="emp-pill-badge" id="emp-sub-badge-tickets">0</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- SECTION 1: MY ASSIGNED HARDWARE -->
-                <div class="emp-section" id="emp-assets-section">
-                    <div class="section-action-header">
-                        <div>
-                            <h3>My Assigned Hardware Equipment</h3>
-                            <p class="text-muted">Laptops, monitors, and devices allocated exclusively to your profile</p>
-                        </div>
-                    </div>
+                <!-- SUB-PANE 1: MY ASSIGNED HARDWARE -->
+                <div class="emp-sub-pane" id="emp-pane-sub-assets">
                     <div class="emp-assets-grid" id="emp-assets-container">
                         <!-- Populated dynamically via JS -->
                     </div>
                 </div>
 
-                <!-- SECTION 3: IT SUPPORT TICKETS -->
-                <div class="emp-section" id="emp-tickets-section">
-                    <div class="section-action-header">
-                        <div>
-                            <h3>My IT Support Tickets &amp; Service History</h3>
-                            <p class="text-muted">Status of reported hardware problems, software requests, and diagnostic triage</p>
+                <!-- SUB-PANE 2: IT SUPPORT TICKETS -->
+                <div class="emp-sub-pane" id="emp-pane-sub-tickets" style="display: none;">
+                    <div class="emp-tickets-card">
+                        <div class="emp-tickets-header">
+                            <div>
+                                <h3 style="margin: 0 0 4px 0; font-size: 1.05rem;">My Support Tickets &amp; IT Service Requests</h3>
+                                <p class="text-muted" style="margin: 0; font-size: 0.82rem;">Track active triage status, technician diagnostic notes, and hardware repair history</p>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>+ New Request</span>
+                            </button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            + Raise IT Support Ticket
-                        </button>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table" id="emp-tickets-table">
-                            <thead>
-                                <tr>
-                                    <th>Ticket #</th>
-                                    <th>Date</th>
-                                    <th>Category</th>
-                                    <th>Issue / Title</th>
-                                    <th>Equipment</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th style="text-align: right;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="emp-tickets-tbody">
-                                <!-- Populated dynamically via JS -->
-                            </tbody>
-                        </table>
+                        <div class="table-container" style="border-radius: 0 0 14px 14px; border-top: 1px solid rgba(255,255,255,0.06);">
+                            <table class="data-table" id="emp-tickets-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket #</th>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Issue / Title</th>
+                                        <th>Equipment</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="emp-tickets-tbody">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>

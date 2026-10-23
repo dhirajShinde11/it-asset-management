@@ -254,11 +254,17 @@ async function activateAppLayout(overrideTab, overrideTicket) {
     const lanPill = document.getElementById('lan-share-pill');
     const searchPill = document.getElementById('topbar-search-pill');
     const empQuickTicket = document.getElementById('btn-emp-quick-ticket');
+    const empBrand = document.getElementById('emp-topbar-brand');
+    const adminTitleGroup = document.getElementById('admin-topbar-title-group');
 
     if (!isAdmin) {
-        // Show ONLY employee navigation and hub
+        // Executive Employee Mode: hide 270px sidebar, center content, show brand capsule
+        if (appLayout) appLayout.classList.add('employee-mode');
+        if (empBrand) empBrand.style.display = 'flex';
+        if (adminTitleGroup) adminTitleGroup.style.display = 'none';
+
         if (adminNav) adminNav.style.display = 'none';
-        if (empNav) empNav.style.display = 'block';
+        if (empNav) empNav.style.display = 'none';
         if (roleIndicator) roleIndicator.textContent = 'Employee Self-Service Hub';
 
         const adminMetrics = document.getElementById('admin-metrics-grid');
@@ -271,12 +277,16 @@ async function activateAppLayout(overrideTab, overrideTicket) {
 
         if (lanPill) lanPill.style.display = 'none';
         if (searchPill) searchPill.style.display = 'none';
-        if (empQuickTicket) empQuickTicket.style.display = 'inline-flex';
+        if (empQuickTicket) empQuickTicket.style.display = 'none'; // Clean: hero banner and quick cards have primary actions
 
         switchTab('employee-portal');
         await loadEmployeePortal(App.session.email);
     } else {
         // ADMIN: Show full command center
+        if (appLayout) appLayout.classList.remove('employee-mode');
+        if (empBrand) empBrand.style.display = 'none';
+        if (adminTitleGroup) adminTitleGroup.style.display = 'block';
+
         if (adminNav) adminNav.style.display = 'block';
         if (empNav) empNav.style.display = 'none';
         if (roleIndicator) roleIndicator.textContent = 'Admin Command Hub';
@@ -399,11 +409,33 @@ function logoutUser() {
 function toggleRoleView() {
     const dd = document.getElementById('user-dropdown-menu');
     if (dd) dd.style.display = 'none';
+
+    const appLayout = document.getElementById('app-layout');
+    const empBrand = document.getElementById('emp-topbar-brand');
+    const adminTitleGroup = document.getElementById('admin-topbar-title-group');
+    const adminMetrics = document.getElementById('admin-metrics-grid');
+    const lbl = document.getElementById('dd-switch-label');
+
     if (App.session && App.session.role === 'ADMIN') {
-        switchTab('employee-portal');
-        loadEmployeePortal(App.session.email);
-        const lbl = document.getElementById('dd-switch-label');
-        if (lbl) lbl.textContent = 'Back to Admin Panel';
+        const isCurrentlyEmpView = appLayout?.classList.contains('employee-mode');
+        if (!isCurrentlyEmpView) {
+            // Switch to Employee View Preview
+            if (appLayout) appLayout.classList.add('employee-mode');
+            if (empBrand) empBrand.style.display = 'flex';
+            if (adminTitleGroup) adminTitleGroup.style.display = 'none';
+            if (adminMetrics) adminMetrics.style.display = 'none';
+            switchTab('employee-portal');
+            loadEmployeePortal(App.session.email);
+            if (lbl) lbl.textContent = 'Back to Admin Command Hub';
+        } else {
+            // Switch back to Admin View
+            if (appLayout) appLayout.classList.remove('employee-mode');
+            if (empBrand) empBrand.style.display = 'none';
+            if (adminTitleGroup) adminTitleGroup.style.display = 'block';
+            if (adminMetrics) adminMetrics.style.display = 'grid';
+            switchTab('assets');
+            if (lbl) lbl.textContent = 'Preview Employee Self-Service Portal';
+        }
     } else {
         switchTab('assets');
     }
@@ -529,8 +561,7 @@ function switchTab(tabKey) {
     if (tabKey === 'tickets') loadTickets();
     if (tabKey === 'activity') loadActivityLogs();
     if (tabKey === 'analytics') { loadDashboardSummary(); if (typeof renderAnalyticsBreakdowns === 'function') renderAnalyticsBreakdowns(); }
-    if (tabKey === 'emails') loadEmails();
-    if (tabKey === 'employee-portal' && typeof loadEmployeePortalOverview === 'function') loadEmployeePortalOverview();
+    if (tabKey === 'employee-portal') loadEmployeePortal(App.session?.email);
 }
 
 // -------------------------------------------------------
@@ -2008,6 +2039,24 @@ async function runSmtpTest() {
 // -------------------------------------------------------
 // EMPLOYEE PORTAL
 // -------------------------------------------------------
+function switchEmpSubTab(subKey) {
+    const isAssets = (subKey === 'assets');
+    const btnAssets = document.getElementById('emp-tab-btn-assets');
+    const btnTickets = document.getElementById('emp-tab-btn-tickets');
+    const paneAssets = document.getElementById('emp-pane-sub-assets');
+    const paneTickets = document.getElementById('emp-pane-sub-tickets');
+
+    if (btnAssets) btnAssets.classList.toggle('active', isAssets);
+    if (btnTickets) btnTickets.classList.toggle('active', !isAssets);
+
+    if (paneAssets) paneAssets.style.display = isAssets ? 'block' : 'none';
+    if (paneTickets) paneTickets.style.display = !isAssets ? 'block' : 'none';
+}
+
+function quickRequestEquipment(category, title) {
+    openEmpTicketModal(null, '', '', category, title);
+}
+
 async function loadEmployeePortal(email) {
     if (!email) return;
     try {
@@ -2026,59 +2075,148 @@ function renderEmployeePortal(data, email) {
     const tickets = data.tickets || [];
     window.currentEmpOverviewData = data;
 
-    // Hero card
+    // Time-based executive greeting
     const heroName = profile.fullName || 'Employee';
-    const heroInitials = heroName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    document.getElementById('emp-hero-avatar').textContent = heroInitials;
-    document.getElementById('emp-hero-name').textContent = heroName;
-    document.getElementById('emp-hero-title').textContent = `${profile.jobTitle || 'Team Member'} · ${profile.department || 'Organization'}`;
-    document.getElementById('emp-hero-email').textContent = profile.email || email;
-    document.getElementById('emp-hero-dept').textContent = `Department: ${profile.department || 'General'}`;
+    const firstName = heroName.split(' ')[0] || 'Team Member';
+    const hour = new Date().getHours();
+    let timeGreeting = 'Good morning';
+    let greetingEmoji = '☀️';
+    if (hour >= 12 && hour < 17) {
+        timeGreeting = 'Good afternoon';
+        greetingEmoji = '👋';
+    } else if (hour >= 17) {
+        timeGreeting = 'Good evening';
+        greetingEmoji = '🌙';
+    }
 
-    // KPI metrics
+    const titleEl = document.getElementById('emp-greeting-title');
+    if (titleEl) titleEl.textContent = `${timeGreeting}, ${firstName} ${greetingEmoji}`;
+
+    const subEl = document.getElementById('emp-greeting-sub');
+    if (subEl) subEl.textContent = `${profile.department || 'Engineering'} · ${profile.email || email}`;
+
+    const deptBadge = document.getElementById('emp-hero-dept-badge');
+    if (deptBadge) deptBadge.textContent = profile.department || 'Engineering';
+
+    const avatarEl = document.getElementById('emp-hero-avatar');
+    if (avatarEl) {
+        const heroInitials = heroName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        avatarEl.textContent = heroInitials;
+    }
+
+    // KPI & Sub-tab badges
     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setEl('emp-val-assets-count', assets.length);
-    setEl('emp-val-status', assets.length > 0 ? 'Assigned & Active' : 'No Hardware Allocated');
     setEl('emp-val-tickets-count', tickets.length);
+    setEl('emp-sub-badge-assets', assets.length);
+    setEl('emp-sub-badge-tickets', tickets.length);
     setEl('nav-emp-count-assets', assets.length);
-    const navEmpTk = document.getElementById('nav-emp-count-tickets');
-    if (navEmpTk) navEmpTk.textContent = tickets.length;
+    setEl('nav-emp-count-tickets', tickets.length);
 
-    // Assigned Assets cards
+    // Assigned Assets sub-pane rendering
     const assetsContainer = document.getElementById('emp-assets-container');
     if (assetsContainer) {
         if (assets.length === 0) {
             assetsContainer.innerHTML = `
-                <div class="empty-state" style="grid-column: 1 / -1; padding: 48px 24px; text-align: center; background: rgba(30, 41, 59, 0.4); border: 1px dashed rgba(255,255,255,0.12); border-radius: 12px;">
-                    <div style="font-size: 32px; margin-bottom: 12px;">💻</div>
-                    <h3 style="margin-bottom: 8px; color: var(--text-primary); font-size: 16px;">No Hardware Currently Assigned</h3>
-                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto; font-size: 13px; line-height: 1.6;">
-                        Your IT Administrator has not allocated any equipment to your profile yet. Once an asset is assigned, its specifications, asset tag, and service actions will appear here.
-                    </p>
+                <div style="grid-column: 1 / -1;">
+                    <div class="emp-empty-illustrated">
+                        <div class="emp-empty-art">
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <h3 class="emp-empty-title">No Hardware Assigned to Your Profile Yet</h3>
+                        <p class="emp-empty-desc">
+                            Welcome! If you need a company laptop, high-resolution monitor, or desk accessories, select an option below to submit an instant provisioning request to IT.
+                        </p>
+                        
+                        <div class="quick-requests-header">Quick Equipment Requests</div>
+                        <div class="quick-requests-grid">
+                            <!-- Option 1: Laptop -->
+                            <div class="quick-req-card" onclick="quickRequestEquipment('EQUIPMENT_REQUEST', 'Request: Engineering Laptop / Workstation')">
+                                <div>
+                                    <div class="quick-req-top">
+                                        <div class="quick-req-icon-wrap">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                                            </svg>
+                                        </div>
+                                        <span class="quick-req-badge">Primary Device</span>
+                                    </div>
+                                    <div class="quick-req-title">Company Laptop</div>
+                                    <p class="quick-req-desc">MacBook Pro, ThinkPad, or Dell Precision configured for Engineering.</p>
+                                </div>
+                                <span class="quick-req-btn">Request Laptop &rarr;</span>
+                            </div>
+
+                            <!-- Option 2: Display -->
+                            <div class="quick-req-card" onclick="quickRequestEquipment('EQUIPMENT_REQUEST', 'Request: External 4K Display / Monitor')">
+                                <div>
+                                    <div class="quick-req-top">
+                                        <div class="quick-req-icon-wrap" style="color: #38bdf8; background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.25);">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                                            </svg>
+                                        </div>
+                                        <span class="quick-req-badge">Display</span>
+                                    </div>
+                                    <div class="quick-req-title">External 4K Monitor</div>
+                                    <p class="quick-req-desc">27-inch 4K or UltraWide display with single USB-C cable power &amp; video.</p>
+                                </div>
+                                <span class="quick-req-btn">Request Monitor &rarr;</span>
+                            </div>
+
+                            <!-- Option 3: Peripherals -->
+                            <div class="quick-req-card" onclick="quickRequestEquipment('EQUIPMENT_REQUEST', 'Request: Keyboard, Mouse &amp; Docking Station')">
+                                <div>
+                                    <div class="quick-req-top">
+                                        <div class="quick-req-icon-wrap" style="color: #34d399; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25);">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                            </svg>
+                                        </div>
+                                        <span class="quick-req-badge">Accessories</span>
+                                    </div>
+                                    <div class="quick-req-title">Peripherals &amp; Dock</div>
+                                    <p class="quick-req-desc">Ergonomic keyboard, wireless mouse, multi-port docking station, or headset.</p>
+                                </div>
+                                <span class="quick-req-btn">Request Accessories &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>`;
         } else {
             assetsContainer.innerHTML = assets.map(a => {
                 const condBadge = `<span class="cond-badge cond-${(a.condition || '').toLowerCase()}">${a.condition || '–'}</span>`;
                 const cat = (a.category || '').toUpperCase();
-                let catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
-                if (cat.includes('MONITOR')) catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
-                if (cat.includes('MOBILE') || cat.includes('PHONE')) catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`;
+                let catIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
+                if (cat.includes('MONITOR')) catIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
+                if (cat.includes('MOBILE') || cat.includes('PHONE')) catIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`;
 
-                return `<div class="emp-asset-card">
-                    <div class="emp-asset-header">
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <span style="color:var(--status-blue);display:inline-flex;align-items:center">${catIcon}</span>
-                            <span class="asset-tag-badge">${escapeHtml(a.assetTag)}</span>
+                return `<div class="emp-asset-card-modern">
+                    <div>
+                        <div class="emp-asset-top-row">
+                            <span class="emp-asset-cat-tag">${catIcon} ${escapeHtml(a.category || 'Hardware')}</span>
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <span class="emp-asset-tag-badge">${escapeHtml(a.assetTag)}</span>
+                                ${condBadge}
+                            </div>
                         </div>
-                        ${condBadge}
+                        <div class="emp-asset-device-name">${escapeHtml(a.name)}</div>
+                        <div class="emp-asset-device-model">${escapeHtml(a.manufacturer || '')} ${escapeHtml(a.model || '')}</div>
+                        ${a.specifications ? `<div class="emp-asset-spec-box">${escapeHtml(a.specifications)}</div>` : ''}
                     </div>
-                    <div class="emp-asset-name">${escapeHtml(a.name)}</div>
-                    <div class="emp-asset-model">${escapeHtml(a.manufacturer || '')} ${escapeHtml(a.model || '')}</div>
-                    ${a.specifications ? `<div class="emp-asset-spec">${escapeHtml(a.specifications.substring(0, 90))}${a.specifications.length > 90 ? '…' : ''}</div>` : ''}
-                    <div class="emp-asset-footer">
-                        <span class="text-muted" style="font-size:0.75rem;font-family:var(--font-mono)">S/N: ${escapeHtml(a.serialNumber || 'N/A')}</span>
-                        <button class="btn btn-secondary btn-sm" onclick="openEmpTicketModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}')" style="font-size:0.75rem;padding:5px 10px">
-                            🔧 Report Issue
+                    <div class="emp-asset-bottom-row">
+                        <span class="emp-asset-sn">S/N: ${escapeHtml(a.serialNumber || 'N/A')}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="openEmpTicketModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}', 'HARDWARE', 'Issue with ${escapeHtml(a.assetTag)}: ')" style="font-size:0.75rem;padding:5px 12px">
+                            🔧 Report Problem
                         </button>
                     </div>
                 </div>`;
@@ -2090,7 +2228,16 @@ function renderEmployeePortal(data, email) {
     const ticketsTbody = document.getElementById('emp-tickets-tbody');
     if (ticketsTbody) {
         if (tickets.length === 0) {
-            ticketsTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-muted)">No support tickets logged. Click "+ Raise IT Support Ticket" to report any hardware or software issue.</td></tr>';
+            ticketsTbody.innerHTML = `<tr>
+                <td colspan="8" style="text-align: center; padding: 48px 24px; color: var(--text-muted);">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div style="font-size: 1rem; font-weight: 600; color: #f8fafc; margin-bottom: 4px;">No Active Support Tickets</div>
+                    <div style="font-size: 0.84rem; color: #94a3b8; max-width: 400px; margin: 0 auto 16px;">All your systems and hardware devices are running smoothly without any open incidents.</div>
+                    <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">+ Raise IT Support Ticket</button>
+                </td>
+            </tr>`;
         } else {
             ticketsTbody.innerHTML = tickets.map(t => {
                 const dateStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '–';
@@ -5613,7 +5760,7 @@ async function deleteTicketFromTable(id, ticketNumber) {
 // EMPLOYEE PORTAL TICKET SUBMISSION
 // --------------------------------------------------------------------------
 
-function openEmpTicketModal(assetId = null, assetTag = '', assetName = '') {
+function openEmpTicketModal(assetId = null, assetTag = '', assetName = '', presetCategory = null, presetTitle = '') {
     const form = document.getElementById('emp-ticket-form');
     if (form) form.reset();
 
@@ -5630,6 +5777,15 @@ function openEmpTicketModal(assetId = null, assetTag = '', assetName = '') {
             }
             assetSelect.appendChild(opt);
         });
+    }
+
+    if (presetCategory) {
+        const catSelect = document.getElementById('emp-tk-category');
+        if (catSelect) catSelect.value = presetCategory;
+    }
+    if (presetTitle) {
+        const titleInput = document.getElementById('emp-tk-title');
+        if (titleInput) titleInput.value = presetTitle;
     }
 
     const modal = document.getElementById('emp-ticket-modal');
