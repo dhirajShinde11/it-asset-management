@@ -1604,24 +1604,65 @@ body.modal-open {
    MODERN EMPLOYEE PORTAL DESIGN SYSTEM
    ========================================================================== */
 
-/* Employee Mode Full-Width Executive Layout */
+/* ==========================================================================
+   MODERN EMPLOYEE PORTAL DESIGN SYSTEM (ZERO-SCROLL EXECUTIVE VIEWPORT)
+   ========================================================================== */
+
+/* Employee Mode Full-Width Zero-Scroll Executive Layout */
+body.employee-mode-active,
+body:has(.employee-mode) {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+}
+
+.app-layout.employee-mode {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
 .app-layout.employee-mode .sidebar {
     display: none !important;
 }
 
 .app-layout.employee-mode .main-wrapper {
-    max-width: 1240px !important;
+    max-width: 1360px !important;
     margin: 0 auto !important;
     width: 100% !important;
-    padding: 0 32px 64px !important;
+    padding: 0 24px 14px !important;
     box-sizing: border-box !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .app-layout.employee-mode .topbar {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 18px 0;
-    margin-bottom: 24px;
+    padding: 10px 0;
+    margin-bottom: 12px;
     background: transparent;
+    flex-shrink: 0;
+}
+
+#pane-employee-portal {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#pane-employee-portal.active {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Topbar Brand Capsule (Employee Mode) */
@@ -1632,8 +1673,8 @@ body.modal-open {
 }
 
 .emp-brand-logo {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
     background: linear-gradient(135deg, #6366f1, #3b82f6);
     display: flex;
@@ -1667,48 +1708,49 @@ body.modal-open {
     border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
-/* Modern Executive Greeting Banner */
+/* Modern Executive Greeting Banner - Compact Zero-Scroll */
 .emp-overview-hero {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.8) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 24px 28px;
+    border-radius: 14px;
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 24px;
+    gap: 16px;
     box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(14px);
-    margin-bottom: 24px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 @media (max-width: 900px) {
     .emp-overview-hero {
         flex-direction: column;
         align-items: flex-start;
-        padding: 20px;
-        gap: 18px;
+        padding: 14px 16px;
+        gap: 12px;
     }
 }
 
 .emp-hero-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 14px;
 }
 
 .emp-hero-avatar {
-    width: 60px;
-    height: 60px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: linear-gradient(135deg, #6366f1, #3b82f6);
     border: 2px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 0 24px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-heading);
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
@@ -1721,17 +1763,17 @@ body.modal-open {
 
 .emp-greeting-title {
     font-family: var(--font-heading);
-    font-size: 1.45rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #fff;
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     letter-spacing: -0.01em;
 }
 
 .emp-greeting-sub {
-    font-size: 0.88rem;
+    font-size: 0.78rem;
     color: #94a3b8;
-    margin: 0 0 10px;
+    margin: 0 0 6px;
 }
 
 .emp-greeting-badges {
@@ -1744,10 +1786,10 @@ body.modal-open {
 .emp-status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.74rem;
+    gap: 5px;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: 999px;
     background: rgba(16, 185, 129, 0.12);
     color: #34d399;
@@ -1755,17 +1797,17 @@ body.modal-open {
 }
 
 .emp-status-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #10b981;
     box-shadow: 0 0 8px #10b981;
 }
 
 .emp-dept-pill {
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     font-weight: 500;
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
     color: #cbd5e1;
@@ -1775,7 +1817,7 @@ body.modal-open {
 .emp-hero-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex-shrink: 0;
     flex-wrap: wrap;
 }
@@ -1783,19 +1825,19 @@ body.modal-open {
 .emp-micro-stats {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .emp-micro-stat {
     background: rgba(15, 23, 42, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 12px;
-    padding: 10px 18px;
+    border-radius: 10px;
+    padding: 6px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 95px;
+    min-width: 85px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -1808,14 +1850,14 @@ body.modal-open {
 
 .emp-micro-stat .stat-number {
     font-family: var(--font-heading);
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #f8fafc;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 .emp-micro-stat .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1824,9 +1866,9 @@ body.modal-open {
 }
 
 .emp-hero-cta {
-    padding: 11px 20px;
-    font-size: 0.88rem;
-    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    border-radius: 8px;
     box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 }
 
@@ -1834,31 +1876,32 @@ body.modal-open {
 .emp-nav-bar {
     display: flex;
     align-items: center;
-    margin-bottom: 22px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 .emp-segmented-nav {
     display: inline-flex;
     background: rgba(15, 23, 42, 0.65);
-    padding: 4px;
-    border-radius: 12px;
+    padding: 3px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    gap: 6px;
+    gap: 4px;
 }
 
 .emp-seg-btn {
     background: transparent;
     border: none;
-    border-radius: 9px;
-    padding: 9px 18px;
-    font-size: 0.86rem;
+    border-radius: 7px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
     font-weight: 500;
     color: #94a3b8;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 
 .emp-seg-btn:hover {
@@ -1876,9 +1919,9 @@ body.modal-open {
 
 .emp-pill-badge {
     background: rgba(255, 255, 255, 0.07);
-    padding: 1px 7px;
+    padding: 1px 6px;
     border-radius: 999px;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
 }
 
@@ -1887,68 +1930,88 @@ body.modal-open {
     color: #c7d2fe;
 }
 
-/* Sub Panes */
+/* Sub Panes Fill Viewport Without Window Scrolling */
 .emp-sub-pane {
     width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.emp-sub-pane[style*="display: block"] {
+    display: flex !important;
 }
 
 /* Illustrated Empty State */
 .emp-empty-illustrated {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.55) 100%);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
-    padding: 44px 32px 36px;
+    border-radius: 14px;
+    padding: 20px 24px;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 0;
     backdrop-filter: blur(10px);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
 }
 
 .emp-empty-art {
-    width: 68px;
-    height: 68px;
-    border-radius: 18px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(59, 130, 246, 0.15));
     border: 1px solid rgba(99, 102, 241, 0.3);
     color: #818cf8;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 18px;
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
+    margin-bottom: 10px;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
 }
 
 .emp-empty-title {
     font-family: var(--font-heading);
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #fff;
-    margin: 0 0 8px;
+    margin: 0 0 4px;
 }
 
 .emp-empty-desc {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: #94a3b8;
-    max-width: 540px;
-    margin: 0 auto 28px;
-    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 16px;
+    line-height: 1.5;
 }
 
 /* Quick Requests Grid */
 .quick-requests-header {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: #94a3b8;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     text-align: left;
+    width: 100%;
+    max-width: 860px;
 }
 
 .quick-requests-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 12px;
     text-align: left;
+    width: 100%;
+    max-width: 860px;
 }
 
 @media (max-width: 900px) {
@@ -1960,12 +2023,12 @@ body.modal-open {
 .quick-req-card {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 14px;
+    gap: 8px;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
 }
@@ -1984,9 +2047,9 @@ body.modal-open {
 }
 
 .quick-req-icon-wrap {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     background: rgba(99, 102, 241, 0.12);
     border: 1px solid rgba(99, 102, 241, 0.25);
     color: #a5b4fc;
@@ -1996,9 +2059,9 @@ body.modal-open {
 }
 
 .quick-req-badge {
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     font-weight: 600;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
     color: #94a3b8;
@@ -2008,45 +2071,49 @@ body.modal-open {
 .quick-req-title {
     font-family: var(--font-heading);
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.92rem;
     color: #fff;
-    margin: 2px 0 4px;
+    margin: 2px 0 2px;
 }
 
 .quick-req-desc {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     color: #94a3b8;
-    line-height: 1.5;
+    line-height: 1.45;
     margin: 0;
 }
 
 .quick-req-btn {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 600;
     color: #818cf8;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: gap 0.15s ease;
 }
 
 .quick-req-card:hover .quick-req-btn {
-    gap: 9px;
+    gap: 8px;
     color: #a5b4fc;
 }
 
-/* Assigned Hardware Cards (When assets exist) */
+/* Assigned Hardware Cards */
 .emp-assets-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .emp-asset-card-modern {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 22px;
+    border-radius: 12px;
+    padding: 16px;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
@@ -2063,86 +2130,112 @@ body.modal-open {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .emp-asset-cat-tag {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.76rem;
+    gap: 5px;
+    font-size: 0.74rem;
     font-weight: 600;
     color: #38bdf8;
     background: rgba(56, 189, 248, 0.1);
     border: 1px solid rgba(56, 189, 248, 0.25);
-    padding: 3px 9px;
+    padding: 2px 8px;
     border-radius: 6px;
 }
 
 .emp-asset-tag-badge {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #e2e8f0;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 6px;
 }
 
 .emp-asset-device-name {
     font-family: var(--font-heading);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .emp-asset-device-model {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: #94a3b8;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .emp-asset-spec-box {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.76rem;
+    padding: 6px 10px;
+    font-size: 0.74rem;
     color: #cbd5e1;
-    line-height: 1.5;
-    margin-bottom: 16px;
+    line-height: 1.45;
+    margin-bottom: 12px;
 }
 
 .emp-asset-bottom-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: 14px;
+    padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .emp-asset-sn {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: #64748b;
 }
 
-/* Employee Tickets Card */
+/* Employee Tickets Card (Zero-Scroll Viewport Card) */
 .emp-tickets-card {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .emp-tickets-header {
-    padding: 20px 24px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.emp-tickets-card .table-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-radius: 0;
+    border: none;
+}
+
+@media (max-height: 600px), (max-width: 768px) {
+    .app-layout.employee-mode {
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+    }
+    .app-layout.employee-mode .main-wrapper {
+        overflow: visible;
+        padding-bottom: 40px !important;
+    }
 }
 
 /* Breakdown bars */

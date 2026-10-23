@@ -144,7 +144,11 @@ function showAuthPage(emailToFill) {
     const appLayout = document.getElementById('app-layout');
 
     if (authView) authView.style.display = 'flex';
-    if (appLayout) appLayout.style.display = 'none';
+    if (appLayout) {
+        appLayout.style.display = 'none';
+        appLayout.classList.remove('employee-mode');
+    }
+    document.body.classList.remove('employee-mode-active');
 
     const emailInput = document.getElementById('auth-email');
     const pwdInput = document.getElementById('auth-password');
@@ -259,6 +263,7 @@ async function activateAppLayout(overrideTab, overrideTicket) {
     if (!isAdmin) {
         // Executive Employee Mode: hide 270px sidebar, center content, show brand capsule
         if (appLayout) appLayout.classList.add('employee-mode');
+        document.body.classList.add('employee-mode-active');
         if (empBrand) empBrand.style.display = 'flex';
         if (adminTitleGroup) adminTitleGroup.style.display = 'none';
 
@@ -282,6 +287,7 @@ async function activateAppLayout(overrideTab, overrideTicket) {
     } else {
         // ADMIN: Show full command center
         if (appLayout) appLayout.classList.remove('employee-mode');
+        document.body.classList.remove('employee-mode-active');
         if (empBrand) empBrand.style.display = 'none';
         if (adminTitleGroup) adminTitleGroup.style.display = 'block';
 
@@ -417,6 +423,7 @@ function toggleRoleView() {
         if (!isCurrentlyEmpView) {
             // Switch to Employee View Preview
             if (appLayout) appLayout.classList.add('employee-mode');
+            document.body.classList.add('employee-mode-active');
             if (empBrand) empBrand.style.display = 'flex';
             if (adminTitleGroup) adminTitleGroup.style.display = 'none';
             if (adminMetrics) adminMetrics.style.display = 'none';
@@ -426,6 +433,7 @@ function toggleRoleView() {
         } else {
             // Switch back to Admin View
             if (appLayout) appLayout.classList.remove('employee-mode');
+            document.body.classList.remove('employee-mode-active');
             if (empBrand) empBrand.style.display = 'none';
             if (adminTitleGroup) adminTitleGroup.style.display = 'block';
             if (adminMetrics) adminMetrics.style.display = 'grid';
@@ -485,7 +493,7 @@ function switchTab(tabKey) {
         const isActive = (key === tabKey);
         if (btn) btn.classList.toggle('active', isActive);
         if (pane) {
-            pane.style.display = isActive ? 'block' : 'none';
+            pane.style.display = isActive ? (key === 'employee-portal' ? 'flex' : 'block') : 'none';
             pane.classList.toggle('active', isActive);
         }
     });
@@ -2043,8 +2051,8 @@ function switchEmpSubTab(subKey) {
     if (btnAssets) btnAssets.classList.toggle('active', isAssets);
     if (btnTickets) btnTickets.classList.toggle('active', !isAssets);
 
-    if (paneAssets) paneAssets.style.display = isAssets ? 'block' : 'none';
-    if (paneTickets) paneTickets.style.display = !isAssets ? 'block' : 'none';
+    if (paneAssets) paneAssets.style.display = isAssets ? 'flex' : 'none';
+    if (paneTickets) paneTickets.style.display = !isAssets ? 'flex' : 'none';
 }
 
 function quickRequestEquipment(category, title) {
@@ -2223,12 +2231,12 @@ function renderEmployeePortal(data, email) {
     if (ticketsTbody) {
         if (tickets.length === 0) {
             ticketsTbody.innerHTML = `<tr>
-                <td colspan="8" style="text-align: center; padding: 48px 24px; color: var(--text-muted);">
-                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <td colspan="8" style="text-align: center; padding: 32px 20px; color: var(--text-muted);">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <div style="font-size: 1rem; font-weight: 600; color: #f8fafc; margin-bottom: 4px;">No Active Support Tickets</div>
-                    <div style="font-size: 0.84rem; color: #94a3b8; max-width: 400px; margin: 0 auto;">All your systems and hardware devices are running smoothly without any open incidents.</div>
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #f8fafc; margin-bottom: 3px;">No Active Support Tickets</div>
+                    <div style="font-size: 0.82rem; color: #94a3b8; max-width: 400px; margin: 0 auto;">All your systems and hardware devices are running smoothly without any open incidents.</div>
                 </td>
             </tr>`;
         } else {
