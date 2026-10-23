@@ -2441,9 +2441,75 @@ function exportAssetsCsv() {
 // -------------------------------------------------------
 // UTILS
 // -------------------------------------------------------
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
+}
+
 function closeModal(id) {
     const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
+    if (el) {
+        el.style.display = 'none';
+        const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex');
+        if (!anyModalOpen) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+}
+
+function toggleModalExpand(btn) {
+    const dialog = btn.closest('.modal-dialog');
+    if (!dialog) return;
+    const isExpanded = dialog.classList.toggle('modal-expanded');
+    btn.setAttribute('title', isExpanded ? 'Restore Normal Window' : 'Expand / Maximize Window');
+    btn.innerHTML = isExpanded 
+        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>`
+        : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6m0-6L14 10M9 21H3v-6m0 6l7-7M3 9V3h6M21 15v6h-6"></path></svg>`;
+}
+
+// Global Modal Backdrop Click & ESC Listeners
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+        closeModal(e.target.id);
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const visibleModals = document.querySelectorAll('.modal-overlay');
+        visibleModals.forEach(m => {
+            if (m.style.display === 'flex') closeModal(m.id);
+        });
+    }
+});
+
+// Automatic synchronization of body.modal-open whenever any modal is displayed or hidden
+try {
+    const modalObserver = new MutationObserver(() => {
+        const isAnyModalOpen = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex');
+        if (isAnyModalOpen) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+    });
+
+    const initModalObservers = () => {
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            modalObserver.observe(m, { attributes: true, attributeFilter: ['style', 'class'] });
+        });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initModalObservers);
+    } else {
+        initModalObservers();
+    }
+} catch (e) {
+    console.debug('Modal observer init', e);
 }
 
 function showToast(message, type = 'info') {
@@ -5788,8 +5854,7 @@ function openEmpTicketModal(assetId = null, assetTag = '', assetName = '', prese
         if (titleInput) titleInput.value = presetTitle;
     }
 
-    const modal = document.getElementById('emp-ticket-modal');
-    if (modal) modal.style.display = 'flex';
+    openModal('emp-ticket-modal');
 }
 
 async function submitEmpTicket(event) {
