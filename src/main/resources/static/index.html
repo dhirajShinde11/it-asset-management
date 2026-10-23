@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css?v=2.2">
+    <link rel="stylesheet" href="/css/styles.css?v=2.3">
 </head>
 <body>
     <!-- Background Glow Effects -->
@@ -198,22 +198,12 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div class="system-status">
-                    <span class="pulse-indicator"></span>
+                <div class="system-status-clean">
+                    <span class="status-dot"></span>
                     <div class="status-meta">
-                        <span class="status-name">Backend REST API</span>
-                        <span class="status-sub">Spring Boot 3.3 • MySQL 3306</span>
+                        <span class="status-title">BMC AssetHub</span>
+                        <span class="status-edition">Enterprise Suite</span>
                     </div>
-                </div>
-                <div class="sidebar-links">
-                    <a href="/swagger-ui.html" target="_blank" class="tool-link" id="link-swagger" title="Interactive API Docs">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        Swagger API Docs
-                    </a>
-                    <a href="http://localhost/phpmyadmin/index.php?route=/database/structure&db=itam_db" target="_blank" class="tool-link" id="link-mysql" title="MySQL / phpMyAdmin (Database: itam_db)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-                        MySQL (phpMyAdmin)
-                    </a>
                 </div>
             </div>
             </div>
@@ -229,68 +219,7 @@
                 </div>
                 
                 <div class="topbar-actions">
-                    <!-- Session User Capsule / Auth Widget -->
-                    <div class="auth-widget" id="auth-widget">
-                        <div class="user-capsule" id="user-capsule" onclick="toggleUserDropdown()">
-                            <div class="user-avatar" id="capsule-avatar">AD</div>
-                            <div class="user-info-text">
-                                <span class="user-name" id="capsule-name">IT Administrator</span>
-                                <span class="user-meta-line">
-                                    <span class="role-pill pill-admin" id="capsule-role">ADMIN</span>
-                                    <span class="user-dept-label" id="capsule-dept">IT</span>
-                                </span>
-                            </div>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </div>
-
-                        <!-- Dropdown Menu -->
-                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
-                            <div class="dropdown-header">
-                                <div class="dropdown-user-name" id="dd-user-name">IT Administrator</div>
-                                <div class="dropdown-user-email" id="dd-user-email">admin@company.com</div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item" id="dd-switch-view-btn" onclick="toggleRoleView()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-                                <span id="dd-switch-label">Switch to Employee Portal</span>
-                            </button>
-                            <button class="dropdown-item" onclick="openProfileModal()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                <span>My Account Profile</span>
-                            </button>
-                            <button class="dropdown-item" onclick="openChangePasswordModal()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                <span>Change Password</span>
-                            </button>
-                            <button class="dropdown-item" onclick="openLoginModal()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                                <span>Switch User / Sign In</span>
-                            </button>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item text-danger" onclick="logoutUser()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                                <span>Sign Out</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Quick Global Search Capsule -->
-                    <div class="global-search-pill" onclick="openSpotlightSearch()" title="Spotlight Quick Search (Ctrl + K or /)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <span>Search ITAM...</span>
-                        <kbd class="shortcut-badge">Ctrl K</kbd>
-                    </div>
-
-                    <!-- Live LAN Network Access Pill -->
-                    <div id="lan-share-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 7px 12px; font-size: 12px; color: var(--status-green); cursor: pointer;" onclick="openNetworkShareModal()" title="Click to view QR code and share links for other devices on this Wi-Fi">
-                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-green); box-shadow: 0 0 8px var(--status-green);"></span>
-                        <span id="lan-share-label">LAN: Auto-Detecting...</span>
-                        <button type="button" onclick="event.stopPropagation(); copyLanUrl();" title="Quick Copy Link" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0 0 0 4px; display: inline-flex; align-items: center;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                    </div>
-
-                    <!-- Dynamic Action Buttons -->
+                    <!-- Dynamic Contextual Action Buttons -->
                     <button class="btn btn-secondary" id="btn-export-csv" onclick="exportAssetsCsv()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -323,6 +252,65 @@
                         </svg>
                         Add User
                     </button>
+                    <!-- Employee Quick Request Button (Shown exclusively to Employees) -->
+                    <button class="btn btn-primary" id="btn-emp-quick-ticket" onclick="openEmpTicketModal()" style="display: none;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>+ Request IT Support</span>
+                    </button>
+
+                    <!-- Quick Global Search Capsule (Admin Only) -->
+                    <div class="global-search-pill" id="topbar-search-pill" onclick="openSpotlightSearch()" title="Spotlight Quick Search (Ctrl + K or /)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <span>Search...</span>
+                        <kbd class="shortcut-badge">Ctrl K</kbd>
+                    </div>
+
+                    <!-- Live LAN Network Access Button (Admin Only) -->
+                    <button type="button" class="btn btn-secondary btn-sm" id="lan-share-pill" onclick="openNetworkShareModal()" title="Connect Mobile &amp; Wi-Fi Devices" style="display: none;">
+                        <span class="lan-dot"></span>
+                        <span id="lan-share-label">Wi-Fi Connect</span>
+                    </button>
+
+                    <!-- Session User Capsule / Auth Widget (Cleanly Anchored Far Right) -->
+                    <div class="auth-widget" id="auth-widget">
+                        <div class="user-capsule" id="user-capsule" onclick="toggleUserDropdown()">
+                            <div class="user-avatar" id="capsule-avatar">AD</div>
+                            <div class="user-info-text">
+                                <span class="user-name" id="capsule-name">IT Administrator</span>
+                                <span class="user-meta-line">
+                                    <span class="role-pill pill-admin" id="capsule-role">ADMIN</span>
+                                    <span class="user-dept-label" id="capsule-dept">IT</span>
+                                </span>
+                            </div>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+
+                        <!-- Dropdown Menu -->
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="dropdown-header">
+                                <div class="dropdown-user-name" id="dd-user-name">IT Administrator</div>
+                                <div class="dropdown-user-email" id="dd-user-email">admin@company.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" id="dd-switch-view-btn" onclick="toggleRoleView()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                                <span id="dd-switch-label">Switch to Employee Portal</span>
+                            </button>
+                            <button class="dropdown-item" onclick="openProfileModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <span>My Account Profile</span>
+                            </button>
+                            <button class="dropdown-item" onclick="openChangePasswordModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Change Password</span>
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item text-danger" onclick="logoutUser()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -1198,26 +1186,30 @@
                 <!-- Employee Welcome Hero Card -->
                 <div class="emp-hero-card">
                     <div class="emp-hero-main">
-                        <div class="emp-avatar-large" id="emp-hero-avatar">SJ</div>
+                        <div class="emp-avatar-large" id="emp-hero-avatar">--</div>
                         <div class="emp-hero-info">
-                            <div class="emp-hero-welcome">Welcome to your IT Equipment Hub</div>
-                            <h2 class="emp-hero-name" id="emp-hero-name">Sarah Jenkins</h2>
-                            <p class="emp-hero-title" id="emp-hero-title">Staff Distributed Systems Engineer • Engineering Department</p>
+                            <div class="emp-hero-welcome">My Workstation &amp; Equipment</div>
+                            <h2 class="emp-hero-name" id="emp-hero-name">Loading Profile...</h2>
+                            <p class="emp-hero-title" id="emp-hero-title">Organization Team Member</p>
                             <div class="emp-hero-tags">
-                                <span class="tag-pill" id="emp-hero-email">sarah.jenkins@company.com</span>
-                                <span class="tag-pill" id="emp-hero-dept">Department: Engineering</span>
+                                <span class="tag-pill" id="emp-hero-email">...</span>
+                                <span class="tag-pill" id="emp-hero-dept">Department: ...</span>
                                 <span class="tag-pill tag-pill-active" id="emp-hero-status">Active Account</span>
                             </div>
                         </div>
                     </div>
                     <div class="emp-hero-actions">
-                        <button class="btn btn-secondary" onclick="openProfileModal()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            My Profile
+                        <button class="btn btn-primary btn-sm" onclick="openEmpTicketModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            + Raise Ticket
                         </button>
-                        <button class="btn btn-secondary" onclick="openChangePasswordModal()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            Change Password
+                        <button class="btn btn-secondary btn-sm" onclick="openProfileModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Profile
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            Password
                         </button>
                     </div>
                 </div>
@@ -3255,7 +3247,7 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="/js/qrcode.min.js?v=2.2"></script>
-    <script src="/js/app.js?v=2.2"></script>
+    <script src="/js/qrcode.min.js?v=2.3"></script>
+    <script src="/js/app.js?v=2.3"></script>
 </body>
 </html>

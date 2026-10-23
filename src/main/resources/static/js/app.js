@@ -247,27 +247,43 @@ async function activateAppLayout(overrideTab, overrideTicket) {
 
     renderSessionCapsule();
 
-    if (App.session.role === 'EMPLOYEE') {
+    const isAdmin = App.session && App.session.role === 'ADMIN';
+    const adminNav = document.getElementById('admin-nav-menu');
+    const empNav = document.getElementById('employee-nav-menu');
+    const roleIndicator = document.getElementById('sidebar-role-indicator');
+    const lanPill = document.getElementById('lan-share-pill');
+    const searchPill = document.getElementById('topbar-search-pill');
+    const empQuickTicket = document.getElementById('btn-emp-quick-ticket');
+
+    if (!isAdmin) {
         // Show ONLY employee navigation and hub
-        document.getElementById('admin-nav-menu').style.display = 'none';
-        document.getElementById('employee-nav-menu').style.display = 'block';
-        document.getElementById('sidebar-role-indicator').textContent = 'Employee Self-Service Hub';
+        if (adminNav) adminNav.style.display = 'none';
+        if (empNav) empNav.style.display = 'block';
+        if (roleIndicator) roleIndicator.textContent = 'Employee Self-Service Hub';
 
         const adminMetrics = document.getElementById('admin-metrics-grid');
         if (adminMetrics) adminMetrics.style.display = 'none';
 
-        const btnAsset = document.getElementById('btn-create-asset');
-        const btnCsv = document.getElementById('btn-export-csv');
-        if (btnAsset) btnAsset.style.display = 'none';
-        if (btnCsv) btnCsv.style.display = 'none';
+        ['btn-create-asset', 'btn-export-csv', 'btn-bulk-import', 'btn-add-user-top'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        if (lanPill) lanPill.style.display = 'none';
+        if (searchPill) searchPill.style.display = 'none';
+        if (empQuickTicket) empQuickTicket.style.display = 'inline-flex';
 
         switchTab('employee-portal');
         await loadEmployeePortal(App.session.email);
     } else {
         // ADMIN: Show full command center
-        document.getElementById('admin-nav-menu').style.display = 'block';
-        document.getElementById('employee-nav-menu').style.display = 'none';
-        document.getElementById('sidebar-role-indicator').textContent = 'Admin Command Hub';
+        if (adminNav) adminNav.style.display = 'block';
+        if (empNav) empNav.style.display = 'none';
+        if (roleIndicator) roleIndicator.textContent = 'Admin Command Hub';
+
+        if (empQuickTicket) empQuickTicket.style.display = 'none';
+        if (lanPill) lanPill.style.display = 'inline-flex';
+        if (searchPill) searchPill.style.display = 'inline-flex';
 
         showAdminLayout();
 
@@ -351,10 +367,19 @@ function showAdminLayout() {
 
     const btnAsset = document.getElementById('btn-create-asset');
     const btnCsv = document.getElementById('btn-export-csv');
+    const btnImport = document.getElementById('btn-bulk-import');
     const btnUser = document.getElementById('btn-add-user-top');
+    const btnEmpTicket = document.getElementById('btn-emp-quick-ticket');
+    const lanPill = document.getElementById('lan-share-pill');
+    const searchPill = document.getElementById('topbar-search-pill');
+
     if (btnAsset) btnAsset.style.display = '';
     if (btnCsv) btnCsv.style.display = '';
+    if (btnImport) btnImport.style.display = '';
     if (btnUser) btnUser.style.display = 'none';
+    if (btnEmpTicket) btnEmpTicket.style.display = 'none';
+    if (lanPill) lanPill.style.display = 'inline-flex';
+    if (searchPill) searchPill.style.display = 'inline-flex';
 }
 
 function logoutUser() {
@@ -445,12 +470,35 @@ function switchTab(tabKey) {
     const sub = document.getElementById('page-sub-heading');
     const btnAsset = document.getElementById('btn-create-asset');
     const btnCsv = document.getElementById('btn-export-csv');
+    const btnImport = document.getElementById('btn-bulk-import');
     const btnUser = document.getElementById('btn-add-user-top');
+    const btnEmpTicket = document.getElementById('btn-emp-quick-ticket');
+    const lanPill = document.getElementById('lan-share-pill');
+    const searchPill = document.getElementById('topbar-search-pill');
 
     const isAdmin = App.session && App.session.role === 'ADMIN';
-    if (btnAsset) btnAsset.style.display = (isAdmin && tabKey === 'assets') ? '' : 'none';
-    if (btnCsv) btnCsv.style.display = (isAdmin && tabKey === 'assets') ? '' : 'none';
-    if (btnUser) btnUser.style.display = (isAdmin && tabKey === 'users') ? '' : 'none';
+
+    if (!isAdmin) {
+        if (btnAsset) btnAsset.style.display = 'none';
+        if (btnCsv) btnCsv.style.display = 'none';
+        if (btnImport) btnImport.style.display = 'none';
+        if (btnUser) btnUser.style.display = 'none';
+        if (lanPill) lanPill.style.display = 'none';
+        if (searchPill) searchPill.style.display = 'none';
+        if (btnEmpTicket) btnEmpTicket.style.display = 'inline-flex';
+
+        const firstName = (App.session?.fullName || 'Team Member').split(' ')[0];
+        if (heading) heading.innerText = 'My IT Equipment';
+        if (sub) sub.innerText = `Welcome back, ${firstName} · View your assigned equipment and submit IT requests`;
+    } else {
+        if (btnEmpTicket) btnEmpTicket.style.display = 'none';
+        if (lanPill) lanPill.style.display = 'inline-flex';
+        if (searchPill) searchPill.style.display = 'inline-flex';
+        if (btnAsset) btnAsset.style.display = (tabKey === 'assets') ? '' : 'none';
+        if (btnCsv) btnCsv.style.display = (tabKey === 'assets') ? '' : 'none';
+        if (btnImport) btnImport.style.display = (tabKey === 'assets' || tabKey === 'users') ? '' : 'none';
+        if (btnUser) btnUser.style.display = (tabKey === 'users') ? '' : 'none';
+    }
 
     const headings = {
         'assets': ['IT Asset Inventory', 'Track, audit, provision, and maintain organization hardware'],
@@ -2011,17 +2059,25 @@ function renderEmployeePortal(data, email) {
         } else {
             assetsContainer.innerHTML = assets.map(a => {
                 const condBadge = `<span class="cond-badge cond-${(a.condition || '').toLowerCase()}">${a.condition || '–'}</span>`;
+                const cat = (a.category || '').toUpperCase();
+                let catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
+                if (cat.includes('MONITOR')) catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
+                if (cat.includes('MOBILE') || cat.includes('PHONE')) catIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`;
+
                 return `<div class="emp-asset-card">
                     <div class="emp-asset-header">
-                        <span class="asset-tag-badge">${escapeHtml(a.assetTag)}</span>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="color:var(--status-blue);display:inline-flex;align-items:center">${catIcon}</span>
+                            <span class="asset-tag-badge">${escapeHtml(a.assetTag)}</span>
+                        </div>
                         ${condBadge}
                     </div>
                     <div class="emp-asset-name">${escapeHtml(a.name)}</div>
                     <div class="emp-asset-model">${escapeHtml(a.manufacturer || '')} ${escapeHtml(a.model || '')}</div>
                     ${a.specifications ? `<div class="emp-asset-spec">${escapeHtml(a.specifications.substring(0, 90))}${a.specifications.length > 90 ? '…' : ''}</div>` : ''}
                     <div class="emp-asset-footer">
-                        <span class="text-muted" style="font-size:0.75rem">S/N: ${escapeHtml(a.serialNumber || 'N/A')}</span>
-                        <button class="btn-table-action" onclick="openEmpTicketModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}')" style="font-size:0.72rem">
+                        <span class="text-muted" style="font-size:0.75rem;font-family:var(--font-mono)">S/N: ${escapeHtml(a.serialNumber || 'N/A')}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="openEmpTicketModal(${a.id}, '${escapeHtml(a.assetTag)}', '${escapeHtml(a.name)}')" style="font-size:0.75rem;padding:5px 10px">
                             🔧 Report Issue
                         </button>
                     </div>
